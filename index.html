@@ -8,9 +8,40 @@
 <body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px;">
 
     <h1>Local 710 Grievance Portal</h1>
-    <p>Status: Connected to Server Space</p>
-    <hr>
-    <p>Testing phase online. Real-time data sync plumbing is next.</p>
+    <div id="loading">Loading your grievances...</div>
+    <div id="data-display" style="display:none;"></div>
 
+    <script>
+        // 1. Grab the Driver GUID from the website URL bar
+        const urlParams = new URLSearchParams(window.location.search);
+        const driverId = urlParams.get('id');
+
+        if (!driverId) {
+            document.getElementById('loading').innerText = "Error: No Driver ID provided. Please use your official link.";
+        } else {
+            // 2. Point this exactly to your Power Automate Bridge Link
+            const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd2d27578a944fed84277c9a0e2c5985/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SD5cbPfDHuVdyQ8YHqSgNjGZeoZZ3DnMqHPvusYj8WY";
+
+            // 3. Shoot the ID to Power Automate
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "driverId": driverId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const display = document.getElementById('data-display');
+                display.style.display = 'block';
+                
+                // Temporary check to see if data made it back
+                display.innerHTML = `<h3>Server Connection Success!</h3><p>We successfully pinged the cloud for ID: <b>${driverId}</b>.</p>`;
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = "Connection error. Please try again shortly.";
+                console.error(error);
+            });
+        }
+    </script>
 </body>
 </html>
