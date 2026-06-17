@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Stewards Dispatch Hub</title>
+</head>
+<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0;">
+
+    <!-- TOP CONTROL PANEL -->
+    <div style="border-bottom: 2px solid #ffcc00; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; margin: 0 0 5px 0;">Local 710 Stewards Dispatch Hub</h1>
+        <p style="margin: 0 0 15px 0; color: #aaaaaa; font-size: 14px;">Quickly look up a driver and tap a button to shoot over their secure grievance portal link via text message.</p>
+        
+        <!-- SEARCH BAR -->
+        <input type="text" id="search-box" onkeyup="filterDrivers()" placeholder="🔍 Search by name or employee ID..." 
+               style="width: 100%; max-width: 500px; padding: 12px; font-size: 16px; background-color: #1e1e1e; color: #ffffff; border: 1px solid #ffcc00; border-radius: 6px; box-sizing: border-box;">
+        
+        <div id="counter" style="margin-top: 10px; font-size: 13px; color: #ffcc00; font-weight: bold;">Loading drivers...</div>
+    </div>
+
+    <!-- DRIVER ROSTER CARDS CONTAINER -->
+    <div id="roster-list"></div>
+
+    <script>
+        // Full processed driver database from the "Web Portal" Excel sheet
+        const drivers = [
+  { first: "Jeffrey", last: "Adams", emp_id: "8063561", phone: "", guid: "757bd8b1-6b28-436f-a77b-38fed66295c2", link: "https://710-stewards.github.io/ftw-hub/?id=757bd8b1-6b28-436f-a77b-38fed66295c2" },
+  { first: "Jeremiah", last: "Airgood", emp_id: "5596075", phone: "", guid: "648b1fe4-75aa-439c-946e-d9b046eb3e3a", link: "https://710-stewards.github.io/ftw-hub/?id=648b1fe4-75aa-439c-946e-d9b046eb3e3a" },
+  { first: "Jason", last: "Baird", emp_id: "133863", phone: "", guid: "d9455b3d-28bb-48cc-9cc1-c2380e48402e", link: "https://710-stewards.github.io/ftw-hub/?id=d9455b3d-28bb-48cc-9cc1-c2380e48402e" },
+  { first: "Seth", last: "Baird", emp_id: "1548250", phone: "", guid: "960000e2-16b6-4135-8b5a-2a0aab851e22", link: "https://710-stewards.github.io/ftw-hub/?id=960000e2-16b6-4135-8b5a-2a0aab851e22" },
+  { first: "Tomas", last: "Barrera", emp_id: "1276870", phone: "12603418768", guid: "faddd99d-e7b9-4064-8d43-f695da9e5937", link: "https://710-stewards.github.io/ftw-hub/?id=faddd99d-e7b9-4064-8d43-f695da9e5937" },
+  { first: "Mark", last: "Bedwell", emp_id: "129537", phone: "12604039534", guid: "947d9ddb-2bf4-4b96-bc86-ea836c5e85c7", link: "https://710-stewards.github.io/ftw-hub/?id=947d9ddb-2bf4-4b96-bc86-ea836c5e85c7" },
+  { first: "Benjamin", last: "Bergstrom", emp_id: "6390656", phone: "12604350161", guid: "1dfee084-2796-48e1-8ab7-a93ecff79b8a", link: "https://710-stewards.github.io/ftw-hub/?id=1dfee084-2796-48e1-8ab7-a93ecff79b8a" },
+  { first: "Larry", last: "Bireley", emp_id: "3584922", phone: "12608042591", guid: "14c152b7-028c-41e8-aee3-201300a95648", link: "https://710-stewards.github.io/ftw-hub/?id=14c152b7-028c-41e8-aee3-201300a95648" },
+  { first: "Derek", last: "Blair", emp_id: "136573", phone: "12604422282", guid: "f4b2d2f0-db8b-4e7e-9a19-f9cd0db1920e", link: "https://710-stewards.github.io/ftw-hub/?id=f4b2d2f0-db8b-4e7e-9a19-f9cd0db1920e" },
+  { first: "Nicholas", last: "Bohnke", emp_id: "2123968", phone: "12604317519", guid: "5b0e5f56-2dca-49a3-a5ec-a6223f9e1fed", link: "https://710-stewards.github.io/ftw-hub/?id=5b0e5f56-2dca-49a3-a5ec-a6223f9e1fed" },
+  { first: "Ben", last: "Buck", emp_id: "6436177", phone: "", guid: "51b269a8-36c2-45bd-8e9a-845025088720", link: "https://710-stewards.github.io/ftw-hub/?id=51b269a8-36c2-45bd-8e9a-845025088720" },
+  { first: "Jared", last: "Butts", emp_id: "1227201", phone: "12605159548", guid: "bcb9cf0f-0b97-4f00-af95-db212fdd29e8", link: "https://710-stewards.github.io/ftw-hub/?id=bcb9cf0f-0b97-4f00-af95-db212fdd29e8" },
+  { first: "Matthew", last: "Cameron", emp_id: "5696570", phone: "12607109484", guid: "fbfa798d-4964-4681-a4a4-3abf8b914836", link: "https://710-stewards.github.io/ftw-hub/?id=fbfa798d-4964-4681-a4a4-3abf8b914836" },
+  { first: "Kiley", last: "Camp", emp_id: "4241544", phone: "12607053558", guid: "fd9ea46f-0e91-420a-852b-144854997872", link: "https://710-stewards.github.io/ftw-hub/?id=fd9ea46f-0e91-420a-852b-144854997872" },
+  { first: "Ben", last: "Carnes", emp_id: "3418386", phone: "15743774733", guid: "5df3f966-b69c-49c8-b26c-063bff6d1986", link: "https://710-stewards.github.io/ftw-hub/?id=5df3f966-b69c-49c8-b26c-063bff6d1986" },
+  { first: "Alexander", last: "Ceravolo", emp_id: "5847357", phone: "12602249534", guid: "3015aadb-c47e-475f-8c42-0e915260c8d1", link: "https://710-stewards.github.io/ftw-hub/?id=3015aadb-c47e-475f-8c42-0e915260c8d1" },
+  { first: "Stephen", last: "Christie", emp_id: "133465", phone: "", guid: "13e7dcf7-c9b0-44f7-9d32-1656fd04481f", link: "https://710-stewards.github.io/ftw-hub/?id=13e7dcf7-c9b0-44f7-9d32-1656fd04481f" },
+  { first: "Devin", last: "Clark", emp_id: "6377106", phone: "", guid: "4253e927-5698-492a-ae26-cb7b25fda9aa", link: "https://710-stewards.github.io/ftw-hub/?id=4253e927-5698-492a-ae26-cb7b25fda9aa" },
+  { first: "Richard", last: "Claybaugh", emp_id: "130225", phone: "12604600792", guid: "3879e07a-d578-4265-bd1b-1c0eb17a89d0", link: "https://710-stewards.github.io/ftw-hub/?id=3879e07a-d578-4265-bd1b-1c0eb17a89d0" },
+  { first: "Jason", last: "Coburn", emp_id: "134031", phone: "12604130321", guid: "55232c7c-6d36-4959-acbd-308557662e93", link: "https://710-stewards.github.io/ftw-hub/?id=55232c7c-6d36-4959-acbd-308557662e93" },
+  { first: "Jasmine", last: "Conley", emp_id: "5065409", phone: "", guid: "4f384a11-2924-4913-88e7-37c176d4c062", link: "https://710-stewards.github.io/ftw-hub/?id=4f384a11-2924-4913-88e7-37c176d4c062" },
+  { first: "Alexander", last: "Craig", emp_id: "4927272", phone: "12602292939", guid: "00585c03-6043-46bb-acf1-b8b691f421e8", link: "https://710-stewards.github.io/ftw-hub/?id=00585c03-6043-46bb-acf1-b8b691f421e8" },
+  { first: "Ryan", last: "Crismore", emp_id: "5586991", phone: "", guid: "32f255b3-b1ba-430b-a216-c548aa9a15a3", link: "https://710-stewards.github.io/ftw-hub/?id=32f255b3-b1ba-430b-a216-c548aa9a15a3" },
+  { first: "John", last: "Dambra", emp_id: "4575454", phone: "12604148195", guid: "f134d533-7b35-4708-9d1a-3ffd4a39ee18", link: "https://710-stewards.github.io/ftw-hub/?id=f134d533-7b35-4708-9d1a-3ffd4a39ee18" },
+  { first: "Patrick", last: "Davis", emp_id: "839415", phone: "", guid: "2c5f72cb-10e4-4f11-8f00-867c64505e0a", link: "https://710-stewards.github.io/ftw-hub/?id=2c5f72cb-10e4-4f11-8f00-867c64505e0a" },
+  { first: "Dave", last: "Debolt", emp_id: "1868784", phone: "12604527780", guid: "87fb784e-f364-4dc6-b2bf-8cf8a3e3119b", link: "https://710-stewards.github.io/ftw-hub/?id=87fb784e-f364-4dc6-b2bf-8cf8a3e3119b" },
+  { first: "Miguel", last: "DelaRosa", emp_id: "3914752", phone: "12604171131", guid: "226cec97-6adb-4b13-8a8a-cdadf1fbb692", link: "https://710-stewards.github.io/ftw-hub/?id=226cec97-6adb-4b13-8a8a-cdadf1fbb692" },
+  { first: "Austin", last: "Didion", emp_id: "4230378", phone: "12603415329", guid: "342c5e8f-6d70-417d-a586-676171c78c42", link: "https://710-stewards.github.io/ftw-hub/?id=342c5e8f-6d70-417d-a586-676171c78c42" },
+  { first: "Justo", last: "Donias", emp_id: "137667", phone: "12602411968", guid: "10d58c9a-f7c8-49d3-a56c-364813cfee56", link: "https://710-stewards.github.io/ftw-hub/?id=10d58c9a-f7c8-49d3-a56c-364813cfee56" },
+  { first: "Kyle", last: "Dunfee", emp_id: "862832", phone: "12606024362", guid: "a00859cf-4a70-4f4d-8966-89ef545ded53", link: "https://710-stewards.github.io/ftw-hub/?id=a00859cf-4a70-4f4d-8966-89ef545ded53" },
+  { first: "Kenneth", last: "Edwards", emp_id: "4475034", phone: "", guid: "d50fe087-6bb1-4617-948d-699ddf35a4a5", link: "https://710-stewards.github.io/ftw-hub/?id=d50fe087-6bb1-4617-948d-699ddf35a4a5" },
+  { first: "Scott", last: "Engelhardt", emp_id: "131562", phone: "", guid: "b15ceca9-f890-4076-87aa-717f52b28004", link: "https://710-stewards.github.io/ftw-hub/?id=b15ceca9-f890-4076-87aa-717f52b28004" },
+  { first: "Alexander", last: "Fabian", emp_id: "3483176", phone: "12606156621", guid: "8ddb5ae2-b9c2-45fe-96fc-18c5679c50d6", link: "https://710-stewards.github.io/ftw-hub/?id=8ddb5ae2-b9c2-45fe-96fc-18c5679c50d6" },
+  { first: "Brian", last: "France", emp_id: "1065372", phone: "12605795904", guid: "077619e9-3a88-4e44-9965-878881aca638", link: "https://710-stewards.github.io/ftw-hub/?id=077619e9-3a88-4e44-9965-878881aca638" },
+  { first: "Kurt", last: "Fremion", emp_id: "128887", phone: "12604152485", guid: "71c42214-1b2d-4880-af15-d83bb82a8b3c", link: "https://710-stewards.github.io/ftw-hub/?id=71c42214-1b2d-4880-af15-d83bb82a8b3c" },
+  { first: "Christopher", last: "Frietas", emp_id: "1837419", phone: "12602351251", guid: "22f08bab-9034-433d-bc0b-4510f47fb793", link: "https://710-stewards.github.io/ftw-hub/?id=22f08bab-9034-433d-bc0b-4510f47fb793" },
+  { first: "Nathan", last: "Fry", emp_id: "7000349", phone: "12607506283", guid: "09133c19-cef4-42ea-a2e9-b9aa05627014", link: "https://710-stewards.github.io/ftw-hub/?id=09133c19-cef4-42ea-a2e9-b9aa05627014" },
+  { first: "Angel", last: "Galvan", emp_id: "3414472", phone: "12607607638", guid: "cdb3d46a-3a89-473c-be54-55ae8f5087c7", link: "https://710-stewards.github.io/ftw-hub/?id=cdb3d46a-3a89-473c-be54-55ae8f5087c7" },
+  { first: "Alan", last: "Ganaway", emp_id: "5126611", phone: "", guid: "00c08132-b650-4e2f-b842-7949101c3b94", link: "https://710-stewards.github.io/ftw-hub/?id=00c08132-b650-4e2f-b842-7949101c3b94" },
+  { first: "Gregory", last: "Garcia", emp_id: "2100418", phone: "12604030040", guid: "6a3ff1de-6868-4d17-85c1-c76d04d82618", link: "https://710-stewards.github.io/ftw-hub/?id=6a3ff1de-6868-4d17-85c1-c76d04d82618" },
+  { first: "Nicholas", last: "Gengo", emp_id: "757830", phone: "12606154302", guid: "7546a893-7263-41d3-bc1a-23aa04b5baa7", link: "https://710-stewards.github.io/ftw-hub/?id=7546a893-7263-41d3-bc1a-23aa04b5baa7" },
+  { first: "Derek", last: "Gerardot", emp_id: "1448083", phone: "12606022199", guid: "fcd4d1de-d641-44d4-ba27-4b504d3aacf8", link: "https://710-stewards.github.io/ftw-hub/?id=fcd4d1de-d641-44d4-ba27-4b504d3aacf8" },
+  { first: "Brad", last: "Gerow", emp_id: "2022402", phone: "12604378418", guid: "fd6068d2-a662-4b69-ac6c-150502616a06", link: "https://710-stewards.github.io/ftw-hub/?id=fd6068d2-a662-4b69-ac6c-150502616a06" },
+  { first: "Austin", last: "Gibbons", emp_id: "1289877", phone: "15742018702", guid: "d5458778-2063-4c32-8096-924608efd97c", link: "https://710-stewards.github.io/ftw-hub/?id=d5458778-2063-4c32-8096-924608efd97c" },
+  { first: "Robert", last: "Gibson", emp_id: "6223308", phone: "12604172043", guid: "15f7aeea-506c-4240-8a56-d9b908c38407", link: "https://710-stewards.github.io/ftw-hub/?id=15f7aeea-506c-4240-8a56-d9b908c38407" },
+  { first: "Kris", last: "Girardot", emp_id: "130583", phone: "12603122025", guid: "7f830e8f-f566-4406-ab8a-3b3b0080825e", link: "https://710-stewards.github.io/ftw-hub/?id=7f830e8f-f566-4406-ab8a-3b3b0080825e" },
+  { first: "Ernest", last: "Golden", emp_id: "133334", phone: "12603487870", guid: "631cfc59-407f-4d4b-a46e-fb97f40a1b29", link: "https://710-stewards.github.io/ftw-hub/?id=631cfc59-407f-4d4b-a46e-fb97f40a1b29" },
+  { first: "Brian", last: "Goshert", emp_id: "5675970", phone: "", guid: "e07e1ad5-48c8-4a7f-b6ba-06895cfc96e0", link: "https://710-stewards.github.io/ftw-hub/?id=e07e1ad5-48c8-4a7f-b6ba-06895cfc96e0" },
+  { first: "Scott", last: "Goshert", emp_id: "1106701", phone: "12603480525", guid: "d943278c-a049-4f57-acb4-c9bc4392f0a0", link: "https://710-stewards.github.io/ftw-hub/?id=d943278c-a049-4f57-acb4-c9bc4392f0a0" },
+  { first: "Caleb", last: "Gross", emp_id: "5591434", phone: "", guid: "79939fe5-e0a7-4c16-9c04-12eaedf7fc90", link: "https://710-stewards.github.io/ftw-hub/?id=79939fe5-e0a7-4c16-9c04-12eaedf7fc90" },
+  { first: "Travis", last: "Grube", emp_id: "1884966", phone: "12602054507", guid: "d2fead34-07b6-414b-9c57-c0f3d5192a24", link: "https://710-stewards.github.io/ftw-hub/?id=d2fead34-07b6-414b-9c57-c0f3d5192a24" },
+  { first: "Jeremy", last: "Hager", emp_id: "128431", phone: "", guid: "3437f917-4791-41a8-82de-9bd1e8711284", link: "https://710-stewards.github.io/ftw-hub/?id=3437f917-4791-41a8-82de-9bd1e8711284" },
+  { first: "Jaden", last: "Hannie", emp_id: "6064220", phone: "12604942370", guid: "596997ab-f486-4bfb-a3a6-5c1bccdb82b2", link: "https://710-stewards.github.io/ftw-hub/?id=596997ab-f486-4bfb-a3a6-5c1bccdb82b2" },
+  { first: "Andrew", last: "Hare", emp_id: "7323707", phone: "12604581448", guid: "233f4bac-019d-48c2-b0f4-0e40b269a585", link: "https://710-stewards.github.io/ftw-hub/?id=233f4bac-019d-48c2-b0f4-0e40b269a585" },
+  { first: "Tyler", last: "Hauptli", emp_id: "7348831", phone: "15747809202", guid: "83dc775d-cbf5-4a84-9ee3-65cce1648f30", link: "https://710-stewards.github.io/ftw-hub/?id=83dc775d-cbf5-4a84-9ee3-65cce1648f30" },
+  { first: "Matthew", last: "Herbst", emp_id: "132121", phone: "12605802032", guid: "50e29ee9-4f0e-4db9-90df-57b7daf3d839", link: "https://710-stewards.github.io/ftw-hub/?id=50e29ee9-4f0e-4db9-90df-57b7daf3d839" },
+  { first: "Aaron", last: "Hessler", emp_id: "7721343", phone: "", guid: "844beb42-9b05-46d3-a96c-7a20ed83fc47", link: "https://710-stewards.github.io/ftw-hub/?id=844beb42-9b05-46d3-a96c-7a20ed83fc47" },
+  { first: "Arie", last: "Hessler", emp_id: "4108319", phone: "", guid: "518be8ea-898c-4459-9171-d830f600d9a8", link: "https://710-stewards.github.io/ftw-hub/?id=518be8ea-898c-4459-9171-d830f600d9a8" },
+  { first: "Ronald", last: "Hicks", emp_id: "1910599", phone: "12607603645", guid: "43a183df-deaf-4bbc-9918-65abf9d204ba", link: "https://710-stewards.github.io/ftw-hub/?id=43a183df-deaf-4bbc-9918-65abf9d204ba" },
+  { first: "Michael", last: "Hippenhammer", emp_id: "131765", phone: "12604183297", guid: "b912033d-f165-4851-b357-6cfe392a206d", link: "https://710-stewards.github.io/ftw-hub/?id=b912033d-f165-4851-b357-6cfe392a206d" },
+  { first: "Travis", last: "Hissong", emp_id: "6387711", phone: "12605791090", guid: "ee247d6e-60ab-4357-92b9-062d768d8b48", link: "https://710-stewards.github.io/ftw-hub/?id=ee247d6e-60ab-4357-92b9-062d768d8b48" },
+  { first: "Courtney", last: "Hurse", emp_id: "2071529", phone: "12604871816", guid: "71570dbf-9bb7-487c-9795-e260d23eacd8", link: "https://710-stewards.github.io/ftw-hub/?id=71570dbf-9bb7-487c-9795-e260d23eacd8" },
+  { first: "Carl", last: "Jacobs", emp_id: "131138", phone: "12604387749", guid: "74e893df-ad70-455d-861e-2b989e60df25", link: "https://710-stewards.github.io/ftw-hub/?id=74e893df-ad70-455d-861e-2b989e60df25" },
+  { first: "Daniel", last: "Jewett", emp_id: "4729668", phone: "12604446971", guid: "01015f93-89f4-407f-9aec-ecf2faff76d5", link: "https://710-stewards.github.io/ftw-hub/?id=01015f93-89f4-407f-9aec-ecf2faff76d5" },
+  { first: "Tyler", last: "Keith", emp_id: "7391942", phone: "17656030361", guid: "db7f546a-cdc7-44b3-ab4c-44a47acfe551", link: "https://710-stewards.github.io/ftw-hub/?id=db7f546a-cdc7-44b3-ab4c-44a47acfe551" },
+  { first: "Shane", last: "Keller", emp_id: "132884", phone: "12604382822", guid: "f48e761f-b96f-489b-b9fa-7c1377e3c4a7", link: "https://710-stewards.github.io/ftw-hub/?id=f48e761f-b96f-489b-b9fa-7c1377e3c4a7" },
+  { first: "Gregory", last: "Lambert", emp_id: "128470", phone: "12602292409", guid: "ab5d8b7c-c8f8-4768-acc7-ee98ded2b46b", link: "https://710-stewards.github.io/ftw-hub/?id=ab5d8b7c-c8f8-4768-acc7-ee98ded2b46b" },
+  { first: "Jason", last: "Lantz", emp_id: "131370", phone: "", guid: "e125bc33-862e-4994-b798-de88588b9a01", link: "https://710-stewards.github.io/ftw-hub/?id=e125bc33-862e-4994-b798-de88588b9a01" },
+  { first: "James", last: "Leamon", emp_id: "4204036", phone: "12603122474", guid: "d003932d-2cb6-42fc-b3f1-fd724abf66ce", link: "https://710-stewards.github.io/ftw-hub/?id=d003932d-2cb6-42fc-b3f1-fd724abf66ce" },
+  { first: "Jeremy", last: "Lee", emp_id: "8391815", phone: "12604376219", guid: "c8353410-ab9c-4335-b8db-269cd8358368", link: "https://710-stewards.github.io/ftw-hub/?id=c8353410-ab9c-4335-b8db-269cd8358368" },
+  { first: "Daric", last: "Lepper", emp_id: "5190187", phone: "", guid: "7633bf1d-b036-454b-866c-0e58dafafd68", link: "https://710-stewards.github.io/ftw-hub/?id=7633bf1d-b036-454b-866c-0e58dafafd68" },
+  { first: "Jonathon", last: "Louagie", emp_id: "3660633", phone: "", guid: "cf0ea475-3b4b-4014-b6b7-8491d40fb9c8", link: "https://710-stewards.github.io/ftw-hub/?id=cf0ea475-3b4b-4014-b6b7-8491d40fb9c8" },
+  { first: "Brian", last: "Ludwig", emp_id: "132467", phone: "12604036726", guid: "fe55e899-9594-4c0d-8e1c-e151920edd60", link: "https://710-stewards.github.io/ftw-hub/?id=fe55e899-9594-4c0d-8e1c-e151920edd60" },
+  { first: "Arturo", last: "Macias", emp_id: "5932106", phone: "12604182694", guid: "b523bba3-3b0e-4bb8-9ff1-ad270eb71f90", link: "https://710-stewards.github.io/ftw-hub/?id=b523bba3-3b0e-4bb8-9ff1-ad270eb71f90" },
+  { first: "Robert", last: "Marcuccilli", emp_id: "6190264", phone: "", guid: "995f3acd-90c7-4e2f-90cf-df26e0589795", link: "https://710-stewards.github.io/ftw-hub/?id=995f3acd-90c7-4e2f-90cf-df26e0589795" },
+  { first: "Gary", last: "McClure", emp_id: "7570904", phone: "12604101818", guid: "4f392099-426d-4279-913f-c7976e87e199", link: "https://710-stewards.github.io/ftw-hub/?id=4f392099-426d-4279-913f-c7976e87e199" },
+  { first: "Erik", last: "McGill", emp_id: "1234037", phone: "12604098753", guid: "ceaece80-3e06-415d-960a-7e57922d9017", link: "https://710-stewards.github.io/ftw-hub/?id=ceaece80-3e06-415d-960a-7e57922d9017" },
+  { first: "Matthew", last: "McGill", emp_id: "2019824", phone: "12604144170", guid: "5a01e45b-34f4-4beb-995f-995133504bb5", link: "https://710-stewards.github.io/ftw-hub/?id=5a01e45b-34f4-4beb-995f-995133504bb5" },
+  { first: "Courtney", last: "McKillip", emp_id: "1411725", phone: "17652511354", guid: "36f92cb6-fed0-40ab-9c80-c3477283b450", link: "https://710-stewards.github.io/ftw-hub/?id=36f92cb6-fed0-40ab-9c80-c3477283b450" },
+  { first: "Zackary", last: "McMullen", emp_id: "6037670", phone: "12603887748", guid: "2147c6c6-29fd-477b-96d0-9394cb3b32ad", link: "https://710-stewards.github.io/ftw-hub/?id=2147c6c6-29fd-477b-96d0-9394cb3b32ad" },
+  { first: "Albert", last: "Mendoza", emp_id: "3263995", phone: "", guid: "84055974-2066-4678-83db-7b5072ec4de7", link: "https://710-stewards.github.io/ftw-hub/?id=84055974-2066-4678-83db-7b5072ec4de7" },
+  { first: "Leighton", last: "Meyer", emp_id: "5189822", phone: "12608885930", guid: "01816c38-e8b4-4982-8f89-4c1848b232be", link: "https://710-stewards.github.io/ftw-hub/?id=01816c38-e8b4-4982-8f89-4c1848b232be" },
+  { first: "Kyle", last: "Mignerey", emp_id: "1677238", phone: "", guid: "0e8ec2e6-4cfc-4031-adf7-521c414ea52c", link: "https://710-stewards.github.io/ftw-hub/?id=0e8ec2e6-4cfc-4031-adf7-521c414ea52c" },
+  { first: "Shahin", last: "Modarressi", emp_id: "1534495", phone: "12604666665", guid: "d155886c-f362-4b93-99b2-6b69ef3e21ce", link: "https://710-stewards.github.io/ftw-hub/?id=d155886c-f362-4b93-99b2-6b69ef3e21ce" },
+  { first: "Jamison", last: "Moore", emp_id: "5587225", phone: "", guid: "692ff6b3-958d-4def-9b39-b55c712c32c3", link: "https://710-stewards.github.io/ftw-hub/?id=692ff6b3-958d-4def-9b39-b55c712c32c3" },
+  { first: "Ryan", last: "Noblitt", emp_id: "6122796", phone: "", guid: "55b4602c-c7fb-4269-9241-b0863c256f21", link: "https://710-stewards.github.io/ftw-hub/?id=55b4602c-c7fb-4269-9241-b0863c256f21" },
+  { first: "Brandon", last: "Norman", emp_id: "6004886", phone: "", guid: "e709b3f7-36ff-4cd2-9cde-47199e7c5eea", link: "https://710-stewards.github.io/ftw-hub/?id=e709b3f7-36ff-4cd2-9cde-47199e7c5eea" },
+  { first: "Kris", last: "Owens", emp_id: "1293495", phone: "12607053633", guid: "ed1e4377-b01b-4e25-95ce-fcf53a5272be", link: "https://710-stewards.github.io/ftw-hub/?id=ed1e4377-b01b-4e25-95ce-fcf53a5272be" },
+  { first: "Brandon", last: "Perkins", emp_id: "6390011", phone: "12602424407", guid: "2babf312-eca4-481c-85f1-486494aebc49", link: "https://710-stewards.github.io/ftw-hub/?id=2babf312-eca4-481c-85f1-486494aebc49" },
+  { first: "Nick", last: "Platter", emp_id: "5587362", phone: "12603879309", guid: "9c258b6e-ed11-4c2b-9bcd-8c9d5dd4e309", link: "https://710-stewards.github.io/ftw-hub/?id=9c258b6e-ed11-4c2b-9bcd-8c9d5dd4e309" },
+  { first: "Dave", last: "Ponder", emp_id: "4306060", phone: "12604101238", guid: "d94cb936-0bb8-4311-83a9-6963a6221d82", link: "https://710-stewards.github.io/ftw-hub/?id=d94cb936-0bb8-4311-83a9-6963a6221d82" },
+  { first: "Justin", last: "Pratt", emp_id: "5623390", phone: "12607157007", guid: "73bfd35e-b15a-47ff-b955-0f0997bc65ac", link: "https://710-stewards.github.io/ftw-hub/?id=73bfd35e-b15a-47ff-b955-0f0997bc65ac" },
+  { first: "Vinny", last: "Ramono", emp_id: "4306007", phone: "12607503593", guid: "7a1a9df0-dee0-407b-82ac-f124e3d9aa50", link: "https://710-stewards.github.io/ftw-hub/?id=7a1a9df0-dee0-407b-82ac-f124e3d9aa50" },
+  { first: "Aaron", last: "Rivers", emp_id: "5955933", phone: "15747022816", guid: "9ad0b215-2918-4f29-bad9-4eb34b635e6d", link: "https://710-stewards.github.io/ftw-hub/?id=9ad0b215-2918-4f29-bad9-4eb34b635e6d" },
+  { first: "Grant", last: "Ross", emp_id: "4778373", phone: "", guid: "43775ac7-c668-4563-87ea-5546cce39de0", link: "https://710-stewards.github.io/ftw-hub/?id=43775ac7-c668-4563-87ea-5546cce39de0" },
+  { first: "Andre", last: "Rossi", emp_id: "4901044", phone: "", guid: "97277461-03ab-4e71-93f6-741256f13b7d", link: "https://710-stewards.github.io/ftw-hub/?id=97277461-03ab-4e71-93f6-741256f13b7d" },
+  { first: "Kory", last: "Sark", emp_id: "7058178", phone: "12604151235", guid: "71274820-fcc4-4bf7-aa95-3e4d71412c3b", link: "https://710-stewards.github.io/ftw-hub/?id=71274820-fcc4-4bf7-aa95-3e4d71412c3b" },
+  { first: "Kyle", last: "Sark", emp_id: "7727403", phone: "18434088346", guid: "9395f762-3621-485b-83d1-07de9dbfa43a", link: "https://710-stewards.github.io/ftw-hub/?id=9395f762-3621-485b-83d1-07de9dbfa43a" },
+  { first: "Chad", last: "Satterthwaite", emp_id: "135387", phone: "12604032780", guid: "31a2f85d-8137-4b6a-b84b-ed29a2f3e442", link: "https://710-stewards.github.io/ftw-hub/?id=31a2f85d-8137-4b6a-b84b-ed29a2f3e442" },
+  { first: "David", last: "Schmidt", emp_id: "127868", phone: "12603120848", guid: "6ced9b38-54e2-4b32-a41d-33e5e098c3fd", link: "https://710-stewards.github.io/ftw-hub/?id=6ced9b38-54e2-4b32-a41d-33e5e098c3fd" },
+  { first: "Kathleen", last: "Schulze", emp_id: "4834228", phone: "", guid: "03765b56-aab5-48e7-9991-71d93dff17f6", link: "https://710-stewards.github.io/ftw-hub/?id=03765b56-aab5-48e7-9991-71d93dff17f6" },
+  { first: "Cristen", last: "Shifflett", emp_id: "3226216", phone: "", guid: "4a1c17b0-7182-45fb-be0c-f99da81343df", link: "https://710-stewards.github.io/ftw-hub/?id=4a1c17b0-7182-45fb-be0c-f99da81343df" },
+  { first: "Garrett", last: "Shoaf", emp_id: "5172918", phone: "", guid: "6ff7d3f4-6b17-4ae4-9851-a1787f1b0914", link: "https://710-stewards.github.io/ftw-hub/?id=6ff7d3f4-6b17-4ae4-9851-a1787f1b0914" },
+  { first: "Bradley", last: "Showalter", emp_id: "1210299", phone: "12603127180", guid: "3e3db53e-a64c-44ac-820f-75cd3a8416a8", link: "https://710-stewards.github.io/ftw-hub/?id=3e3db53e-a64c-44ac-820f-75cd3a8416a8" },
+  { first: "Ryan", last: "Siegwarth", emp_id: "7013371", phone: "12604026790", guid: "c63d7749-6f01-48a1-8c9c-0584bb32eed2", link: "https://710-stewards.github.io/ftw-hub/?id=c63d7749-6f01-48a1-8c9c-0584bb32eed2" },
+  { first: "Gerald", last: "Sigworth", emp_id: "136330", phone: "17656180112", guid: "a78bcec6-886a-4ba0-ae51-c6f9e21f7fb4", link: "https://710-stewards.github.io/ftw-hub/?id=a78bcec6-886a-4ba0-ae51-c6f9e21f7fb4" },
+  { first: "Alex", last: "Sith", emp_id: "6097793", phone: "", guid: "267a94b5-5f35-49e5-89db-49d4ceaac1c5", link: "https://710-stewards.github.io/ftw-hub/?id=267a94b5-5f35-49e5-89db-49d4ceaac1c5" },
+  { first: "Diana", last: "Small", emp_id: "132776", phone: "12604380485", guid: "44cea42b-5e4c-497d-8fd0-52b4f4f434dc", link: "https://710-stewards.github.io/ftw-hub/?id=44cea42b-5e4c-497d-8fd0-52b4f4f434dc" },
+  { first: "Alan-Michael", last: "Smith", emp_id: "3399477", phone: "12604133481", guid: "9d7f6b3f-0d56-4caa-9db6-a66583eb0d9c", link: "https://710-stewards.github.io/ftw-hub/?id=9d7f6b3f-0d56-4caa-9db6-a66583eb0d9c" },
+  { first: "Jaivfis", last: "Smith", emp_id: "129448", phone: "12604330706", guid: "74a72ac3-f87c-4e32-ba3c-8b1298e54e36", link: "https://710-stewards.github.io/ftw-hub/?id=74a72ac3-f87c-4e32-ba3c-8b1298e54e36" },
+  { first: "Jeffrey", last: "Smith", emp_id: "134748", phone: "12604136683", guid: "5a46c73c-7bc9-4033-8303-4ab7b0cb91b1", link: "https://710-stewards.github.io/ftw-hub/?id=5a46c73c-7bc9-4033-8303-4ab7b0cb91b1" },
+  { first: "Archie", last: "Smothers", emp_id: "4474026", phone: "", guid: "e64a857a-a5c5-493d-98dd-c32990870395", link: "https://710-stewards.github.io/ftw-hub/?id=e64a857a-a5c5-493d-98dd-c32990870395" },
+  { first: "David", last: "Snook", emp_id: "617342", phone: "12607045214", guid: "61f316f0-49f8-4ba7-8e96-b99d859e7494", link: "https://710-stewards.github.io/ftw-hub/?id=61f316f0-49f8-4ba7-8e96-b99d859e7494" },
+  { first: "Aaron", last: "Snyder", emp_id: "5276040", phone: "", guid: "93034448-8294-4b25-8a13-3b796c46abd8", link: "https://710-stewards.github.io/ftw-hub/?id=93034448-8294-4b25-8a13-3b796c46abd8" },
+  { first: "Dillon", last: "Spindler", emp_id: "5108837", phone: "", guid: "63449ad9-b5ac-4f6b-ba4d-aa74038d8895", link: "https://710-stewards.github.io/ftw-hub/?id=63449ad9-b5ac-4f6b-ba4d-aa74038d8895" },
+  { first: "Hannah", last: "Starkey", emp_id: "5770240", phone: "15748356705", guid: "15654d27-ca08-426a-b08b-da6043835493", link: "https://710-stewards.github.io/ftw-hub/?id=15654d27-ca08-426a-b08b-da6043835493" },
+  { first: "Samantha", last: "Steinhausen", emp_id: "3512614", phone: "", guid: "268f8ad8-846e-40f7-86bc-f3ca85d31a41", link: "https://710-stewards.github.io/ftw-hub/?id=268f8ad8-846e-40f7-86bc-f3ca85d31a41" },
+  { first: "Alec", last: "Steinke", emp_id: "5083740", phone: "", guid: "e56167ed-6a62-45d6-8d34-04461a99bd97", link: "https://710-stewards.github.io/ftw-hub/?id=e56167ed-6a62-45d6-8d34-04461a99bd97" },
+  { first: "Jeffery", last: "Studle", emp_id: "129558", phone: "12604184325", guid: "eee5766e-6142-4200-b17f-ca0d6706d0a8", link: "https://710-stewards.github.io/ftw-hub/?id=eee5766e-6142-4200-b17f-ca0d6706d0a8" },
+  { first: "Kailee", last: "Stuller", emp_id: "4795069", phone: "", guid: "1cd34d86-cc88-4b04-925e-65b937af2f68", link: "https://710-stewards.github.io/ftw-hub/?id=1cd34d86-cc88-4b04-925e-65b937af2f68" },
+  { first: "Rick", last: "Thompson", emp_id: "133533", phone: "12603482886", guid: "6fb2213c-b036-4dda-8b14-6a459ebc49d1", link: "https://710-stewards.github.io/ftw-hub/?id=6fb2213c-b036-4dda-8b14-6a459ebc49d1" },
+  { first: "Jake", last: "Tusing", emp_id: "130692", phone: "15745277401", guid: "5cbcb21f-3fb7-4297-a1f6-b3cab108f761", link: "https://710-stewards.github.io/ftw-hub/?id=5cbcb21f-3fb7-4297-a1f6-b3cab108f761" },
+  { first: "Steven", last: "Urbine", emp_id: "5083753", phone: "", guid: "ce5eed6d-dd68-4d7a-962a-3c0f0190592a", link: "https://710-stewards.github.io/ftw-hub/?id=ce5eed6d-dd68-4d7a-962a-3c0f0190592a" },
+  { first: "Brent", last: "Van Horn", emp_id: "132340", phone: "", guid: "29949ada-2b82-4b3b-98f9-bf2a99fc34f2", link: "https://710-stewards.github.io/ftw-hub/?id=29949ada-2b82-4b3b-98f9-bf2a99fc34f2" },
+  { first: "Jorge", last: "Vazquez", emp_id: "6004305", phone: "12604424177", guid: "b51d175c-9b8f-467b-885b-ce5ade7dc06c", link: "https://710-stewards.github.io/ftw-hub/?id=b51d175c-9b8f-467b-885b-ce5ade7dc06c" },
+  { first: "Jason", last: "Voight", emp_id: "130031", phone: "12604106044", guid: "4ae35093-2bdd-4ede-b6bb-d0ca6d159a28", link: "https://710-stewards.github.io/ftw-hub/?id=4ae35093-2bdd-4ede-b6bb-d0ca6d159a28" },
+  { first: "Mark", last: "Volz", emp_id: "133763", phone: "12602412688", guid: "14495ace-1823-4daa-ad37-98d5b7cf2537", link: "https://710-stewards.github.io/ftw-hub/?id=14495ace-1823-4daa-ad37-98d5b7cf2537" },
+  { first: "Robert", last: "Walker", emp_id: "6016411", phone: "12602052408", guid: "9b9d5c4b-e6c2-43e2-90a3-c68df1c45944", link: "https://710-stewards.github.io/ftw-hub/?id=9b9d5c4b-e6c2-43e2-90a3-c68df1c45944" },
+  { first: "Jeffery", last: "Wanemacher", emp_id: "130036", phone: "15743057393", guid: "60b402d9-2342-4940-9600-1106b76e9fd7", link: "https://710-stewards.github.io/ftw-hub/?id=60b402d9-2342-4940-9600-1106b76e9fd7" },
+  { first: "Tracy", last: "Weatherholt", emp_id: "133326", phone: "", guid: "c022094f-68a9-4220-9af2-31bc995f1449", link: "https://710-stewards.github.io/ftw-hub/?id=c022094f-68a9-4220-9af2-31bc995f1449" },
+  { first: "Donna", last: "Wegner", emp_id: "1123011", phone: "", guid: "12c028f9-1d18-4839-9402-e920e817d712", link: "https://710-stewards.github.io/ftw-hub/?id=12c028f9-1d18-4839-9402-e920e817d712" },
+  { first: "Joshua", last: "Weil", emp_id: "5631163", phone: "12602733391", guid: "6c33640c-eca7-4acd-a43c-6f9b835b2296", link: "https://710-stewards.github.io/ftw-hub/?id=6c33640c-eca7-4acd-a43c-6f9b835b2296" },
+  { first: "Nicholas", last: "West", emp_id: "6000512", phone: "12607150001", guid: "096f4156-c565-4edd-bdb4-18d0d2ca6b2f", link: "https://710-stewards.github.io/ftw-hub/?id=096f4156-c565-4edd-bdb4-18d0d2ca6b2f" },
+  { first: "Bobbi", last: "Williamson", emp_id: "3823759", phone: "15743315167", guid: "e153c91d-0ec5-4593-a0a4-b67e07a2da1d", link: "https://710-stewards.github.io/ftw-hub/?id=e153c91d-0ec5-4593-a0a4-b67e07a2da1d" },
+  { first: "Wes", last: "Williamson", emp_id: "6215820", phone: "15745277305", guid: "59500a9d-a28d-4eb2-9eb8-c81e2d6f7da9", link: "https://710-stewards.github.io/ftw-hub/?id=59500a9d-a28d-4eb2-9eb8-c81e2d6f7da9" },
+  { first: "Gary", last: "Willmann", emp_id: "130600", phone: "17654990410", guid: "6f167b2d-fd5f-44c4-b68e-a0cda6fa03fe", link: "https://710-stewards.github.io/ftw-hub/?id=6f167b2d-fd5f-44c4-b68e-a0cda6fa03fe" },
+  { first: "Cole", last: "Wilson", emp_id: "7286963", phone: "12602271855", guid: "bb2d9747-18e6-4b35-a88d-3d2d6ea6b067", link: "https://710-stewards.github.io/ftw-hub/?id=bb2d9747-18e6-4b35-a88d-3d2d6ea6b067" },
+  { first: "Denver", last: "Wilson", emp_id: "7543049", phone: "", guid: "bc5924f0-05e1-4721-a0fd-8b7262ac696c", link: "https://710-stewards.github.io/ftw-hub/?id=bc5924f0-05e1-4721-a0fd-8b7262ac696c" },
+  { first: "Fleet", last: "Witmeyer", emp_id: "7169306", phone: "", guid: "8a575c86-e989-4d23-8eeb-8ab319095858", link: "https://710-stewards.github.io/ftw-hub/?id=8a575c86-e989-4d23-8eeb-8ab319095858" },
+  { first: "Adam", last: "Wood", emp_id: "5171936", phone: "", guid: "e8a67ca3-2416-4592-8b62-dc27c893a29f", link: "https://710-stewards.github.io/ftw-hub/?id=e8a67ca3-2416-4592-8b62-dc27c893a29f" },
+  { first: "Keith", last: "Woudema", emp_id: "129001", phone: "", guid: "9687b074-20b4-467a-b7a7-caeefd639985", link: "https://710-stewards.github.io/ftw-hub/?id=9687b074-20b4-467a-b7a7-caeefd639985" },
+  { first: "John", last: "Zick", emp_id: "6083044", phone: "12603284367", guid: "b6619193-5c89-4127-9da3-eba99672a94c", link: "https://710-stewards.github.io/ftw-hub/?id=b6619193-5c89-4127-9da3-eba99672a94c" },
+  { first: "Jenna", last: "Thackrey", emp_id: "7318223", phone: "12604162534", guid: "efb11aa5-27cd-418c-a947-28025c14c906", link: "https://710-stewards.github.io/ftw-hub/?id=efb11aa5-27cd-418c-a947-28025c14c906" }
+];
+
+        // Render the filtered driver roster onto screen
+        function renderRoster(list) {
+            const container = document.getElementById('roster-list');
+            document.getElementById('counter').innerText = `Total Records Displayed: ${list.length}`;
+            
+            if (list.length === 0) {
+                container.innerHTML = `<p style="color: #666; font-style: italic; padding: 20px;">No matching members found.</p>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(driver => {
+                // Pre-encode the portal URL parameters exactly like Excel's formula
+                const textMessage = `Local 710 Grievance Portal Link: https://710-stewards.github.io/ftw-hub/%3Fid%3D${driver.guid}`;
+                
+                // Construct structural protocol URLs
+                const androidLink = driver.phone ? `sms:${driver.phone}?body=${textMessage}` : '#';
+                const iphoneLink = driver.phone ? `sms:${driver.phone}&body=${textMessage}` : '#';
+                const hasPhone = driver.phone !== "";
+
+                html += `
+                    <div style="background-color: #1e1e1e; padding: 15px; margin-bottom: 12px; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; border-left: 4px solid #ffcc00;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 5px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 18px; color: #ffffff;">${driver.first} ${driver.last}</h3>
+                                <span style="font-size: 13px; color: #aaaaaa;">Emp ID: <b>${driver.emp_id}</b> ${driver.phone ? `&nbsp;|&nbsp; 📱 ${driver.phone}` : ''}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- DISPATCH SHORTCUT BUTTON ACTION ROW -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px;">
+                            ${hasPhone ? `
+                                <a href="${androidLink}" style="flex: 1; min-width: 110px; text-align: center; background-color: #3DDC84; color: #000000; padding: 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    🤖 Android Send
+                                </a>
+                                <a href="${iphoneLink}" style="flex: 1; min-width: 110px; text-align: center; background-color: #A2AAAD; color: #000000; padding: 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    🍏 iPhone Send
+                                </a>
+                            ` : `
+                                <div style="flex: 2; min-width: 230px; text-align: center; background-color: #333333; color: #777777; padding: 10px; border-radius: 4px; font-size: 13px; font-weight: bold; border: 1px dashed #444;">
+                                    ⚠️ Missing Phone Number
+                                </div>
+                            `}
+                            <button onclick="copyToClipboard('${driver.link}', this)" style="flex: 1; min-width: 100px; background-color: #ffcc00; color: #000000; border: none; padding: 10px; border-radius: 4px; font-weight: bold; font-size: 13px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                📋 Copy Link
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Live filtration processing rule
+        function filterDrivers() {
+            const query = document.getElementById('search-box').value.toLowerCase().trim();
+            if (!query) {
+                renderRoster(drivers);
+                return;
+            }
+            
+            const filtered = drivers.filter(d => 
+                d.first.toLowerCase().includes(query) || 
+                d.last.toLowerCase().includes(query) || 
+                d.emp_id.includes(query)
+            );
+            renderRoster(filtered);
+        }
+
+        // Native clipboard bridge worker
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "✅ Copied!";
+                btn.style.backgroundColor = "#00ff88";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#ffcc00";
+                }, 1500);
+            }).catch(err => {
+                alert("Failed to copy link. Copy text manually:\n" + text);
+            });
+        }
+
+        // First initial execution load
+        renderRoster(drivers);
+    </script>
+</body>
+</html>
