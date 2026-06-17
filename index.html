@@ -5,13 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local 710 Grievance Portal</title>
 </head>
-<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0;">
+<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0; padding-bottom: 60px;">
 
-    <h1 style="border-bottom: 2px solid #ffcc00; padding-bottom: 10px; font-size: 24px;">Local 710 Grievance Portal</h1>
-    <div id="loading" style="font-size: 16px; color: #aaaaaa; margin-top: 20px;">Loading your grievances...</div>
-    <div id="data-display" style="display:none; margin-top: 20px;"></div>
+    <!-- GLOBAL HEADER PANEL -->
+    <div style="border-bottom: 2px solid #ffcc00; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="font-size: 26px; margin: 0 0 5px 0; color: #ffffff;">Local 710 Grievance Portal</h1>
+        <div id="driver-info" style="font-size: 16px; color: #ffcc00; margin-bottom: 5px;">Loading driver details...</div>
+        <div id="record-count" style="font-size: 14px; color: #aaaaaa; font-weight: bold;">Connecting to cloud...</div>
+    </div>
+
+    <!-- MAIN FEED LIST CONTAINER -->
+    <div id="loading" style="font-size: 16px; color: #aaaaaa;">Loading your grievances...</div>
+    <div id="data-display" style="display:none;"></div>
+
+    <!-- THE SLIDE-OUT DETAIL OVERLAY SCREEN -->
+    <div id="detail-screen" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; overflow-y: auto; padding: 20px; box-sizing: border-box; z-index: 999;">
+        <button onclick="closeDetails()" style="background: #333; color: #fff; padding: 12px 20px; border: none; border-radius: 4px; font-weight: bold; font-size: 14px; cursor: pointer; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            ← Back to List
+        </button>
+        <div id="detail-content"></div>
+    </div>
 
     <script>
+        // Store data globally after loading so the slide-out view can read it in memory
+        window.grievanceCache = [];
+
         const urlParams = new URLSearchParams(window.location.search);
         const driverId = urlParams.get('id');
 
@@ -25,7 +43,8 @@
         }
 
         if (!driverId) {
-            document.getElementById('loading').innerText = "Error: No Driver ID provided.";
+            document.getElementById('loading').innerText = "Error: No Driver ID provided. Please use your official secure link.";
+            document.getElementById('record-count').innerText = "🔴 Connection Failed";
         } else {
             const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd2d27578a944fed84277c9a0e2c5985/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SD5cbPfDHuVdyQ8YHqSgNjGZeoZZ3DnMqHPvusYj8WY";
 
@@ -41,25 +60,49 @@
                 display.style.display = 'block';
                 
                 if (!data || data.length === 0) {
-                    display.innerHTML = `<h3>No grievances found.</h3><p>All clear for ID: ${driverId}</p>`;
+                    document.getElementById('driver-info').innerText = "Driver Dashboard";
+                    document.getElementById('record-count').innerText = "🟢 Connected • 0 Records Found";
+                    display.innerHTML = `<h3>No active grievances found.</h3><p>Your record is completely clear.</p>`;
                     return;
                 }
 
-                let htmlContent = `<p style="color: #00ff88; font-weight: bold; margin-bottom: 20px;">➔ Connected. Found ${data.length} records:</p>`;
+                // Cache data globally for the layout actions
+                window.grievanceCache = data;
 
-                // Loops through SharePoint's backend field names directly
-                data.forEach(item => {
+                // 1. DYNAMICALLY GENERATE GLOBAL BANNER (Pulls details from first row)
+                const firstRow = data[0];
+                const firstName = firstRow['field_0'] || 'Driver';
+                const lastName = firstRow['field_1'] || '';
+                const employeeId = firstRow['Title'] || 'N/A';
+
+                document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
+                document.getElementById('record-count').innerText = `🟢 Connected • Found ${data.length} records`;
+
+                // 2. BUILD THE COMPACT DASHBOARD CARDS
+                let htmlContent = '';
+                data.forEach((item, index) => {
+                    // Determine status behavior
+                    const statusStr = (item['field_6'] || 'Pending').trim();
+                    const isSettled = statusStr.toLowerCase() !== 'pending';
+                    const badgeColor = isSettled ? '#00ff88' : '#ffcc00'; 
+                    const textClass = isSettled ? 'color: #00ff88;' : 'color: #ffcc00;';
+
                     htmlContent += `
-                        <div style="background-color: #1e1e1e; border-left: 4px solid #ffcc00; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                <span style="font-weight: bold; color: #ffcc00;">Emp ID: ${item['Title'] || 'N/A'}</span>
-                                <span style="background-color: #333; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; color: #fff;">${item['field_6'] || 'Pending'}</span>
+                        <div onclick="openDetails(${index})" style="background-color: #1e1e1e; border-left: 5px solid ${badgeColor}; padding: 16px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); cursor: pointer; transition: transform 0.1s;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; font-size: 16px; color: #ffffff;">Date: ${formatExcelDate(item['field_2'])}</span>
+                                <span style="background-color: #2a2a2a; color: ${badgeColor}; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; border: 1px solid #444;">${statusStr}</span>
                             </div>
-                            <p style="margin: 4px 0; font-size: 14px;"><b>Driver:</b> ${item['field_0']} ${item['field_1']}</p>
-                            <p style="margin: 4px 0; font-size: 14px;"><b>Violation Date:</b> ${formatExcelDate(item['field_2'])}</p>
-                            <p style="margin: 4px 0; font-size: 14px;"><b>Type/Hours:</b> ${item['field_3'] || 'N/A'}</p>
-                            <p style="margin: 4px 0; font-size: 14px;"><b>Claim Amount:</b> $${item['field_4'] || '0.00'}</p>
-                            ${item['field_8'] ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #aaaaaa; font-style: italic; background: #252525; padding: 6px; border-radius: 3px;"><b>Notes:</b> ${item['field_8']}</p>` : ''}
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Type/Hours:</b> ${item['field_3'] || 'N/A'}</p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${item['field_4'] || '0.00'}</p>
+                            
+                            <!-- Conditional Bottom Row for Settled Payouts -->
+                            ${isSettled ? `
+                                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #333; display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+                                    <span style="color: #888;">Paid Payout:</span>
+                                    <span style="color: #00ff88;">$${item['field_7'] || '0.00'}</span>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 });
@@ -67,9 +110,62 @@
                 display.innerHTML = htmlContent;
             })
             .catch(error => {
-                document.getElementById('loading').innerText = "Connection error.";
+                document.getElementById('loading').innerText = "Connection error. Cloud failed to respond.";
+                document.getElementById('record-count').innerText = "🔴 Cloud Offline";
                 console.error(error);
             });
+        }
+
+        // 3. SLIDE OUT OVERLAY LAYER LOGIC (IN MEMORY TRICK)
+        function openDetails(index) {
+            const item = window.grievanceCache[index];
+            if (!item) return;
+
+            const detailContent = document.getElementById('detail-content');
+            
+            // Format structural notes data
+            const statusStr = (item['field_6'] || 'Pending').trim();
+            const rawPdfLink = item['field_9'] || '';
+
+            detailContent.innerHTML = `
+                <h2 style="color: #ffcc00; margin-top: 0; font-size: 22px; border-bottom: 1px solid #333; padding-bottom: 10px;">Grievance Deep Dive</h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 15px;">
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888; width: 40%;"><b>Status:</b></td><td style="padding: 10px 0; font-weight: bold;">${statusStr}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Violation Date:</b></td><td style="padding: 10px 0;">${formatExcelDate(item['field_2'])}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Type/Description:</b></td><td style="padding: 10px 0;">${item['field_3'] || 'N/A'}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Initial Claim:</b></td><td style="padding: 10px 0; color: #ffcc00; font-weight: bold;">$${item['field_4'] || '0.00'}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Settled Amount:</b></td><td style="padding: 10px 0; color: #00ff88; font-weight: bold;">$${item['field_7'] || '0.00'}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Settled Date:</b></td><td style="padding: 10px 0;">${formatExcelDate(item['field_5'])}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Tracking Tracker ID:</b></td><td style="padding: 10px 0; font-family: monospace; font-size: 13px;">${item['field_11'] || 'N/A'}</td></tr>
+                    <tr style="border-bottom: 1px solid #222;"><td style="padding: 10px 0; color: #888;"><b>Assigned Steward:</b></td><td style="padding: 10px 0;">${item['field_12'] || 'N/A'}</td></tr>
+                </table>
+
+                <h3 style="color: #ffffff; font-size: 16px; margin-bottom: 8px;">Supervisor / Steward Notes:</h3>
+                <div style="background-color: #1e1e1e; padding: 15px; border-radius: 4px; font-style: italic; color: #dddddd; font-size: 14px; line-height: 1.5; margin-bottom: 30px; border-left: 3px solid #666;">
+                    ${item['field_8'] ? item['field_8'] : 'No operational notes attached to this case file.'}
+                </div>
+
+                <!-- PDF DIRECT LINK TRIGGER -->
+                ${rawPdfLink ? `
+                    <a href="${rawPdfLink}" target="_blank" style="display: block; text-align: center; background-color: #ffcc00; color: #000000; padding: 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(255,204,0,0.2);">
+                        📄 Open Original PDF Case Document
+                    </a>
+                ` : `
+                    <div style="text-align: center; color: #666; font-size: 14px; padding: 15px; border: 1px dashed #444; border-radius: 6px;">
+                        No digital document link mapped to this file record.
+                    </div>
+                `}
+            `;
+
+            // Slides the overlay into screen view
+            document.getElementById('detail-screen').style.display = 'block';
+            window.scrollTo(0, 0); // Resets position inside details view wrapper
+        }
+
+        function closeDetails() {
+            // Hides the overlay screen, revealing the untouched main feed below it
+            document.getElementById('detail-screen').style.display = 'none';
         }
     </script>
 </body>
