@@ -5,21 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local 710 Grievance Portal</title>
 </head>
-<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px;">
+<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0;">
 
-    <h1>Local 710 Grievance Portal</h1>
-    <div id="loading">Loading your grievances...</div>
-    <div id="data-display" style="display:none;"></div>
+    <h1 style="border-bottom: 2px solid #ffcc00; padding-bottom: 10px; font-size: 24px;">Local 710 Grievance Portal</h1>
+    <div id="loading" style="font-size: 16px; color: #aaaaaa; margin-top: 20px;">Loading your grievances...</div>
+    <div id="data-display" style="display:none; margin-top: 20px;"></div>
 
     <script>
         // 1. Grab the Driver GUID from the website URL bar
         const urlParams = new URLSearchParams(window.location.search);
         const driverId = urlParams.get('id');
 
+        // Quick helper to fix Excel's weird raw date numbers if they show up raw
+        function formatExcelDate(serial) {
+            if (!serial || isNaN(serial)) return serial || 'N/A';
+            const utc_days  = Math.floor(serial - 25569);
+            const utc_value = utc_days * 86400;  
+            const date_info = new Date(utc_value * 1000);
+            return (date_info.getMonth() + 1) + '/' + date_info.getDate() + '/' + date_info.getFullYear();
+        }
+
         if (!driverId) {
             document.getElementById('loading').innerText = "Error: No Driver ID provided. Please use your official link.";
         } else {
-            // 2. Point this exactly to your Power Automate Bridge Link
+            // 2. Your Power Automate Bridge Link
             const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd2d27578a944fed84277c9a0e2c5985/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SD5cbPfDHuVdyQ8YHqSgNjGZeoZZ3DnMqHPvusYj8WY";
 
             // 3. Shoot the ID to Power Automate
@@ -34,8 +43,32 @@
                 const display = document.getElementById('data-display');
                 display.style.display = 'block';
                 
-                // Temporary check to see if data made it back
-                display.innerHTML = `<h3>Server Connection Success!</h3><p>We successfully pinged the cloud for ID: <b>${driverId}</b>.</p>`;
+                if (!data || data.length === 0) {
+                    display.innerHTML = `<h3>No grievances found.</h3><p>All clear for ID: ${driverId}</p>`;
+                    return;
+                }
+
+                // Header success message
+                let htmlContent = `<p style="color: #00ff88; font-weight: bold; margin-bottom: 20px;">➔ Connected. Found ${data.length} records:</p>`;
+
+                // 4. Loop through the mapped fields coming from your "Select" block
+                data.forEach(item => {
+                    htmlContent += `
+                        <div style="background-color: #1e1e1e; border-left: 4px solid #ffcc00; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: bold; color: #ffcc00;">ID: ${item['Employee ID '] || 'N/A'}</span>
+                                <span style="background-color: #333; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; color: #fff;">${item['Disposition'] || 'Pending'}</span>
+                            </div>
+                            <p style="margin: 4px 0; font-size: 14px;"><b>Driver:</b> ${item['First']} ${item['Last']}</p>
+                            <p style="margin: 4px 0; font-size: 14px;"><b>Violation Date:</b> ${formatExcelDate(item['Date of Violation'])}</p>
+                            <p style="margin: 4px 0; font-size: 14px;"><b>Type/Hours:</b> ${item['Violation Type'] || 'N/A'}</p>
+                            <p style="margin: 4px 0; font-size: 14px;"><b>Claim Amount:</b> $${item['$$$'] || '0.00'}</p>
+                            ${item['Notes'] ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #aaaaaa; font-style: italic; background: #252525; padding: 6px; border-radius: 3px;"><b>Notes:</b> ${item['Notes']}</p>` : ''}
+                        </div>
+                    `;
+                });
+
+                display.innerHTML = htmlContent;
             })
             .catch(error => {
                 document.getElementById('loading').innerText = "Connection error. Please try again shortly.";
