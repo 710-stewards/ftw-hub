@@ -19,18 +19,22 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-        if (!stewardGUID) {
-            document.getElementById('loading').innerText = "Error: No Steward ID provided. Please use your official secure link.";
-            document.getElementById('record-count').innerText = "🔴 Connection Failed";
-        } else {
-            // Your brand new Steward Flow URL
-            const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+        function loadPending() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('data-display').style.display = 'none';
+
+            if (!stewardGUID) {
+                document.getElementById('loading').innerText = "Error: No Steward ID provided. Please use your official secure link.";
+                document.getElementById('record-count').innerText = "🔴 Connection Failed";
+                return;
+            }
 
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID })
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
             })
             .then(response => response.json())
             .then(data => {
@@ -50,13 +54,16 @@
 
                 let htmlContent = '';
                 data.forEach((item, index) => {
+                    // Pulling the unique identifier from the Title column
+                    const uniqueTitleId = item['Title'] || '';
+
                     htmlContent += `
                         <div style="background-color: #1e1e1e; border-left: 5px solid #ffcc00; padding: 16px; margin-bottom: 15px; border-radius: 6px;">
-                            <span style="font-weight: bold; font-size: 16px; color: #ffffff;">Driver ID: ${item['Title'] || 'N/A'}</span>
+                            <span style="font-weight: bold; font-size: 16px; color: #ffffff;">ID: ${uniqueTitleId}</span>
                             <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Type/Hours:</b> ${item['field_3'] || 'N/A'}</p>
                             <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${item['field_4'] || '0.00'}</p>
-                            <button onclick="verifyGrievance('${item['ID']}')" style="margin-top: 10px; background-color: #ffcc00; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer;">
-                                ✓ Verify Grievance
+                            <button onclick="verifyGrievance('${uniqueTitleId}')" style="margin-top: 10px; background-color: #00ff88; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                                ✓ Verify & Approve
                             </button>
                         </div>
                     `;
@@ -71,9 +78,34 @@
             });
         }
 
-        function verifyGrievance(id) {
-            alert("Verifying grievance ID: " + id + ". We will hook up the save button action next!");
+        function verifyGrievance(titleId) {
+            if (!confirm("Are you sure you want to verify record " + titleId + "?")) return;
+
+            // Sending the 'verify' action and passing the Title value to your flow
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    "action": "verify", 
+                    "Title": titleId 
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Instantly reload the dashboard so the verified card vanishes
+                    loadPending();
+                } else {
+                    alert("Failed to update the record on the server.");
+                }
+            })
+            .catch(error => {
+                alert("Network error trying to verify.");
+                console.error(error);
+            });
         }
+
+        // Run on load
+        loadPending();
     </script>
 </body>
 </html>
