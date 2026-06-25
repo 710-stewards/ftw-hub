@@ -244,90 +244,56 @@
             });
         }
 
-        /* --- CLOUD AUTOMATE SAVING ENGINE --- */
-        function queueFieldChange(recordId, fieldName, targetValue) {
-            updateSaveIndicator('dirty');
-            
-            // Debounce processing window (waits 2.5 seconds after final keystroke to execute save)
-            clearTimeout(changeDebounceTimers[recordId + "_" + fieldName]);
-            changeDebounceTimers[recordId + "_" + fieldName] = setTimeout(() => {
-                commitFieldUpdate(recordId, fieldName, targetValue);
-            }, 2500);
-        }
-
-        function commitFieldUpdate(recordId, fieldName, targetValue) {
-            updateSaveIndicator('saving');
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "stewardGuid": stewardGUID,
-                    "action": "patch",
-                    "titleId": recordId,
-                    "field": fieldName,
-                    "value": targetValue
-                })
-            })
-            .then(res => {
-                if(res.ok) { updateSaveIndicator('clean'); }
-                else { updateSaveIndicator('error'); }
-            })
-            .catch(() => { updateSaveIndicator('error'); });
-        }
-
+                /* --- SINGLE EXECUTION ROW COMMIT ENGINE --- */
         function executeRowCommit(recordId) {
             if(!confirm("Commit verification and transfer record to Steward Verified status?")) return;
             
-            updateSaveIndicator('saving');
+            // Gather all current values straight from the card inputs right at the moment of approval
+            const card = document.getElementById(`card-${recordId}`);
+            const updatedName = card.querySelector('.emp-input').value;
+            const updatedEmpId = card.querySelector('.id-input').value;
+            const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
+            const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
+            const updatedViolType = card.querySelectorAll('select')[0].value;
+            const updatedViolSubType = card.querySelectorAll('select')[1].value;
+            const updatedAmount = card.querySelector('input[type="number"]').value;
+
+            const ind = document.getElementById('save-indicator');
+            ind.innerText = "↻ Committing changes and verifying...";
+            ind.className = "save-status saving";
+
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "stewardGuid": stewardGUID,
                     "action": "verify",
-                    "titleId": recordId
+                    "titleId": recordId,
+                    "RawOCRName": updatedName,
+                    "EmployeeID": updatedEmpId,
+                    "FileDate": updatedFileDate,
+                    "ViolationDate": updatedViolDate,
+                    "ViolationType": updatedViolType,
+                    "ViolationSubType": updatedViolSubType,
+                    "ViolationAmount": updatedAmount
                 })
             })
             .then(res => {
                 if(res.ok) {
-                    document.getElementById(`card-${recordId}`).style.opacity = '0.3';
-                    setTimeout(() => { document.getElementById(`card-${recordId}`).remove(); }, 400);
-                    updateSaveIndicator('clean');
+                    // Instantly slide the card off the screen now that the cloud confirmed receipt
+                    card.style.opacity = '0.3';
+                    setTimeout(() => { card.remove(); }, 400);
+                    
+                    ind.innerText = "✓ Action Complete";
+                    ind.className = "save-status";
+                } else {
+                    alert("Cloud sync failed. Check connection.");
                 }
             });
         }
 
-        function updateSaveIndicator(state) {
-            const ind = document.getElementById('save-indicator');
-            if (state === 'dirty') {
-                ind.innerText = "● Unsaved Data Entries";
-                ind.className = "save-status dirty";
-                unsavedCount++;
-            } else if (state === 'saving') {
-                ind.innerText = "↻ Synching changes to SharePoint...";
-                ind.className = "save-status saving";
-            } else if (state === 'clean') {
-                unsavedCount = Math.max(0, unsavedCount - 1);
-                if(unsavedCount === 0) {
-                    ind.innerText = "✓ All Changes Saved Live";
-                    ind.className = "save-status";
-                }
-            } else if (state === 'error') {
-                ind.innerText = "⚠️ Connection Interrupted";
-                ind.className = "save-status";
-                ind.style.background = "var(--danger)";
-                ind.style.color = "#fff";
-            }
-        }
-
-        window.addEventListener("beforeunload", (e) => {
-            if (unsavedCount > 0) {
-                const msg = 'Pending cloud entries are processing. Leaving now may drop modifications.';
-                (e || window.event).returnValue = msg;
-                return msg;
-            }
-        });
+        // Stub out the old background queue function so it doesn't throw errors if left in HTML attributes
+        function queueFieldChange(recordId, fieldName, targetValue) {}
 
         /* --- EVIDENCE SLIDE DRAWER LOGIC --- */
         function openDrawer(recordId) {
