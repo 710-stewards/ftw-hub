@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Steward Live Portal</title>
     <style>
-        /* CORE VARIABLES & RESET */
+        /* CORE SETUP */
         :root {
             --bg-dark: #121212;
             --bg-panel: #1e1e1e;
@@ -16,106 +16,122 @@
             --text-muted: #aaaaaa;
             --border: #333;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); padding: 20px; overflow-y: auto; }
 
-        /* HEADER */
-        header { padding: 15px 20px; border-bottom: 2px solid var(--accent); background: var(--bg-panel); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
-        .header-info { display: flex; flex-direction: column; gap: 4px; }
-        .save-status { font-size: 13px; font-weight: bold; padding: 4px 10px; border-radius: 20px; background: #333; color: var(--text-muted); transition: 0.3s; }
-        .save-status.dirty { background: #554400; color: var(--accent); }
-        .save-status.saving { background: #004422; color: var(--success); }
+        header { padding: 15px 0; border-bottom: 2px solid var(--accent); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .save-status { font-size: 13px; font-weight: bold; padding: 4px 10px; border-radius: 20px; background: #333; color: var(--text-muted); }
 
-        /* LAYOUT CONTAINER */
-        .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-
-        /* MAIN GRID AREA */
-        .main-content { flex: 1; overflow-y: auto; padding: 20px; transition: margin-right 0.3s; }
+        /* RECORD GRID */
+        .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
         
-        /* HIGH-DENSITY CARD SYSTEM */
-        .record-grid { display: grid; gap: 15px; }
-        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.3s; }
-        .record-card:hover { border-color: #555; }
-        .record-card.ai-match { border-left-color: var(--success); }
-        .record-card.ai-fail { border-left-color: var(--danger); }
+        @media (max-width: 500px) {
+            .record-grid { grid-template-columns: 1fr; }
+        }
 
-        /* Row structure within cards */
-        .card-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
-        .data-group { flex: 1; min-width: 140px; }
-        .data-meta { display: flex; gap: 15px; font-size: 13px; color: var(--text-muted); padding-top: 2px; }
+        /* CARD STYLE MATCHING SKETCH 1000027581.JPG */
+        .record-card { 
+            background: var(--bg-panel); 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            padding: 20px; 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
 
-        /* Input Styling for Live Edit */
-        input, select { background: #2a2a2a; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 14px; width: 100%; }
+        /* Thick Left-Side Arc Border Line from Sketch */
+        .record-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 10px;
+            bottom: 10px;
+            width: 6px;
+            border-radius: 0 4px 4px 0;
+        }
+        .record-card.ai-match::before { background-color: var(--success); }
+        .record-card.ai-fail::before { background-color: var(--danger); }
+
+        /* Dynamic Name and ID text color rules */
+        .record-card.ai-match .emp-name-text { color: #ffffff; }
+        .record-card.ai-match .emp-id-text { color: var(--text-muted); }
+        .record-card.ai-fail .emp-name-text { color: var(--danger); }
+        .record-card.ai-fail .emp-id-text { color: var(--danger); }
+
+        /* Split layout grid for inputs matching your drawing columns */
+        .card-split-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Forms and Inputs */
+        .input-wrapper { display: flex; flex-direction: column; }
+        .input-label { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; }
+        input, select { background: #262626; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-size: 14px; width: 100%; }
         input:focus, select:focus { border-color: var(--accent); outline: none; }
-        label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
 
-        /* SLIDE-OUT DRAWER */
-        .drawer { width: 450px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -450px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
-        .drawer.open { right: 0; }
-        .drawer-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
-        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
-        .drawer-content { padding: 15px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 450px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
-
-        /* MOBILE OVERRIDES */
-        @media (max-width: 799px) {
-            .drawer { width: 100%; right: -100%; }
-            .data-group { min-width: 100%; }
+        /* 3D Button Styling matching your drawing sketches */
+        .btn-3d {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-deepdive {
+            background: #3a3a3a;
+            color: #ffffff;
+            box-shadow: 0 4px 0 #222;
+        }
+        .btn-deepdive:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #222;
+        }
+        .btn-approve {
+            background: #2a5e35;
+            color: var(--success);
+            border: 1px solid var(--success);
+            box-shadow: 0 4px 0 #15331c;
+        }
+        .btn-approve:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 #15331c;
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="header-info">
-            <h1 style="font-size: 20px; margin: 0;">Local 710 Live Portal</h1>
-            <span id="steward-info" style="font-size: 14px; color: var(--accent);">Loading...</span>
+        <div>
+            <h1 style="font-size: 22px;">Local 710 Steward Portal</h1>
+            <span id="steward-info" style="color: var(--accent); font-size: 14px;">Loading...</span>
         </div>
         <div id="save-indicator" class="save-status">✓ All changes saved</div>
     </header>
 
-    <div class="app-container">
-        
-        <div class="main-content">
-            <div id="loading" style="color: var(--text-muted);">Fetching live records...</div>
-            
-            <div id="data-display" class="record-grid"></div>
-        </div>
-
-        <div id="side-drawer" class="drawer">
-            <div class="drawer-header">
-                <h3 id="drawer-title">Deep Dive Evidence</h3>
-                <button class="close-btn" onclick="closeDrawer()">✕</button>
-            </div>
-            <div class="drawer-content" id="drawer-main-content">
-                </div>
-        </div>
-
-    </div>
+    <div id="loading" style="color: var(--text-muted);">Parsing records...</div>
+    <div id="data-display" class="record-grid"></div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-        // STATE MANAGEMENT VARIABLES
-        let dirtyFlag = false;
-        let debounceTimer;
         let fullDataCache = [];
-
-        // Helper to cleanly present standard date formats
-        function formatDate(dateStr) {
-            if (!dateStr) return 'N/A';
-            try {
-                const date = new Date(dateStr);
-                if (isNaN(date.getTime())) return dateStr;
-                return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
-            } catch(e) { return dateStr; }
-        }
 
         function loadPending() {
             if (!stewardGUID) {
-                document.getElementById('loading').innerText = "Security Error: Missing GUID.";
+                document.getElementById('loading').innerText = "Missing routing parameter.";
                 return;
             }
 
@@ -127,66 +143,94 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
-                fullDataCache = data; 
+                fullDataCache = data;
                 
                 if (!data || data.length === 0) {
                     document.getElementById('steward-info').innerText = "0 Assigned Records";
                     return;
                 }
-
                 document.getElementById('steward-info').innerText = `${data.length} records assigned`;
 
                 let htmlContent = '';
                 data.forEach((item) => {
-                    const id = item['Title'] || '';
+                    const sysId = item['Title'] || '';
+                    const empId = item['EmployeeID'] || '------';
                     const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
                     const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
                     
-                    // Simple, direct name resolution based on AI Match Checkbox
+                    // Core Name Selector Logic
                     const displayName = isAiMatched 
-                        ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim() || 'No Matched Name Data'
-                        : item['RawMemberName'] || 'Unknown Driver';
+                        ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
+                        : item['RawOCRName'] || 'Unknown Driver';
 
-                    const violType = item['ViolationType'] || 'Select Type';
-                    const subViolType = item['SubViolationType'] ? ` — ${item['SubViolationType']}` : '';
+                    const violType = item['ViolationType'] || '';
+                    const subType = item['ViolationSubType'] || '';
                     const amt = item['ViolationAmount'] || '0.00';
-                    const violDate = formatDate(item['ViolationDate']);
-                    const fileDate = formatDate(item['FileDate']);
+                    
+                    // Raw string dates passed directly to clean inputs
+                    const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
+                    const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
 
                     htmlContent += `
-                        <div class="record-card ${cardClass}" id="card-${id}">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 5px;">
-                                <div>
-                                    <div style="font-size: 20px; font-weight: bold; color: #ffffff;">${displayName}</div>
-                                    <div class="data-meta">
-                                        <span><b>Viol Date:</b> ${violDate}</span>
-                                        <span><b>File Date:</b> ${fileDate}</span>
-                                    </div>
+                        <div class="record-card ${cardClass}" id="card-${sysId}">
+                            
+                            <!-- TOP row header matching sketch elements -->
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-left: 5px;">
+                                <div class="emp-name-text" style="font-size: 22px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1;">
+                                    ${displayName}
                                 </div>
-                                <span style="font-size: 11px; color: var(--text-muted); font-weight: bold;">SYSTEM ID: ${id}</span>
+                                <div style="text-align: right; min-width: 100px;">
+                                    <div style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: bold;">Emp ID</div>
+                                    <div class="emp-id-text" style="font-size: 15px; font-weight: bold; font-family: monospace;">${empId}</div>
+                                </div>
                             </div>
 
-                            <div class="card-row">
-                                <div class="data-group">
-                                    <label>Violation Focus${subViolType}</label>
-                                    <select onchange="markDirty('${id}', 'ViolationType', this.value)">
-                                        <option value="${violType}" hidden>${violType}</option>
-                                        <option value="Discharge">Discharge</option>
-                                        <option value="Suspension">Suspension</option>
-                                        <option value="Pay Claim">Pay Claim</option>
-                                        <option value="Protest">Protest</option>
-                                        <option value="Other">Other</option>
-                                    </select>
+                            <!-- TWO COLUMN GRID COPIED DIRECTLY FROM DRAWING -->
+                            <div class="card-split-grid" style="padding-left: 5px;">
+                                
+                                <!-- LEFT COLUMN -->
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="input-wrapper">
+                                        <span class="input-label">File Date</span>
+                                        <input type="date" value="${fileDate}">
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Violation Type</span>
+                                        <select>
+                                            <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                            <option value="Discharge">Discharge</option>
+                                            <option value="Suspension">Suspension</option>
+                                            <option value="Pay Claim">Pay Claim</option>
+                                            <option value="Protest">Protest</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Claim Amt</span>
+                                        <input type="number" step="0.01" value="${amt}">
+                                    </div>
+                                    <button class="btn-3d btn-deepdive" style="margin-top: 5px;">Deep Dive</button>
                                 </div>
 
-                                <div class="data-group" style="max-width: 150px;">
-                                    <label>Claim Amt</label>
-                                    <input type="number" step="0.01" value="${amt}" oninput="markDirty('${id}', 'ViolationAmount', this.value)">
+                                <!-- RIGHT COLUMN -->
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Violation Date</span>
+                                        <input type="date" value="${violDate}">
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Sub Violation</span>
+                                        <select>
+                                            <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-wrapper" style="height: 43px; justify-content: center;">
+                                        <span class="input-label" style="margin-bottom: 2px;">Sys ID</span>
+                                        <span style="font-size: 13px; font-family: monospace; color: var(--text-muted); font-weight: bold;">${sysId}</span>
+                                    </div>
+                                    <button class="btn-3d btn-approve" style="margin-top: 22px;">Approve</button>
                                 </div>
 
-                                <div style="display: flex; align-self: flex-end; padding-bottom: 1px;">
-                                    <button onclick="openDrawer('${id}')" style="background: #333; color: white; border: 1px solid #444; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%;">Deep Dive</button>
-                                </div>
                             </div>
                         </div>
                     `;
@@ -194,97 +238,6 @@
 
                 document.getElementById('data-display').innerHTML = htmlContent;
             });
-        }
-
-        /* --- STATE MANAGEMENT & AUTO-SAVE LOGIC --- */
-        function markDirty(recordId, field, newValue) {
-            const indicator = document.getElementById('save-indicator');
-            indicator.innerText = "● Unsaved Edits";
-            indicator.className = "save-status dirty";
-            dirtyFlag = true;
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => { triggerAutoSave(recordId); }, 3000); 
-        }
-
-        function triggerAutoSave(recordId) {
-            const indicator = document.getElementById('save-indicator');
-            indicator.innerText = "↻ Saving to cloud...";
-            indicator.className = "save-status saving";
-            
-            setTimeout(() => {
-                indicator.innerText = "✓ All changes saved";
-                indicator.className = "save-status";
-                dirtyFlag = false;
-            }, 1000);
-        }
-
-        window.addEventListener("beforeunload", function (e) {
-            if (dirtyFlag) {
-                clearTimeout(debounceTimer);
-                const msg = 'You have unsaved edits. Are you sure you want to leave?';
-                (e || window.event).returnValue = msg;
-                return msg;
-            }
-        });
-
-        /* --- DRAWER (DEEP DIVE) LOGIC --- */
-        function openDrawer(recordId) {
-            const record = fullDataCache.find(r => r.Title === recordId);
-            document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
-            
-            const drawerContent = document.getElementById('drawer-main-content');
-            if (!record) {
-                drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record not found.</p>`;
-                return;
-            }
-
-            let safeLink = record.PublicLink || '';
-            let downloadBtnHtml = '';
-
-            if (safeLink.includes("drive.google.com")) {
-                const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    const fileId = fileIdMatch[1];
-                    safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                    downloadBtnHtml = `
-                        <div style="text-align: center; margin-top: 12px;">
-                            <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
-                                📥 Download PDF Copy
-                            </a>
-                        </div>
-                    `;
-                }
-            }
-
-            // Dump remaining fields down in the deep dive area safely
-            drawerContent.innerHTML = `
-                <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-                    <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
-                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Employee ID:</b> ${record.EmployeeID || 'N/A'}</p>
-                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
-                    <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
-                </div>
-
-                <label>Steward Internal Notes</label>
-                <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" oninput="markDirty()" placeholder="Type notes here..."></textarea>
-                
-                <label>Evidence Document</label>
-                ${safeLink 
-                    ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}`
-                    : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`
-                }
-            `;
-
-            document.getElementById('side-drawer').classList.add('open');
-            if(window.innerWidth > 800) {
-                document.querySelector('.main-content').style.marginRight = '450px';
-            }
-        }
-
-        function closeDrawer() {
-            document.getElementById('side-drawer').classList.remove('open');
-            document.querySelector('.main-content').style.marginRight = '0';
         }
 
         loadPending();
