@@ -2,50 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Steward Verification Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Steward Portal</title>
 </head>
-<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px;">
+<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0;">
 
-    <h1>Pending Verification</h1>
-    <div id="data-display">Loading pending records...</div>
+    <div style="border-bottom: 2px solid #ffcc00; padding-bottom: 15px; margin-bottom: 20px;">
+        <h1 style="font-size: 26px; margin: 0 0 5px 0; color: #ffffff;">Steward Verification Portal</h1>
+        <div id="steward-info" style="font-size: 16px; color: #ffcc00; margin-bottom: 5px;">Loading steward details...</div>
+        <div id="record-count" style="font-size: 14px; color: #aaaaaa; font-weight: bold;">Connecting to cloud...</div>
+    </div>
+
+    <div id="loading" style="font-size: 16px; color: #aaaaaa;">Loading pending grievances...</div>
+    <div id="data-display" style="display:none;"></div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
 
-        async function loadPending() {
-            // Your Flow URL (Same one as before)
-            const flowUrl = "YOUR_POWER_AUTOMATE_URL_HERE";
-            
-            // We fetch where Steward_Verified is false
-            const response = await fetch(flowUrl, {
+        if (!stewardGUID) {
+            document.getElementById('loading').innerText = "Error: No Steward ID provided. Please use your official secure link.";
+            document.getElementById('record-count').innerText = "🔴 Connection Failed";
+        } else {
+            // Your brand new Steward Flow URL
+            const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+
+            fetch(flowUrl, {
                 method: "POST",
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "filter": "unverified" })
-            });
-            const data = await response.json();
-            
-            const display = document.getElementById('data-display');
-            display.innerHTML = ''; // Clear loading
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const display = document.getElementById('data-display');
+                display.style.display = 'block';
+                
+                if (!data || data.length === 0) {
+                    document.getElementById('steward-info').innerText = "Steward Dashboard";
+                    document.getElementById('record-count').innerText = "🟢 Connected • 0 Pending Records";
+                    display.innerHTML = `<h3>No pending grievances.</h3><p>You are completely caught up.</p>`;
+                    return;
+                }
 
-            data.forEach((item, index) => {
-                display.innerHTML += `
-                    <div style="background: #1e1e1e; padding: 15px; margin-bottom: 10px; border-left: 5px solid #ffcc00;">
-                        <h3>Member: ${item.MemberName}</h3>
-                        <p>ID: ${item.EmployeeID}</p>
-                        <button onclick="verifyItem('${item.ID}')" style="background: #ffcc00; border: none; padding: 10px; cursor: pointer;">VERIFY & APPROVE</button>
-                    </div>
-                `;
+                document.getElementById('steward-info').innerHTML = `Welcome, <b>Steward Portal</b>`;
+                document.getElementById('record-count').innerText = `🟢 Connected • Found ${data.length} pending records`;
+
+                let htmlContent = '';
+                data.forEach((item, index) => {
+                    htmlContent += `
+                        <div style="background-color: #1e1e1e; border-left: 5px solid #ffcc00; padding: 16px; margin-bottom: 15px; border-radius: 6px;">
+                            <span style="font-weight: bold; font-size: 16px; color: #ffffff;">Driver ID: ${item['Title'] || 'N/A'}</span>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Type/Hours:</b> ${item['field_3'] || 'N/A'}</p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${item['field_4'] || '0.00'}</p>
+                            <button onclick="verifyGrievance('${item['ID']}')" style="margin-top: 10px; background-color: #ffcc00; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                                ✓ Verify Grievance
+                            </button>
+                        </div>
+                    `;
+                });
+
+                display.innerHTML = htmlContent;
+            })
+            .catch(error => {
+                document.getElementById('loading').innerText = "Connection error. Cloud failed to respond.";
+                document.getElementById('record-count').innerText = "🔴 Cloud Offline";
+                console.error(error);
             });
         }
 
-        async function verifyItem(id) {
-            // Here you'll add the PATCH request to flip "Steward_Verified" to true
-            alert("Record " + id + " has been verified!");
-            // After successful patch, trigger a refresh or hide the card
-            loadPending(); 
+        function verifyGrievance(id) {
+            alert("Verifying grievance ID: " + id + ". We will hook up the save button action next!");
         }
-
-        loadPending();
     </script>
 </body>
 </html>
