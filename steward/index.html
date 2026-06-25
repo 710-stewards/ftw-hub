@@ -32,44 +32,40 @@
         /* MAIN GRID AREA */
         .main-content { flex: 1; overflow-y: auto; padding: 20px; transition: margin-right 0.3s; }
         
-        /* RESPONSIVE GRID/CARD SYSTEM */
+        /* HIGH-DENSITY CARD SYSTEM */
         .record-grid { display: grid; gap: 15px; }
-        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 6px; padding: 15px; display: grid; gap: 10px; transition: transform 0.1s, border-color 0.3s; }
+        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.3s; }
         .record-card:hover { border-color: #555; }
         .record-card.ai-match { border-left-color: var(--success); }
         .record-card.ai-fail { border-left-color: var(--danger); }
 
+        /* Row structure within cards */
+        .card-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .data-group { flex: 1; min-width: 140px; }
+        .data-meta { display: flex; gap: 15px; font-size: 13px; color: var(--text-muted); padding-top: 2px; }
+
         /* Input Styling for Live Edit */
         input, select { background: #2a2a2a; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 14px; width: 100%; }
         input:focus, select:focus { border-color: var(--accent); outline: none; }
-        label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block;}
+        label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 0.5px; }
 
         /* SLIDE-OUT DRAWER */
-        .drawer { width: 400px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -400px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .drawer { width: 450px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -450px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
         .drawer.open { right: 0; }
         .drawer-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
         .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
         .drawer-content { padding: 15px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 400px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
+        .pdf-frame { width: 100%; height: 450px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
 
-        /* DESKTOP (TABLET/PC) VIEW - acts like a grid row */
-        @media (min-width: 800px) {
-            .record-card { grid-template-columns: 1.5fr 2fr 1fr auto; align-items: center; }
-            label { display: none; } /* Hide labels on desktop grid to look like a table */
-            .grid-header { display: grid; grid-template-columns: 1.5fr 2fr 1fr auto; gap: 10px; padding: 0 15px 10px 15px; font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-        }
-
-        /* MOBILE VIEW - acts like stacked cards */
+        /* MOBILE OVERRIDES */
         @media (max-width: 799px) {
-            .grid-header { display: none; }
             .drawer { width: 100%; right: -100%; }
-            .record-card { grid-template-columns: 1fr; }
+            .data-group { min-width: 100%; }
         }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
     <header>
         <div class="header-info">
             <h1 style="font-size: 20px; margin: 0;">Local 710 Live Portal</h1>
@@ -78,42 +74,21 @@
         <div id="save-indicator" class="save-status">✓ All changes saved</div>
     </header>
 
-    <!-- MAIN APP LAYOUT -->
     <div class="app-container">
         
-        <!-- LEFT: DATA GRID -->
         <div class="main-content">
             <div id="loading" style="color: var(--text-muted);">Fetching live records...</div>
             
-            <!-- Desktop Table Headers (Hidden on Mobile) -->
-            <div class="grid-header" id="grid-header" style="display:none;">
-                <div>ID & Driver</div>
-                <div>Violation Type</div>
-                <div>Claim Amount</div>
-                <div>Actions</div>
-            </div>
-
-            <!-- Record Cards will inject here -->
             <div id="data-display" class="record-grid"></div>
         </div>
 
-        <!-- RIGHT: SPLIT-VIEW DRAWER -->
         <div id="side-drawer" class="drawer">
             <div class="drawer-header">
-                <h3 id="drawer-title">Record Details</h3>
+                <h3 id="drawer-title">Deep Dive Evidence</h3>
                 <button class="close-btn" onclick="closeDrawer()">✕</button>
             </div>
-            <div class="drawer-content">
-                <p style="color: var(--text-muted); margin-bottom: 15px;">Review the associated documents and steward notes before modifying the record.</p>
-                
-                <label>Steward Internal Notes</label>
-                <textarea rows="4" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 20px; resize: vertical;" oninput="markDirty()" placeholder="Type notes here..."></textarea>
-                
-                <label>Evidence Document</label>
-                <div id="pdf-container">
-                    <!-- PDF Iframe will inject here -->
+            <div class="drawer-content" id="drawer-main-content">
                 </div>
-            </div>
         </div>
 
     </div>
@@ -126,7 +101,17 @@
         // STATE MANAGEMENT VARIABLES
         let dirtyFlag = false;
         let debounceTimer;
-        let fullDataCache = []; // Stores the raw SharePoint rows
+        let fullDataCache = [];
+
+        // Helper to cleanly present standard date formats
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+            } catch(e) { return dateStr; }
+        }
 
         function loadPending() {
             if (!stewardGUID) {
@@ -142,7 +127,7 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
-                fullDataCache = data; // Cache data for drawer use
+                fullDataCache = data; 
                 
                 if (!data || data.length === 0) {
                     document.getElementById('steward-info').innerText = "0 Assigned Records";
@@ -150,46 +135,58 @@
                 }
 
                 document.getElementById('steward-info').innerText = `${data.length} records assigned`;
-                document.getElementById('grid-header').style.display = 'grid';
 
                 let htmlContent = '';
                 data.forEach((item) => {
                     const id = item['Title'] || '';
-                    const empName = item['FirstName'] ? `${item['FirstName']} ${item['LastName'] || ''}` : 'Unknown';
-                    const violType = item['ViolationType'] || 'Select Type';
-                    const amt = item['ViolationAmount'] || '0.00';
                     const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
                     const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
+                    
+                    // Simple, direct name resolution based on AI Match Checkbox
+                    const displayName = isAiMatched 
+                        ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim() || 'No Matched Name Data'
+                        : item['RawMemberName'] || 'Unknown Driver';
+
+                    const violType = item['ViolationType'] || 'Select Type';
+                    const subViolType = item['SubViolationType'] ? ` — ${item['SubViolationType']}` : '';
+                    const amt = item['ViolationAmount'] || '0.00';
+                    const violDate = formatDate(item['ViolationDate']);
+                    const fileDate = formatDate(item['FileDate']);
 
                     htmlContent += `
                         <div class="record-card ${cardClass}" id="card-${id}">
-                            <div>
-                                <label>Case & Driver</label>
-                                <span style="font-weight: bold; font-size: 15px;">${id}</span><br>
-                                <span style="font-size: 13px; color: var(--text-muted);">${empName}</span>
-                            </div>
-                            
-                            <div>
-                                <label>Violation Type</label>
-                                <!-- LIVE EDIT DROPDOWN -->
-                                <select onchange="markDirty('${id}', 'ViolationType', this.value)">
-                                    <option value="${violType}" hidden>${violType}</option>
-                                    <option value="Discharge">Discharge</option>
-                                    <option value="Suspension">Suspension</option>
-                                    <option value="Pay Claim">Pay Claim</option>
-                                    <option value="Protest">Protest</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 5px;">
+                                <div>
+                                    <div style="font-size: 20px; font-weight: bold; color: #ffffff;">${displayName}</div>
+                                    <div class="data-meta">
+                                        <span><b>Viol Date:</b> ${violDate}</span>
+                                        <span><b>File Date:</b> ${fileDate}</span>
+                                    </div>
+                                </div>
+                                <span style="font-size: 11px; color: var(--text-muted); font-weight: bold;">SYSTEM ID: ${id}</span>
                             </div>
 
-                            <div>
-                                <label>Claim Amt</label>
-                                <!-- LIVE EDIT INPUT -->
-                                <input type="number" step="0.01" value="${amt}" oninput="markDirty('${id}', 'ViolationAmount', this.value)">
-                            </div>
+                            <div class="card-row">
+                                <div class="data-group">
+                                    <label>Violation Focus${subViolType}</label>
+                                    <select onchange="markDirty('${id}', 'ViolationType', this.value)">
+                                        <option value="${violType}" hidden>${violType}</option>
+                                        <option value="Discharge">Discharge</option>
+                                        <option value="Suspension">Suspension</option>
+                                        <option value="Pay Claim">Pay Claim</option>
+                                        <option value="Protest">Protest</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
 
-                            <div style="display: flex; gap: 8px;">
-                                <button onclick="openDrawer('${id}')" style="background: #333; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Deep Dive</button>
+                                <div class="data-group" style="max-width: 150px;">
+                                    <label>Claim Amt</label>
+                                    <input type="number" step="0.01" value="${amt}" oninput="markDirty('${id}', 'ViolationAmount', this.value)">
+                                </div>
+
+                                <div style="display: flex; align-self: flex-end; padding-bottom: 1px;">
+                                    <button onclick="openDrawer('${id}')" style="background: #333; color: white; border: 1px solid #444; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%;">Deep Dive</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -200,20 +197,14 @@
         }
 
         /* --- STATE MANAGEMENT & AUTO-SAVE LOGIC --- */
-
         function markDirty(recordId, field, newValue) {
             const indicator = document.getElementById('save-indicator');
             indicator.innerText = "● Unsaved Edits";
             indicator.className = "save-status dirty";
             dirtyFlag = true;
 
-            // Clear existing timer
             clearTimeout(debounceTimer);
-
-            // Start 3-second debounce timer
-            debounceTimer = setTimeout(() => {
-                triggerAutoSave(recordId);
-            }, 3000); 
+            debounceTimer = setTimeout(() => { triggerAutoSave(recordId); }, 3000); 
         }
 
         function triggerAutoSave(recordId) {
@@ -221,8 +212,6 @@
             indicator.innerText = "↻ Saving to cloud...";
             indicator.className = "save-status saving";
             
-            // NOTE: In Phase 3, this will send the PATCH request to Power Automate.
-            // For now, we simulate the save success.
             setTimeout(() => {
                 indicator.innerText = "✓ All changes saved";
                 indicator.className = "save-status";
@@ -230,61 +219,66 @@
             }, 1000);
         }
 
-        // Prevent tab closure if dirty
         window.addEventListener("beforeunload", function (e) {
             if (dirtyFlag) {
-                // Force an immediate save (flush) before closing
                 clearTimeout(debounceTimer);
-                // triggerAutoSave(); 
-                
-                const confirmationMessage = 'You have unsaved edits. Are you sure you want to leave?';
-                (e || window.event).returnValue = confirmationMessage;
-                return confirmationMessage;
+                const msg = 'You have unsaved edits. Are you sure you want to leave?';
+                (e || window.event).returnValue = msg;
+                return msg;
             }
         });
 
         /* --- DRAWER (DEEP DIVE) LOGIC --- */
-
         function openDrawer(recordId) {
-            // Find the record in our cache
             const record = fullDataCache.find(r => r.Title === recordId);
-            document.getElementById('drawer-title').innerText = `Case: ${recordId}`;
+            document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
             
-            const pdfContainer = document.getElementById('pdf-container');
-           if (record && record.PublicLink) {
-                let safeLink = record.PublicLink;
-                let downloadBtnHtml = '';
-
-                // If it's a Google Drive link, extract the ID and force the preview/download URLs
-                if (safeLink.includes("drive.google.com")) {
-                    const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-                    if (fileIdMatch && fileIdMatch[1]) {
-                        const fileId = fileIdMatch[1];
-                        safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                        
-                        const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                        downloadBtnHtml = `
-                            <div style="text-align: center; margin-top: 15px;">
-                                <a href="${downloadUrl}" style="display: inline-block; background-color: #333333; color: #ffcc00; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                                    📥 Download PDF Copy
-                                </a>
-                            </div>
-                        `;
-                    }
-                }
-
-                pdfContainer.innerHTML = `
-                    <iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>
-                    ${downloadBtnHtml}
-                `;
-            } else {
-                pdfContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`;
+            const drawerContent = document.getElementById('drawer-main-content');
+            if (!record) {
+                drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record not found.</p>`;
+                return;
             }
 
+            let safeLink = record.PublicLink || '';
+            let downloadBtnHtml = '';
+
+            if (safeLink.includes("drive.google.com")) {
+                const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                    const fileId = fileIdMatch[1];
+                    safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+                    downloadBtnHtml = `
+                        <div style="text-align: center; margin-top: 12px;">
+                            <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
+                                📥 Download PDF Copy
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+
+            // Dump remaining fields down in the deep dive area safely
+            drawerContent.innerHTML = `
+                <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
+                    <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
+                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Employee ID:</b> ${record.EmployeeID || 'N/A'}</p>
+                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
+                    <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
+                </div>
+
+                <label>Steward Internal Notes</label>
+                <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" oninput="markDirty()" placeholder="Type notes here..."></textarea>
+                
+                <label>Evidence Document</label>
+                ${safeLink 
+                    ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}`
+                    : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`
+                }
+            `;
+
             document.getElementById('side-drawer').classList.add('open');
-            // Slight visual shift to main content on desktop
             if(window.innerWidth > 800) {
-                document.querySelector('.main-content').style.marginRight = '400px';
+                document.querySelector('.main-content').style.marginRight = '450px';
             }
         }
 
@@ -293,7 +287,6 @@
             document.querySelector('.main-content').style.marginRight = '0';
         }
 
-        // Run on load
         loadPending();
     </script>
 </body>
