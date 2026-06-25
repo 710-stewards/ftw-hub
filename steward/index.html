@@ -54,9 +54,9 @@
 
         /* DESKTOP (TABLET/PC) VIEW - acts like a grid row */
         @media (min-width: 800px) {
-            .record-card { grid-template-columns: 1fr 1.5fr 1fr 1fr auto; align-items: center; }
+            .record-card { grid-template-columns: 1.5fr 2fr 1fr auto; align-items: center; }
             label { display: none; } /* Hide labels on desktop grid to look like a table */
-            .grid-header { display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr auto; gap: 10px; padding: 0 15px 10px 15px; font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+            .grid-header { display: grid; grid-template-columns: 1.5fr 2fr 1fr auto; gap: 10px; padding: 0 15px 10px 15px; font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
         }
 
         /* MOBILE VIEW - acts like stacked cards */
@@ -88,8 +88,7 @@
             <!-- Desktop Table Headers (Hidden on Mobile) -->
             <div class="grid-header" id="grid-header" style="display:none;">
                 <div>ID & Driver</div>
-                <div>Violation / Resolution</div>
-                <div>Status</div>
+                <div>Violation Type</div>
                 <div>Claim Amount</div>
                 <div>Actions</div>
             </div>
@@ -171,26 +170,15 @@
                             </div>
                             
                             <div>
-    <label>Violation Type</label>
-    <!-- LIVE EDIT DROPDOWN -->
-    <select onchange="markDirty('${id}', 'ViolationType', this.value)">
-        <option value="${violType}" hidden>${violType}</option>
-        <option value="Discharge">Discharge</option>
-        <option value="Suspension">Suspension</option>
-        <option value="Pay Claim">Pay Claim</option>
-        <option value="Protest">Protest</option>
-        <option value="Other">Other</option>
-    </select>
-</div>
-
-
-                            <div>
-                                <label>Status</label>
+                                <label>Violation Type</label>
                                 <!-- LIVE EDIT DROPDOWN -->
-                                <select onchange="markDirty('${id}', 'Status', this.value)">
-                                    <option value="Pending">Pending</option>
-                                    <option value="Resolved">Resolved</option>
-                                    <option value="Deadlocked">Deadlocked</option>
+                                <select onchange="markDirty('${id}', 'ViolationType', this.value)">
+                                    <option value="${violType}" hidden>${violType}</option>
+                                    <option value="Discharge">Discharge</option>
+                                    <option value="Suspension">Suspension</option>
+                                    <option value="Pay Claim">Pay Claim</option>
+                                    <option value="Protest">Protest</option>
+                                    <option value="Other">Other</option>
                                 </select>
                             </div>
 
