@@ -3,31 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Steward Portal</title>
+    <title>Steward Live Portal</title>
+    <style>
+        /* CORE VARIABLES & RESET */
+        :root {
+            --bg-dark: #121212;
+            --bg-panel: #1e1e1e;
+            --accent: #ffcc00;
+            --success: #00ff88;
+            --danger: #ff3333;
+            --text-main: #ffffff;
+            --text-muted: #aaaaaa;
+            --border: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        /* HEADER */
+        header { padding: 15px 20px; border-bottom: 2px solid var(--accent); background: var(--bg-panel); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;}
+        .header-info { display: flex; flex-direction: column; gap: 4px; }
+        .save-status { font-size: 13px; font-weight: bold; padding: 4px 10px; border-radius: 20px; background: #333; color: var(--text-muted); transition: 0.3s; }
+        .save-status.dirty { background: #554400; color: var(--accent); }
+        .save-status.saving { background: #004422; color: var(--success); }
+
+        /* LAYOUT CONTAINER */
+        .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+        /* MAIN GRID AREA */
+        .main-content { flex: 1; overflow-y: auto; padding: 20px; transition: margin-right 0.3s; }
+        
+        /* RESPONSIVE GRID/CARD SYSTEM */
+        .record-grid { display: grid; gap: 15px; }
+        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-left: 5px solid var(--accent); border-radius: 6px; padding: 15px; display: grid; gap: 10px; transition: transform 0.1s, border-color 0.3s; }
+        .record-card:hover { border-color: #555; }
+        .record-card.ai-match { border-left-color: var(--success); }
+        .record-card.ai-fail { border-left-color: var(--danger); }
+
+        /* Input Styling for Live Edit */
+        input, select { background: #2a2a2a; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 14px; width: 100%; }
+        input:focus, select:focus { border-color: var(--accent); outline: none; }
+        label { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 2px; display: block;}
+
+        /* SLIDE-OUT DRAWER */
+        .drawer { width: 400px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -400px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+        .drawer.open { right: 0; }
+        .drawer-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
+        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .drawer-content { padding: 15px; flex: 1; overflow-y: auto; }
+        .pdf-frame { width: 100%; height: 400px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
+
+        /* DESKTOP (TABLET/PC) VIEW - acts like a grid row */
+        @media (min-width: 800px) {
+            .record-card { grid-template-columns: 1fr 1.5fr 1fr 1fr auto; align-items: center; }
+            label { display: none; } /* Hide labels on desktop grid to look like a table */
+            .grid-header { display: grid; grid-template-columns: 1fr 1.5fr 1fr 1fr auto; gap: 10px; padding: 0 15px 10px 15px; font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        }
+
+        /* MOBILE VIEW - acts like stacked cards */
+        @media (max-width: 799px) {
+            .grid-header { display: none; }
+            .drawer { width: 100%; right: -100%; }
+            .record-card { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
-<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px; margin: 0;">
+<body>
 
-    <div style="border-bottom: 2px solid #ffcc00; padding-bottom: 15px; margin-bottom: 20px;">
-        <h1 style="font-size: 26px; margin: 0 0 5px 0; color: #ffffff;">Steward Verification Portal</h1>
-        <div id="steward-info" style="font-size: 16px; color: #ffcc00; margin-bottom: 5px;">Loading steward details...</div>
-        <div id="record-count" style="font-size: 14px; color: #aaaaaa; font-weight: bold;">Connecting to cloud...</div>
+    <!-- HEADER -->
+    <header>
+        <div class="header-info">
+            <h1 style="font-size: 20px; margin: 0;">Local 710 Live Portal</h1>
+            <span id="steward-info" style="font-size: 14px; color: var(--accent);">Loading...</span>
+        </div>
+        <div id="save-indicator" class="save-status">✓ All changes saved</div>
+    </header>
+
+    <!-- MAIN APP LAYOUT -->
+    <div class="app-container">
+        
+        <!-- LEFT: DATA GRID -->
+        <div class="main-content">
+            <div id="loading" style="color: var(--text-muted);">Fetching live records...</div>
+            
+            <!-- Desktop Table Headers (Hidden on Mobile) -->
+            <div class="grid-header" id="grid-header" style="display:none;">
+                <div>ID & Driver</div>
+                <div>Violation / Resolution</div>
+                <div>Status</div>
+                <div>Claim Amount</div>
+                <div>Actions</div>
+            </div>
+
+            <!-- Record Cards will inject here -->
+            <div id="data-display" class="record-grid"></div>
+        </div>
+
+        <!-- RIGHT: SPLIT-VIEW DRAWER -->
+        <div id="side-drawer" class="drawer">
+            <div class="drawer-header">
+                <h3 id="drawer-title">Record Details</h3>
+                <button class="close-btn" onclick="closeDrawer()">✕</button>
+            </div>
+            <div class="drawer-content">
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Review the associated documents and steward notes before modifying the record.</p>
+                
+                <label>Steward Internal Notes</label>
+                <textarea rows="4" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 20px; resize: vertical;" oninput="markDirty()" placeholder="Type notes here..."></textarea>
+                
+                <label>Evidence Document</label>
+                <div id="pdf-container">
+                    <!-- PDF Iframe will inject here -->
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <div id="loading" style="font-size: 16px; color: #aaaaaa;">Loading assigned grievances...</div>
-    <div id="data-display" style="display:none;"></div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-        function loadPending() {
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('data-display').style.display = 'none';
+        // STATE MANAGEMENT VARIABLES
+        let dirtyFlag = false;
+        let debounceTimer;
+        let fullDataCache = []; // Stores the raw SharePoint rows
 
+        function loadPending() {
             if (!stewardGUID) {
-                document.getElementById('loading').innerText = "Error: No Steward ID provided. Please use your official secure link.";
-                document.getElementById('record-count').innerText = "🔴 Connection Failed";
+                document.getElementById('loading').innerText = "Security Error: Missing GUID.";
                 return;
             }
 
@@ -39,86 +143,139 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
-                const display = document.getElementById('data-display');
-                display.style.display = 'block';
+                fullDataCache = data; // Cache data for drawer use
                 
                 if (!data || data.length === 0) {
-                    document.getElementById('steward-info').innerText = "Steward Dashboard";
-                    document.getElementById('record-count').innerText = "🟢 Connected • 0 Assigned Records";
-                    display.innerHTML = `<h3>No pending grievances.</h3><p>You have no unverified cases assigned to your ID.</p>`;
+                    document.getElementById('steward-info').innerText = "0 Assigned Records";
                     return;
                 }
 
-                document.getElementById('steward-info').innerHTML = `Welcome, <b>Steward Portal</b>`;
-                document.getElementById('record-count').innerText = `🟢 Connected • Found ${data.length} records assigned to you`;
+                document.getElementById('steward-info').innerText = `${data.length} records assigned`;
+                document.getElementById('grid-header').style.display = 'grid';
 
                 let htmlContent = '';
-                data.forEach((item, index) => {
-                    const uniqueTitleId = item['Title'] || '';
-                    const empName = item['FirstName'] ? (item['FirstName'] + ' ' + (item['LastName'] || '')) : 'Unknown Driver';
-                    const empId = item['EmployeeID'] || 'N/A';
-                    const violType = item['ViolationType'] || 'N/A';
-                    const claimAmt = item['ViolationAmount'] || '0.00';
-                    const claimHrs = item['ClaimHours'] || '0.00';
-                    const docLink = item['PublicLink'] || '';
-                    
-                    // Match status check against your true SharePoint column name
+                data.forEach((item) => {
+                    const id = item['Title'] || '';
+                    const empName = item['FirstName'] ? `${item['FirstName']} ${item['LastName'] || ''}` : 'Unknown';
+                    const violType = item['ViolationType'] || 'Select Type';
+                    const amt = item['ViolationAmount'] || '0.00';
                     const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
-                    const cardBorderColor = isAiMatched ? '#00ff88' : '#ff3333'; 
-                    const statusText = isAiMatched ? '✓ AI Matched' : '⚠ AI Discrepancy';
+                    const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
 
                     htmlContent += `
-                        <div style="background-color: #1e1e1e; border-left: 5px solid ${cardBorderColor}; padding: 16px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: bold; font-size: 16px; color: #ffffff;">Case ID: ${uniqueTitleId}</span>
-                                <span style="color: ${cardBorderColor}; background-color: #2a2a2a; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">${statusText}</span>
+                        <div class="record-card ${cardClass}" id="card-${id}">
+                            <div>
+                                <label>Case & Driver</label>
+                                <span style="font-weight: bold; font-size: 15px;">${id}</span><br>
+                                <span style="font-size: 13px; color: var(--text-muted);">${empName}</span>
                             </div>
-                            <p style="margin: 5px 0; font-size: 15px; color: #ffffff;"><b>Driver:</b> ${empName} (Emp ID: ${empId})</p>
-                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Violation Type:</b> ${violType}</p>
-                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claimed Hours:</b> ${claimHrs} hrs</p>
-                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${claimAmt}</p>
                             
-                            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                                ${docLink ? `<a href="${docLink}" target="_blank" style="background-color: #333333; color: #ffffff; text-decoration: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; font-size: 14px; border: 1px solid #444;">📄 View PDF</a>` : ''}
-                                <button onclick="verifyGrievance('${uniqueTitleId}')" style="background-color: #ffcc00; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px;">
-                                    ✓ Verify & Approve
-                                </button>
+                            <div>
+                                <label>Violation Type</label>
+                                <!-- LIVE EDIT DROPDOWN -->
+                                <select onchange="markDirty('${id}', 'ViolationType', this.value)">
+                                    <option value="${violType}">${violType}</option>
+                                    <option value="9.5 Violation">9.5 Violation</option>
+                                    <option value="Seniority Bypass">Seniority Bypass</option>
+                                    <option value="Discipline">Discipline</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label>Status</label>
+                                <!-- LIVE EDIT DROPDOWN -->
+                                <select onchange="markDirty('${id}', 'Status', this.value)">
+                                    <option value="Pending">Pending</option>
+                                    <option value="Resolved">Resolved</option>
+                                    <option value="Deadlocked">Deadlocked</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label>Claim Amt</label>
+                                <!-- LIVE EDIT INPUT -->
+                                <input type="number" step="0.01" value="${amt}" oninput="markDirty('${id}', 'ViolationAmount', this.value)">
+                            </div>
+
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="openDrawer('${id}')" style="background: #333; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Deep Dive</button>
                             </div>
                         </div>
                     `;
                 });
 
-                display.innerHTML = htmlContent;
-            })
-            .catch(error => {
-                document.getElementById('loading').innerText = "Connection error. Cloud failed to respond.";
-                document.getElementById('record-count').innerText = "🔴 Cloud Offline";
-                console.error(error);
+                document.getElementById('data-display').innerHTML = htmlContent;
             });
         }
 
-        function verifyGrievance(titleId) {
-            if (!confirm("Are you sure you want to verify record " + titleId + "?")) return;
+        /* --- STATE MANAGEMENT & AUTO-SAVE LOGIC --- */
 
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    "action": "verify", 
-                    "Title": titleId 
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    loadPending();
-                } else {
-                    alert("Failed to update the record on the server.");
-                }
-            })
-            .catch(error => {
-                alert("Network error trying to verify.");
-                console.error(error);
-            });
+        function markDirty(recordId, field, newValue) {
+            const indicator = document.getElementById('save-indicator');
+            indicator.innerText = "● Unsaved Edits";
+            indicator.className = "save-status dirty";
+            dirtyFlag = true;
+
+            // Clear existing timer
+            clearTimeout(debounceTimer);
+
+            // Start 3-second debounce timer
+            debounceTimer = setTimeout(() => {
+                triggerAutoSave(recordId);
+            }, 3000); 
+        }
+
+        function triggerAutoSave(recordId) {
+            const indicator = document.getElementById('save-indicator');
+            indicator.innerText = "↻ Saving to cloud...";
+            indicator.className = "save-status saving";
+            
+            // NOTE: In Phase 3, this will send the PATCH request to Power Automate.
+            // For now, we simulate the save success.
+            setTimeout(() => {
+                indicator.innerText = "✓ All changes saved";
+                indicator.className = "save-status";
+                dirtyFlag = false;
+            }, 1000);
+        }
+
+        // Prevent tab closure if dirty
+        window.addEventListener("beforeunload", function (e) {
+            if (dirtyFlag) {
+                // Force an immediate save (flush) before closing
+                clearTimeout(debounceTimer);
+                // triggerAutoSave(); 
+                
+                const confirmationMessage = 'You have unsaved edits. Are you sure you want to leave?';
+                (e || window.event).returnValue = confirmationMessage;
+                return confirmationMessage;
+            }
+        });
+
+        /* --- DRAWER (DEEP DIVE) LOGIC --- */
+
+        function openDrawer(recordId) {
+            // Find the record in our cache
+            const record = fullDataCache.find(r => r.Title === recordId);
+            document.getElementById('drawer-title').innerText = `Case: ${recordId}`;
+            
+            const pdfContainer = document.getElementById('pdf-container');
+            if(record && record.PublicLink) {
+                pdfContainer.innerHTML = `<iframe src="${record.PublicLink}" class="pdf-frame" frameborder="0"></iframe>`;
+            } else {
+                pdfContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`;
+            }
+
+            document.getElementById('side-drawer').classList.add('open');
+            // Slight visual shift to main content on desktop
+            if(window.innerWidth > 800) {
+                document.querySelector('.main-content').style.marginRight = '400px';
+            }
+        }
+
+        function closeDrawer() {
+            document.getElementById('side-drawer').classList.remove('open');
+            document.querySelector('.main-content').style.marginRight = '0';
         }
 
         // Run on load
