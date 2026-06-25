@@ -61,14 +61,21 @@
         .input-wrapper { display: flex; flex-direction: column; }
         .input-label { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; }
         
-        input, select { background: #262626; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-size: 14px; width: 100%; }
+        input, select { background: #262626; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-size: 14px; width: 100%; height: 38px; }
         input:focus, select:focus { border-color: var(--accent); outline: none; }
         
-        input.emp-input { font-size: 18px; font-weight: bold; padding: 6px 8px; }
-        input.id-input { font-size: 14px; font-weight: bold; font-family: monospace; text-align: right; padding: 6px 8px; }
+        /* Fixed height structural alignment block for System ID text field */
+        .sys-id-display-box { background: transparent; color: var(--text-muted); border: 1px dashed #444; padding: 10px; border-radius: 4px; font-size: 13px; font-family: monospace; font-weight: bold; width: 100%; height: 38px; display: flex; align-items: center; }
+
+        /* Optimized Input Dimensions preventing text cuts */
+        input.emp-input { font-size: 18px; font-weight: bold; padding: 6px 8px; transition: font-size 0.1s ease; }
+        input.emp-input.long-name { font-size: 13px; } /* Auto shrink fallback class */
+        
+        /* Shrinking the Emp ID field to create max name width */
+        input.id-input { font-size: 14px; font-weight: bold; font-family: monospace; text-align: center; padding: 6px 4px; }
 
         /* 3D Button Styling */
-        .btn-3d { display: block; width: 100%; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; text-align: center; cursor: pointer; border: none; transition: transform 0.1s, box-shadow 0.1s; }
+        .btn-3d { display: block; width: 100%; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; text-align: center; cursor: pointer; border: none; transition: transform 0.1s, box-shadow 0.1s; height: 42px; }
         .btn-deepdive { background: #3a3a3a; color: #ffffff; box-shadow: 0 4px 0 #222; }
         .btn-deepdive:active { transform: translateY(4px); box-shadow: 0 0px 0 #222; }
         .btn-approve { background: #2a5e35; color: var(--success); border: 1px solid var(--success); box-shadow: 0 4px 0 #15331c; }
@@ -104,7 +111,7 @@
             <p style="font-size: 13px; color: var(--text-muted);">Select additional active stewards to display their pending intakes on your dashboard.</p>
             
             <div class="steward-checkbox-grid" id="steward-checkbox-grid">
-                <label class="checkbox-label"><input type="checkbox" checked disabled> K_Owens (You)</label>
+                <label class="checkbox-label"><input type="checkbox" checked disabled> Kris Owens (You)</label>
                 <label class="checkbox-label"><input type="checkbox" onchange="simulateFilterChange()"> G_Willmann</label>
                 <label class="checkbox-label"><input type="checkbox" onchange="simulateFilterChange()"> R_Hicks</label>
                 <label class="checkbox-label"><input type="checkbox" onchange="simulateFilterChange()"> A_Martinez</label>
@@ -146,7 +153,6 @@
             setTimeout(() => {
                 indicator.innerText = "✓ Filter applied";
                 indicator.className = "save-status";
-                alert("Nice! Clicking this will pass the custom list of names to the data stream later.");
             }, 800);
         }
 
@@ -183,6 +189,9 @@
                         ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
                         : item['RawOCRName'] || 'Unknown Driver';
 
+                    // Apply automatic shrink class if character string length is excessive
+                    const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
+
                     const violType = item['ViolationType'] || '';
                     const subType = item['ViolationSubType'] || '';
                     const amt = item['ViolationAmount'] || '0.00';
@@ -193,14 +202,14 @@
                     htmlContent += `
                         <div class="record-card ${cardClass}" id="card-${sysId}">
                             
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 15px;">
-                                <div class="input-wrapper" style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;">
+                                <div class="input-wrapper" style="flex: 1; min-width: 0;">
                                     <span class="input-label emp-label">Member Name</span>
-                                    <input type="text" class="emp-input" value="${displayName}">
+                                    <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}">
                                 </div>
-                                <div class="input-wrapper" style="width: 120px; text-align: right;">
-                                    <span class="input-label emp-label" style="text-align: right;">Emp ID</span>
-                                    <input type="text" class="id-input" value="${empId}" placeholder="------">
+                                <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
+                                    <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
+                                    <input type="text" class="id-input" value="${empId}" placeholder="-------" maxlength="7">
                                 </div>
                             </div>
 
@@ -240,11 +249,11 @@
                                             <option value="${subType}" hidden>${subType || 'Select...'}</option>
                                         </select>
                                     </div>
-                                    <div class="input-wrapper" style="height: 43px; justify-content: center; padding-top: 4px;">
-                                        <span class="input-label" style="margin-bottom: 2px;">Sys ID</span>
-                                        <span style="font-size: 13px; font-family: monospace; color: var(--text-muted); font-weight: bold;">${sysId}</span>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Sys ID</span>
+                                        <div class="sys-id-display-box">${sysId}</div>
                                     </div>
-                                    <button class="btn-3d btn-approve" style="margin-top: 22px;">Approve</button>
+                                    <button class="btn-3d btn-approve" style="margin-top: 5px;">Approve</button>
                                 </div>
 
                             </div>
