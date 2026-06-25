@@ -171,15 +171,18 @@
                             </div>
                             
                             <div>
-                                <label>Violation Type</label>
-                                <!-- LIVE EDIT DROPDOWN -->
-                                <select onchange="markDirty('${id}', 'ViolationType', this.value)">
-                                    <option value="${violType}">${violType}</option>
-                                    <option value="9.5 Violation">9.5 Violation</option>
-                                    <option value="Seniority Bypass">Seniority Bypass</option>
-                                    <option value="Discipline">Discipline</option>
-                                </select>
-                            </div>
+    <label>Violation Type</label>
+    <!-- LIVE EDIT DROPDOWN -->
+    <select onchange="markDirty('${id}', 'ViolationType', this.value)">
+        <option value="${violType}" hidden>${violType}</option>
+        <option value="Discharge">Discharge</option>
+        <option value="Suspension">Suspension</option>
+        <option value="Pay Claim">Pay Claim</option>
+        <option value="Protest">Protest</option>
+        <option value="Other">Other</option>
+    </select>
+</div>
+
 
                             <div>
                                 <label>Status</label>
