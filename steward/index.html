@@ -54,17 +54,36 @@
 
                 let htmlContent = '';
                 data.forEach((item, index) => {
-                    // Pulling the unique identifier from the Title column
                     const uniqueTitleId = item['Title'] || '';
+                    const empName = item['FirstName'] ? (item['FirstName'] + ' ' + (item['LastName'] || '')) : 'Unknown Driver';
+                    const empId = item['EmployeeID'] || 'N/A';
+                    const violType = item['ViolationType'] || 'N/A';
+                    const claimAmt = item['ViolationAmount'] || '0.00';
+                    const claimHrs = item['ClaimHours'] || '0.00';
+                    const docLink = item['PublicLink'] || '';
+                    
+                    // AI Match status logic to dictate border color
+                    const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
+                    const cardBorderColor = isAiMatched ? '#00ff88' : '#ff3333'; 
+                    const statusText = isAiMatched ? '✓ AI Matched' : '⚠ AI Discrepancy';
 
                     htmlContent += `
-                        <div style="background-color: #1e1e1e; border-left: 5px solid #ffcc00; padding: 16px; margin-bottom: 15px; border-radius: 6px;">
-                            <span style="font-weight: bold; font-size: 16px; color: #ffffff;">ID: ${uniqueTitleId}</span>
-                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Type/Hours:</b> ${item['field_3'] || 'N/A'}</p>
-                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${item['field_4'] || '0.00'}</p>
-                            <button onclick="verifyGrievance('${uniqueTitleId}')" style="margin-top: 10px; background-color: #00ff88; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer;">
-                                ✓ Verify & Approve
-                            </button>
+                        <div style="background-color: #1e1e1e; border-left: 5px solid ${cardBorderColor}; padding: 16px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; font-size: 16px; color: #ffffff;">ID: ${uniqueTitleId}</span>
+                                <span style="color: ${cardBorderColor}; background-color: #2a2a2a; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">${statusText}</span>
+                            </div>
+                            <p style="margin: 5px 0; font-size: 15px; color: #ffffff;"><b>Driver:</b> ${empName} (Emp ID: ${empId})</p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Violation Type:</b> ${violType}</p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claimed Hours:</b> ${claimHrs} hrs</p>
+                            <p style="margin: 5px 0; font-size: 14px; color: #cccccc;"><b>Claim Amount:</b> $${claimAmt}</p>
+                            
+                            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                                ${docLink ? `<a href="${docLink}" target="_blank" style="background-color: #333333; color: #ffffff; text-decoration: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; font-size: 14px; border: 1px solid #444;">📄 View PDF</a>` : ''}
+                                <button onclick="verifyGrievance('${uniqueTitleId}')" style="background-color: #ffcc00; color: #000000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                    ✓ Verify & Approve
+                                </button>
+                            </div>
                         </div>
                     `;
                 });
@@ -81,7 +100,6 @@
         function verifyGrievance(titleId) {
             if (!confirm("Are you sure you want to verify record " + titleId + "?")) return;
 
-            // Sending the 'verify' action and passing the Title value to your flow
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -92,7 +110,6 @@
             })
             .then(response => {
                 if (response.ok) {
-                    // Instantly reload the dashboard so the verified card vanishes
                     loadPending();
                 } else {
                     alert("Failed to update the record on the server.");
