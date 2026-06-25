@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steward Verification Portal</title>
+</head>
+<body style="background-color: #121212; color: #ffffff; font-family: sans-serif; padding: 20px;">
+
+    <h1>Pending Verification</h1>
+    <div id="data-display">Loading pending records...</div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const stewardGUID = urlParams.get('steward');
+
+        async function loadPending() {
+            // Your Flow URL (Same one as before)
+            const flowUrl = "YOUR_POWER_AUTOMATE_URL_HERE";
+            
+            // We fetch where Steward_Verified is false
+            const response = await fetch(flowUrl, {
+                method: "POST",
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "filter": "unverified" })
+            });
+            const data = await response.json();
+            
+            const display = document.getElementById('data-display');
+            display.innerHTML = ''; // Clear loading
+
+            data.forEach((item, index) => {
+                display.innerHTML += `
+                    <div style="background: #1e1e1e; padding: 15px; margin-bottom: 10px; border-left: 5px solid #ffcc00;">
+                        <h3>Member: ${item.MemberName}</h3>
+                        <p>ID: ${item.EmployeeID}</p>
+                        <button onclick="verifyItem('${item.ID}')" style="background: #ffcc00; border: none; padding: 10px; cursor: pointer;">VERIFY & APPROVE</button>
+                    </div>
+                `;
+            });
+        }
+
+        async function verifyItem(id) {
+            // Here you'll add the PATCH request to flip "Steward_Verified" to true
+            alert("Record " + id + " has been verified!");
+            // After successful patch, trigger a refresh or hide the card
+            loadPending(); 
+        }
+
+        loadPending();
+    </script>
+</body>
+</html>
