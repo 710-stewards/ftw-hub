@@ -13,7 +13,7 @@
         <div id="record-count" style="font-size: 14px; color: #aaaaaa; font-weight: bold;">Connecting to cloud...</div>
     </div>
 
-    <div id="loading" style="font-size: 16px; color: #aaaaaa;">Loading pending grievances...</div>
+    <div id="loading" style="font-size: 16px; color: #aaaaaa;">Loading assigned grievances...</div>
     <div id="data-display" style="display:none;"></div>
 
     <script>
@@ -44,13 +44,13 @@
                 
                 if (!data || data.length === 0) {
                     document.getElementById('steward-info').innerText = "Steward Dashboard";
-                    document.getElementById('record-count').innerText = "🟢 Connected • 0 Pending Records";
-                    display.innerHTML = `<h3>No pending grievances.</h3><p>You are completely caught up.</p>`;
+                    document.getElementById('record-count').innerText = "🟢 Connected • 0 Assigned Records";
+                    display.innerHTML = `<h3>No pending grievances.</h3><p>You have no unverified cases assigned to your ID.</p>`;
                     return;
                 }
 
                 document.getElementById('steward-info').innerHTML = `Welcome, <b>Steward Portal</b>`;
-                document.getElementById('record-count').innerText = `🟢 Connected • Found ${data.length} pending records`;
+                document.getElementById('record-count').innerText = `🟢 Connected • Found ${data.length} records assigned to you`;
 
                 let htmlContent = '';
                 data.forEach((item, index) => {
@@ -62,7 +62,7 @@
                     const claimHrs = item['ClaimHours'] || '0.00';
                     const docLink = item['PublicLink'] || '';
                     
-                    // AI Match status logic to dictate border color
+                    // Match status check against your true SharePoint column name
                     const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
                     const cardBorderColor = isAiMatched ? '#00ff88' : '#ff3333'; 
                     const statusText = isAiMatched ? '✓ AI Matched' : '⚠ AI Discrepancy';
@@ -70,7 +70,7 @@
                     htmlContent += `
                         <div style="background-color: #1e1e1e; border-left: 5px solid ${cardBorderColor}; padding: 16px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-weight: bold; font-size: 16px; color: #ffffff;">ID: ${uniqueTitleId}</span>
+                                <span style="font-weight: bold; font-size: 16px; color: #ffffff;">Case ID: ${uniqueTitleId}</span>
                                 <span style="color: ${cardBorderColor}; background-color: #2a2a2a; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: bold;">${statusText}</span>
                             </div>
                             <p style="margin: 5px 0; font-size: 15px; color: #ffffff;"><b>Driver:</b> ${empName} (Emp ID: ${empId})</p>
