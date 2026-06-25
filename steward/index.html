@@ -251,8 +251,32 @@
             document.getElementById('drawer-title').innerText = `Case: ${recordId}`;
             
             const pdfContainer = document.getElementById('pdf-container');
-            if(record && record.PublicLink) {
-                pdfContainer.innerHTML = `<iframe src="${record.PublicLink}" class="pdf-frame" frameborder="0"></iframe>`;
+           if (record && record.PublicLink) {
+                let safeLink = record.PublicLink;
+                let downloadBtnHtml = '';
+
+                // If it's a Google Drive link, extract the ID and force the preview/download URLs
+                if (safeLink.includes("drive.google.com")) {
+                    const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        const fileId = fileIdMatch[1];
+                        safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+                        
+                        const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                        downloadBtnHtml = `
+                            <div style="text-align: center; margin-top: 15px;">
+                                <a href="${downloadUrl}" style="display: inline-block; background-color: #333333; color: #ffcc00; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                                    📥 Download PDF Copy
+                                </a>
+                            </div>
+                        `;
+                    }
+                }
+
+                pdfContainer.innerHTML = `
+                    <iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>
+                    ${downloadBtnHtml}
+                `;
             } else {
                 pdfContainer.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`;
             }
