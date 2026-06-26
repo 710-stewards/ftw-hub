@@ -98,16 +98,7 @@
             .drawer { position: fixed; height: 100vh; }
         }
 
-        /* PC SPREADSHEET OVERRIDE */
-        @media screen and (min-width: 1200px) {
-            .record-grid { grid-template-columns: 1fr; }
-            .record-card { flex-direction: row; align-items: center; padding: 10px 15px; gap: 10px; }
-            .card-split-grid { display: flex; flex: 1; align-items: center; gap: 10px; }
-            .card-split-grid > div { flex-direction: row !important; align-items: center; flex: 1; justify-content: space-between; gap: 10px; }
-            .input-label { display: none; }
-            .btn-3d { width: auto; padding: 8px 15px; height: 38px; box-shadow: none; margin-top: 0 !important; }
-            .btn-3d:active { transform: translateY(2px); }
-        }
+
 
         /* PRINT STYLES */
         @media print {
