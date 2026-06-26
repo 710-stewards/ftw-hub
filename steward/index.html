@@ -224,14 +224,12 @@
                 } catch(e) {}
             }
 
+            // Clean display format for the operational layout top bar header
             if (fullDataCache.length === 0) {
-                document.getElementById('steward-info').innerText = `${currentStewardName} | 0 Assigned Records`;
+                document.getElementById('steward-info').innerText = `${currentStewardName} | 0 Active Records`;
                 document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No pending records found.</div>';
                 return;
             }
-            
-            // Clean display format for the operational layout top bar header
-            document.getElementById('steward-info').innerText = `${currentStewardName} | ${fullDataCache.length} Assigned Records`;
 
             // --- BUILD MASTER ROSTER DATALIST ---
             let seniorityOptionsHtml = '';
@@ -276,8 +274,8 @@
             // --- BUILD DYNAMIC HAMBURGER FILTER GRID ---
             buildStewardFilters();
 
-            // Fire up initial desktop/mobile view array map
-            renderCards(fullDataCache);
+            // Run the initial filter layout to isolate ONLY your logged-in profile records
+            filterRecords();
         }).catch(err => {
             document.getElementById('loading').innerText = "Interface parsing failure. Check format mappings.";
             console.error(err);
@@ -295,10 +293,13 @@
         }
 
         let html = '';
-        stewards.forEach(steward => {
+         stewards.forEach(steward => {
+            // BEAR TRAP: Match the record's string name against the cloud-verified steward profile name
+            const isMe = steward.toLowerCase().trim() === currentStewardName.toLowerCase().trim();
+            
             html += `
-                <label class="checkbox-label">
-                    <input type="checkbox" class="steward-chk" value="${steward}" checked onchange="filterRecords()"> ${steward}
+                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: white; font-size: 14px; cursor: pointer;">
+                    <input type="checkbox" class="steward-chk" value="${steward}" ${isMe ? 'checked' : ''} onchange="filterRecords()"> ${steward}
                 </label>
             `;
         });
@@ -316,14 +317,14 @@
         
         renderCards(filtered);
         
-        // Dynamic operational header update to prevent visual tracking confusion
+        // Dynamic operational header update so you always know your exact filtered count
         document.getElementById('steward-info').innerText = `${currentStewardName} | Showing ${filtered.length} of ${fullDataCache.length} Records`;
     }
 
     function renderCards(recordsList) {
         const displayContainer = document.getElementById('data-display');
         if (recordsList.length === 0) {
-            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No records match your selected operational coverage filter settings.</div>';
+            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center; font-size: 14px;">No records match your active steward visibility checkmarks.</div>';
             return;
         }
 
