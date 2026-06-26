@@ -198,6 +198,19 @@
         document.getElementById('settings-panel').classList.toggle('open');
     }
 
+    // --- REAL-TIME HEADER TRACKER ---
+    function updateHeader() {
+        const myCount = fullDataCache.filter(item => {
+            // Do not count records we just verified locally
+            if (item.isVerifiedLocally) return false;
+            
+            const st = (item.StewardOfRecord || '').toLowerCase().trim();
+            return st === currentStewardName.toLowerCase().trim() || st === currentStewardId.toLowerCase().trim();
+        }).length;
+        
+        document.getElementById('steward-info').innerText = `${currentStewardName} | ${myCount} Pending Grievances`;
+    }
+
     function loadPending() {
         if (!stewardGUID) {
             document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
@@ -227,9 +240,8 @@
             currentStewardName = myProfile.StewardName || myProfile.DisplayName || 'Steward';
             currentStewardId = myProfile.StewardID || ''; 
 
-            // Handle clean top bar header text rendering
             if (fullDataCache.length === 0) {
-                document.getElementById('steward-info').innerText = `${currentStewardName} | 0 Active Records`;
+                updateHeader();
                 document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No pending records found.</div>';
                 return;
             }
@@ -294,7 +306,6 @@
 
         let html = '';
         masterStewardRoster.forEach(stewardRow => {
-            // Target the exact column definitions visible in your screenshot
             const sName = stewardRow.StewardName || '';
             const sId = stewardRow.StewardID || '';
             const rowGuid = (stewardRow.GUID || stewardRow.Title || '').toString().trim();
@@ -315,146 +326,171 @@
 
     function filterRecords() {
         const checkboxes = document.querySelectorAll('.steward-chk');
-        
         const checkedNames = Array.from(checkboxes).filter(chk => chk.checked).map(chk => chk.value.toLowerCase().trim());
         const checkedIds = Array.from(checkboxes).filter(chk => chk.checked).map(chk => chk.getAttribute('data-shortid').toLowerCase().trim());
         
         const filtered = fullDataCache.filter(item => {
+            if (item.isVerifiedLocally) return false; // Hide cards we already approved
+            
             const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').toLowerCase().trim();
             if (!recordSteward) return false;
             
             return checkedNames.includes(recordSteward) || checkedIds.includes(recordSteward);
         });
         
+        updateHeader(); // Keep the header strictly on your numbers
         renderCards(filtered);
-        document.getElementById('steward-info').innerText = `${currentStewardName} | Showing ${filtered.length} of ${fullDataCache.length} Records`;
     }
 
     function renderCards(recordsList) {
         const displayContainer = document.getElementById('data-display');
+        
+        // PADDING FIX: Ensure mobile bottom toolbar doesn't block the last card
+        displayContainer.style.paddingBottom = '120px';
+
         if (recordsList.length === 0) {
-            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center; font-size: 14px;">No records match your active steward visibility checkmarks.</div>';
+            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center; font-size: 14px;">No active records currently selected.</div>';
             return;
         }
 
-        let htmlContent = '';
-        recordsList.forEach((item) => {
-            const sysId = item['Title'] || '';
-            let empId = (item['EmployeeID'] || '').toString().trim();
-            const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
-            let cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
-            
-            let displayName = isAiMatched 
-                ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
-                : (item['RawOCRName'] || 'Unknown Driver').trim();
-
-            const violType = item['ViolationType'] || '';
-            const subType = item['ViolationSubType'] || '';
-            const amt = item['ViolationAmount'] || '0.00';
-            
-            const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
-            const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
-
-            let idAlertHtml = '';
-            let nameAlertHtml = '';
-            let idInputStyleOverride = '';
-            let nameInputStyleOverride = '';
-
-            const rosterMatch = masterSeniorityArray.find(person => {
-                const fName = person.FirstName || person['First Name'] || '';
-                const lName = person.LastName || person['Last Name'] || '';
-                return `${fName} ${lName}`.trim().toLowerCase() === displayName.toLowerCase();
-            });
-
-            if (!isAiMatched) {
-                if (displayName !== 'Unknown Driver') {
-                    displayName = displayName + ' *'; 
-                }
-                nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ RESELECT MEMBER</span>';
-                nameInputStyleOverride = 'border-color: #ffcc00;';
-
-                if (rosterMatch) {
-                    const officialRosterId = (rosterMatch.Title || '').toString().trim();
-                    if (empId !== officialRosterId) {
-                        empId = ''; 
-                        idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
-                        idInputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
-                        cardClass = 'ai-fail'; 
-                    }
-                } else if (displayName !== 'Unknown Driver *') {
-                    idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ NOT IN ROSTER</span>';
-                    idInputStyleOverride = 'border-color: #ffcc00;';
-                }
-            }
-
-            const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
-
-            htmlContent += `
-                <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
-                        <div class="input-wrapper" style="flex: 1; min-width: 0;">
-                            <span class="input-label emp-label">Member Name</span>
-                            <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
-                            ${nameAlertHtml}
-                        </div>
-                        <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
-                            <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
-                            <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
-                            ${idAlertHtml}
-                        </div>
-                    </div>
-
-                    <div class="card-split-grid" onclick="event.stopPropagation()">
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div class="input-wrapper">
-                                <span class="input-label">File Date</span>
-                                <input type="date" value="${fileDate}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Type</span>
-                                <select class="violtype-select">
-                                    <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                    ${violTypeOptionsHtml || `
-                                        <option value="Discharge">Discharge</option>
-                                        <option value="Suspension">Suspension</option>
-                                        <option value="Pay Claim">Pay Claim</option>
-                                        <option value="Protest">Protest</option>
-                                        <option value="Other">Other</option>
-                                    `}
-                                </select>
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Claim Amt</span>
-                                <input type="number" step="0.01" class="amt-input" value="${amt}">
-                            </div>
-                            <button class="btn-3d btn-deepdive" onclick="openDrawer('${sysId}')" style="margin-top: 5px;">Deep Dive</button>
-                        </div>
-
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Date</span>
-                                <input type="date" value="${violDate}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sub Violation</span>
-                                <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
-                                    <option value="${subType}" hidden>${subType || 'Select...'}</option>
-                                    ${subViolOptionsHtml}
-                                    <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
-                                </select>
-                                <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px; height: 38px;" placeholder="Type custom violation here...">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sys ID</span>
-                                <div class="sys-id-display-box">${sysId}</div>
-                            </div>
-                            <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')" style="margin-top: 5px;">Approve</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+        // --- GROUP RECORDS BY STEWARD ---
+        const groupedRecords = {};
+        recordsList.forEach(item => {
+            const st = (item.StewardOfRecord || item['StewardOfRecord'] || 'Unassigned').trim();
+            if (!groupedRecords[st]) groupedRecords[st] = [];
+            groupedRecords[st].push(item);
         });
 
+        let htmlContent = '';
+
+        // --- BUILD DIVIDERS AND CARDS ---
+        for (const [stewardName, items] of Object.entries(groupedRecords)) {
+            
+            // Generate the slick visual divider
+            htmlContent += `
+                <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <span style="color: var(--accent); font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${stewardName}</span>
+                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold; background: #222; padding: 2px 6px; border-radius: 4px;">${items.length} RECORD${items.length > 1 ? 'S' : ''}</span>
+                </div>
+            `;
+
+            items.forEach((item) => {
+                const sysId = item['Title'] || '';
+                let empId = (item['EmployeeID'] || '').toString().trim();
+                const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
+                let cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
+                
+                let displayName = isAiMatched 
+                    ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
+                    : (item['RawOCRName'] || 'Unknown Driver').trim();
+
+                const violType = item['ViolationType'] || '';
+                const subType = item['ViolationSubType'] || '';
+                const amt = item['ViolationAmount'] || '0.00';
+                
+                const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
+                const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
+
+                let idAlertHtml = '';
+                let nameAlertHtml = '';
+                let idInputStyleOverride = '';
+                let nameInputStyleOverride = '';
+
+                const rosterMatch = masterSeniorityArray.find(person => {
+                    const fName = person.FirstName || person['First Name'] || '';
+                    const lName = person.LastName || person['Last Name'] || '';
+                    return `${fName} ${lName}`.trim().toLowerCase() === displayName.toLowerCase();
+                });
+
+                if (!isAiMatched) {
+                    if (displayName !== 'Unknown Driver') {
+                        displayName = displayName + ' *'; 
+                    }
+                    nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ RESELECT MEMBER</span>';
+                    nameInputStyleOverride = 'border-color: #ffcc00;';
+
+                    if (rosterMatch) {
+                        const officialRosterId = (rosterMatch.Title || '').toString().trim();
+                        if (empId !== officialRosterId) {
+                            empId = ''; 
+                            idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
+                            idInputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
+                            cardClass = 'ai-fail'; 
+                        }
+                    } else if (displayName !== 'Unknown Driver *') {
+                        idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ NOT IN ROSTER</span>';
+                        idInputStyleOverride = 'border-color: #ffcc00;';
+                    }
+                }
+
+                const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
+
+                htmlContent += `
+                    <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
+                            <div class="input-wrapper" style="flex: 1; min-width: 0;">
+                                <span class="input-label emp-label">Member Name</span>
+                                <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
+                                ${nameAlertHtml}
+                            </div>
+                            <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
+                                <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
+                                <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
+                                ${idAlertHtml}
+                            </div>
+                        </div>
+
+                        <div class="card-split-grid" onclick="event.stopPropagation()">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="input-wrapper">
+                                    <span class="input-label">File Date</span>
+                                    <input type="date" value="${fileDate}">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Violation Type</span>
+                                    <select class="violtype-select">
+                                        <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                        ${violTypeOptionsHtml || `
+                                            <option value="Discharge">Discharge</option>
+                                            <option value="Suspension">Suspension</option>
+                                            <option value="Pay Claim">Pay Claim</option>
+                                            <option value="Protest">Protest</option>
+                                            <option value="Other">Other</option>
+                                        `}
+                                    </select>
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Claim Amt</span>
+                                    <input type="number" step="0.01" class="amt-input" value="${amt}">
+                                </div>
+                                <button class="btn-3d btn-deepdive" onclick="openDrawer('${sysId}')" style="margin-top: 5px;">Deep Dive</button>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="input-wrapper">
+                                    <span class="input-label">Violation Date</span>
+                                    <input type="date" value="${violDate}">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Sub Violation</span>
+                                    <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
+                                        <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                        ${subViolOptionsHtml}
+                                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                                    </select>
+                                    <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px; height: 38px;" placeholder="Type custom violation here...">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Sys ID</span>
+                                    <div class="sys-id-display-box">${sysId}</div>
+                                </div>
+                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')" style="margin-top: 5px;">Approve</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
         displayContainer.innerHTML = htmlContent;
     }
 
@@ -551,6 +587,12 @@
         })
         .then(res => {
             if (res.ok) {
+                // Update local status so it drops off the real-time count
+                const rec = fullDataCache.find(r => r.Title === recordId);
+                if (rec) rec.isVerifiedLocally = true;
+                
+                updateHeader();
+
                 card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.9)';
@@ -595,6 +637,12 @@
 
     function executeUndoAction() {
         if (!lastHiddenCardId) return;
+
+        // Restore local status so the header count pops back up
+        const rec = fullDataCache.find(r => r.Title === lastHiddenCardId);
+        if (rec) rec.isVerifiedLocally = false;
+        
+        updateHeader();
 
         const card = document.getElementById(`card-${lastHiddenCardId}`);
         if (card) {
