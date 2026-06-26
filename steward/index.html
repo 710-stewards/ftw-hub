@@ -432,9 +432,11 @@
         }
     }
 
+    // --- GLOBAL TRACKERS FOR THE ONE-CLICK UNDO SAFETY NET ---
+    let lastHiddenCardId = null;
+    let undoTimeoutTimer = null;
+
     function executeRowCommit(recordId) {
-        if (!confirm("Commit verification and transfer record to Steward Verified status?")) return;
-        
         const card = document.getElementById(`card-${recordId}`);
         let fullInputName = card.querySelector('.emp-input').value.trim();
         const updatedEmpId = card.querySelector('.id-input').value.trim();
@@ -443,15 +445,15 @@
         const updatedViolType = card.querySelector('.violtype-select').value;
         const updatedAmount = card.querySelector('.amt-input').value;
 
-        // Clean out trailing asterisks before saving to SharePoint columns
-        if (fullInputName.endsWith('*')) {
-            fullInputName = fullInputName.slice(0, -1).trim();
-        }
-
-        // Hard blocker: Deny saves if the ID is blank
+        // Hard blocker: Instantly stop the train if they forgot the lynchpin ID
         if (!updatedEmpId) {
             alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
             return;
+        }
+
+        // Clean out our trailing asterisk poison trap before it saves to SharePoint
+        if (fullInputName.endsWith('*')) {
+            fullInputName = fullInputName.slice(0, -1).trim();
         }
 
         let updatedViolSubType = card.querySelector('.subviol-select').value;
@@ -464,9 +466,10 @@
         const lastName = nameParts.slice(1).join(' ') || '';
 
         const ind = document.getElementById('save-indicator');
-        ind.innerText = "↻ Committing changes and verifying...";
+        ind.innerText = "↻ Committing changes...";
         ind.className = "save-status saving";
 
+        // Shoot the data package straight to the cloud (No double-click speed bumps)
         fetch(flowUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -486,14 +489,73 @@
         })
         .then(res => {
             if (res.ok) {
-                card.style.opacity = '0.3';
-                setTimeout(() => { card.remove(); }, 400);
+                // Smoothly fade and shrink the card out of sight locally
+                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => { 
+                    card.style.display = 'none'; 
+                }, 300);
+
                 ind.innerText = "✓ Action Complete";
                 ind.className = "save-status";
+
+                // Fire up the modern floating safety net at the bottom of the screen
+                triggerUndoToast(recordId);
             } else {
                 alert("Cloud sync failed. Check connection.");
             }
         });
+    }
+
+    // --- FLOATING SAFETY NET ENGINE ---
+    function triggerUndoToast(recordId) {
+        // Reset any existing timers or active tracker variables
+        clearTimeout(undoTimeoutTimer);
+        lastHiddenCardId = recordId;
+
+        let toast = document.getElementById('undo-toast-banner');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'undo-toast-banner';
+            // Clean, floating modern bar styled to match your dark terminal theme
+            toast.style.cssText = "position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--accent); padding: 12px 24px; border-radius: 8px; display: flex; align-items: center; gap: 20px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.6); font-size: 14px; font-weight: bold;";
+            document.body.appendChild(toast);
+        }
+
+        toast.innerHTML = `
+            <span style="color: white; letter-spacing: 0.3px;">Record Verified</span>
+            <button onclick="executeUndoAction()" style="background: transparent; border: none; color: var(--accent); font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 14px; padding: 4px 8px; transition: color 0.2s;">↩ Undo</button>
+        `;
+        toast.style.display = 'flex';
+
+        // Auto-vanish the undo option banner after 5 seconds on the floor
+        undoTimeoutTimer = setTimeout(() => {
+            toast.style.display = 'none';
+            lastHiddenCardId = null;
+        }, 5000);
+    }
+
+    function executeUndoAction() {
+        if (!lastHiddenCardId) return;
+
+        const card = document.getElementById(`card-${lastHiddenCardId}`);
+        if (card) {
+            // Restore the card on screen instantly
+            card.style.display = 'flex';
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        // Drop the toast banner immediately
+        const toast = document.getElementById('undo-toast-banner');
+        if (toast) toast.style.display = 'none';
+        
+        clearTimeout(undoTimeoutTimer);
+        lastHiddenCardId = null;
     }
 
     function openDrawer(recordId) {
