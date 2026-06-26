@@ -179,301 +179,304 @@
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const stewardGUID = urlParams.get('steward');
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+const urlParams = new URLSearchParams(window.location.search);
+    const stewardGUID = urlParams.get('steward');
+    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-        let fullDataCache = [];
+    let fullDataCache = [];
+    let masterSeniorityArray = []; // Global cache for ID lookups
 
-function toggleSettings() {
-            document.getElementById('settings-panel').classList.toggle('open');
+    function toggleSettings() {
+        document.getElementById('settings-panel').classList.toggle('open');
+    }
+
+    function loadPending() {
+        if (!stewardGUID) {
+            document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
+            return;
         }
 
-        function loadPending() {
-            if (!stewardGUID) {
-                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
-                return;
-            }
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
-            })
-            .then(response => response.json())
-            .then(dataBundle => {
-                document.getElementById('loading').style.display = 'none';
-                
-                fullDataCache = dataBundle.pendingGrievances || [];
-                const dropdownOptions = dataBundle.dropdownOptions || [];
-                const seniorityList = dataBundle.seniorityList || [];
-                const stewardName = dataBundle.stewardName || 'Steward';
-                
-                if (fullDataCache.length === 0) {
-                    document.getElementById('steward-info').innerText = "0 Assigned Records";
-                    document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No pending records found.</div>';
-                    return;
-                }
-                document.getElementById('steward-info').innerText = `${fullDataCache.length} records assigned for ${stewardName}`;
-
-                // --- BUILD MASTER ROSTER DATALIST ---
-                let seniorityOptionsHtml = '';
-                seniorityList.forEach(person => {
-                    const fName = person.FirstName || '';
-                    const lName = person.LastName || '';
-                    const eId = person.EmployeeID || '';
-                    const fullRosterName = `${fName} ${lName}`.trim();
-                    if (fullRosterName) {
-                        seniorityOptionsHtml += `<option value="${fullRosterName}" data-empid="${eId}"></option>`;
-                    }
-                });
-
-                // --- BUILD DYNAMIC DROPDOWN OPTION LISTS ---
-                const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
-                const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
-
-                let violTypeOptionsHtml = '';
-                violationTypeRows.forEach(opt => {
-                    const val = opt.OptionValue || '';
-                    violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
-                });
-
-                let subViolOptionsHtml = '';
-                subViolationRows.forEach(opt => {
-                    const val = opt.OptionValue || '';
-                    subViolOptionsHtml += `<option value="${val}">${val}</option>`;
-                });
-
-                let dataListsContainer = document.getElementById('global-datalists');
-                if (!dataListsContainer) {
-                    dataListsContainer = document.createElement('div');
-                    dataListsContainer.id = 'global-datalists';
-                    dataListsContainer.style.display = 'none';
-                    document.body.appendChild(dataListsContainer);
-                }
-                dataListsContainer.innerHTML = `
-                    <datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>
-                    <datalist id="master-subviolation-list">${subViolOptionsHtml}</datalist>
-                `;
-
-                let htmlContent = '';
-                fullDataCache.forEach((item) => {
-                    const sysId = item['Title'] || '';
-                    const empId = item['EmployeeID'] || '';
-                    const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
-                    const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
-                    
-                    const displayName = isAiMatched 
-                        ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
-                        : item['RawOCRName'] || 'Unknown Driver';
-
-                    const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
-                    const violType = item['ViolationType'] || '';
-                    const subType = item['ViolationSubType'] || '';
-                    const amt = item['ViolationAmount'] || '0.00';
-                    
-                    const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
-                    const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
-
-                    htmlContent += `
-                        <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
-                                <div class="input-wrapper" style="flex: 1; min-width: 0;">
-                                    <span class="input-label emp-label">Member Name</span>
-                                    <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
-                                </div>
-                                <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
-                                    <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
-                                    <input type="text" class="id-input" value="${empId}" placeholder="-------" maxlength="7">
-                                </div>
-                            </div>
-
-                            <div class="card-split-grid" onclick="event.stopPropagation()">
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <div class="input-wrapper">
-                                        <span class="input-label">File Date</span>
-                                        <input type="date" value="${fileDate}">
-                                    </div>
-                                    <div class="input-wrapper">
-                                        <span class="input-label">Violation Type</span>
-                                        <select class="violtype-select">
-                                            <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                            ${violTypeOptionsHtml || `
-                                                <option value="Discharge">Discharge</option>
-                                                <option value="Suspension">Suspension</option>
-                                                <option value="Pay Claim">Pay Claim</option>
-                                                <option value="Protest">Protest</option>
-                                                <option value="Other">Other</option>
-                                            `}
-                                        </select>
-                                    </div>
-                                    <div class="input-wrapper">
-                                        <span class="input-label">Claim Amt</span>
-                                        <input type="number" step="0.01" class="amt-input" value="${amt}">
-                                    </div>
-                                    <button class="btn-3d btn-deepdive" onclick="openDrawer('${sysId}')" style="margin-top: 5px;">Deep Dive</button>
-                                </div>
-
-                                <div style="display: flex; flex-direction: column; gap: 12px;">
-                                    <div class="input-wrapper">
-                                        <span class="input-label">Violation Date</span>
-                                        <input type="date" value="${violDate}">
-                                    </div>
-                                    <div class="input-wrapper">
-                                        <span class="input-label">Sub Violation</span>
-                                        <input type="text" class="subviol-input" value="${subType}" list="master-subviolation-list" placeholder="Select or type...">
-                                    </div>
-                                    <div class="input-wrapper">
-                                        <span class="input-label">Sys ID</span>
-                                        <div class="sys-id-display-box">${sysId}</div>
-                                    </div>
-                                    <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')" style="margin-top: 5px;">Approve</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                document.getElementById('data-display').innerHTML = htmlContent;
-            }).catch(err => {
-                document.getElementById('loading').innerText = "Interface parsing failure. Check format mappings.";
-                console.error(err);
-            });
-        }
-
-        function handleRosterSelection(recordId, inputElem) {
-            const selectedName = inputElem.value;
-            const datalist = document.getElementById('master-seniority-list');
-            const option = Array.from(datalist.options).find(opt => opt.value === selectedName);
-            if (option) {
-                const targetEmpId = option.getAttribute('data-empid');
-                const card = document.getElementById(`card-${recordId}`);
-                if (card && targetEmpId) {
-                    card.querySelector('.id-input').value = targetEmpId;
-                }
-            }
-        }
-
-        function executeRowCommit(recordId) {
-            if (!confirm("Commit verification and transfer record to Steward Verified status?")) return;
+        fetch(flowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+        })
+        .then(response => response.json())
+        .then(dataBundle => {
+            document.getElementById('loading').style.display = 'none';
             
-            const card = document.getElementById(`card-${recordId}`);
-            const fullInputName = card.querySelector('.emp-input').value.trim();
-            const updatedEmpId = card.querySelector('.id-input').value;
-            const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
-            const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
-            const updatedViolType = card.querySelector('.violtype-select').value;
-            const updatedViolSubType = card.querySelector('.subviol-input').value;
-            const updatedAmount = card.querySelector('.amt-input').value;
-
-            // Cleanly split full input name into First and Last tokens for your SharePoint columns
-            const nameParts = fullInputName.split(' ');
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
-
-            const ind = document.getElementById('save-indicator');
-            ind.innerText = "重新 Committing changes and verifying...";
-            ind.className = "save-status saving";
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "stewardGuid": stewardGUID,
-                    "action": "verify",
-                    "titleId": recordId,
-                    "FirstName": firstName,
-                    "LastName": lastName,
-                    "EmployeeID": updatedEmpId,
-                    "FileDate": updatedFileDate,
-                    "ViolationDate": updatedViolDate,
-                    "ViolationType": updatedViolType,
-                    "ViolationSubType": updatedViolSubType,
-                    "ViolationAmount": updatedAmount
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    card.style.opacity = '0.3';
-                    setTimeout(() => { card.remove(); }, 400);
-                    ind.innerText = "✓ Action Complete";
-                    ind.className = "save-status";
-                } else {
-                    alert("Cloud sync failed. Check connection.");
-                }
-            });
-        }
-
-        function openDrawer(recordId) {
-            const record = fullDataCache.find(r => r.Title === recordId);
-            document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
-            const drawerContent = document.getElementById('drawer-main-content');
-            if (!record) {
-                drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record context dropped.</p>`;
+            fullDataCache = dataBundle.pendingGrievances || [];
+            const dropdownOptions = dataBundle.dropdownOptions || [];
+            masterSeniorityArray = dataBundle.seniorityList || [];
+            const stewardName = dataBundle.stewardName || 'Steward';
+            
+            if (fullDataCache.length === 0) {
+                document.getElementById('steward-info').innerText = "0 Assigned Records";
+                document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No pending records found.</div>';
                 return;
             }
-            let safeLink = record.PublicLink || '';
-            let downloadBtnHtml = '';
-            if (safeLink.includes("drive.google.com")) {
-                const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    const fileId = fileIdMatch[1];
-                    safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                    downloadBtnHtml = `
-                        <div style="text-align: center; margin-top: 12px;">
-                            <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
-                                📥 Download PDF Copy
-                            </a>
-                        </div>
-                    `;
+            document.getElementById('steward-info').innerText = `${fullDataCache.length} records assigned for ${stewardName}`;
+
+            // --- BUILD MASTER ROSTER DATALIST ---
+            let seniorityOptionsHtml = '';
+            masterSeniorityArray.forEach(person => {
+                const fName = person.FirstName || '';
+                const lName = person.LastName || '';
+                const fullRosterName = `${fName} ${lName}`.trim();
+                if (fullRosterName) {
+                    seniorityOptionsHtml += `<option value="${fullRosterName}"></option>`;
                 }
+            });
+
+            // --- BUILD DYNAMIC DROPDOWN OPTION LISTS ---
+            const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
+            const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
+
+            let violTypeOptionsHtml = '';
+            violationTypeRows.forEach(opt => {
+                const val = opt.OptionValue || '';
+                violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
+            });
+
+            let subViolOptionsHtml = '';
+            subViolationRows.forEach(opt => {
+                const val = opt.OptionValue || '';
+                subViolOptionsHtml += `<option value="${val}">${val}</option>`;
+            });
+
+            let dataListsContainer = document.getElementById('global-datalists');
+            if (!dataListsContainer) {
+                dataListsContainer = document.createElement('div');
+                dataListsContainer.id = 'global-datalists';
+                dataListsContainer.style.display = 'none';
+                document.body.appendChild(dataListsContainer);
             }
-            drawerContent.innerHTML = `
-                <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-                    <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
-                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Raw Extracted Name:</b> ${record.RawOCRName || 'N/A'}</p>
-                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
-                    <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
-                    <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
-                </div>
-                <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Steward Internal Notes</label>
-                <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" placeholder="Type notes here..."></textarea>
-                <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
-                ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
+            dataListsContainer.innerHTML = `
+                <datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>
+                <datalist id="master-subviolation-list">${subViolOptionsHtml}</datalist>
             `;
-            document.getElementById('side-drawer').classList.add('open');
-        }
 
-        function closeDrawer() {
-            document.getElementById('side-drawer').classList.remove('open');
-        }
+            let htmlContent = '';
+            fullDataCache.forEach((item) => {
+                const sysId = item['Title'] || '';
+                const empId = item['EmployeeID'] || '';
+                const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
+                const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
+                
+                const displayName = isAiMatched 
+                    ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
+                    : item['RawOCRName'] || 'Unknown Driver';
 
-        const drawer = document.getElementById('side-drawer');
-        const handle = document.getElementById('drawerHandle');
-        handle.addEventListener('mousedown', initResize);
-        handle.addEventListener('touchstart', initResize, { passive: true });
+                const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
+                const violType = item['ViolationType'] || '';
+                const subType = item['ViolationSubType'] || '';
+                const amt = item['ViolationAmount'] || '0.00';
+                
+                const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
+                const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
 
-        function initResize(e) {
-            document.addEventListener('mousemove', resizeDrawer);
-            document.addEventListener('mouseup', stopResize);
-            document.addEventListener('touchmove', resizeDrawer, { passive: false });
-            document.addEventListener('touchend', stopResize);
-        }
+                htmlContent += `
+                    <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
+                            <div class="input-wrapper" style="flex: 1; min-width: 0;">
+                                <span class="input-label emp-label">Member Name</span>
+                                <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
+                            </div>
+                            <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
+                                <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
+                                <input type="text" class="id-input" value="${empId}" placeholder="-------" maxlength="7">
+                            </div>
+                        </div>
 
-        function resizeDrawer(e) {
-            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            const newWidth = window.innerWidth - clientX;
-            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
-                drawer.style.width = newWidth + 'px';
+                        <div class="card-split-grid" onclick="event.stopPropagation()">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="input-wrapper">
+                                    <span class="input-label">File Date</span>
+                                    <input type="date" value="${fileDate}">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Violation Type</span>
+                                    <select class="violtype-select">
+                                        <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                        ${violTypeOptionsHtml || `
+                                            <option value="Discharge">Discharge</option>
+                                            <option value="Suspension">Suspension</option>
+                                            <option value="Pay Claim">Pay Claim</option>
+                                            <option value="Protest">Protest</option>
+                                            <option value="Other">Other</option>
+                                        `}
+                                    </select>
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Claim Amt</span>
+                                    <input type="number" step="0.01" class="amt-input" value="${amt}">
+                                </div>
+                                <button class="btn-3d btn-deepdive" onclick="openDrawer('${sysId}')" style="margin-top: 5px;">Deep Dive</button>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div class="input-wrapper">
+                                    <span class="input-label">Violation Date</span>
+                                    <input type="date" value="${violDate}">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Sub Violation</span>
+                                    <input type="text" class="subviol-input" value="${subType}" list="master-subviolation-list" placeholder="Select or type...">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Sys ID</span>
+                                    <div class="sys-id-display-box">${sysId}</div>
+                                </div>
+                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')" style="margin-top: 5px;">Approve</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('data-display').innerHTML = htmlContent;
+        }).catch(err => {
+            document.getElementById('loading').innerText = "Interface parsing failure. Check format mappings.";
+            console.error(err);
+        });
+    }
+
+    // Dynamic roster lookup engine to auto-populate Emp ID
+    function handleRosterSelection(recordId, inputElem) {
+        const typedName = inputElem.value.trim();
+        const match = masterSeniorityArray.find(person => {
+            const fullRosterName = `${person.FirstName || ''} ${person.LastName || ''}`.trim();
+            return fullRosterName.toLowerCase() === typedName.toLowerCase();
+        });
+        
+        if (match) {
+            const card = document.getElementById(`card-${recordId}`);
+            if (card) {
+                card.querySelector('.id-input').value = match.EmployeeID || '';
             }
         }
+    }
 
-        function stopResize() {
-            document.removeEventListener('mousemove', resizeDrawer);
-            document.removeEventListener('touchmove', resizeDrawer);
+    function executeRowCommit(recordId) {
+        if (!confirm("Commit verification and transfer record to Steward Verified status?")) return;
+        
+        const card = document.getElementById(`card-${recordId}`);
+        const fullInputName = card.querySelector('.emp-input').value.trim();
+        const updatedEmpId = card.querySelector('.id-input').value;
+        const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
+        const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
+        const updatedViolType = card.querySelector('.violtype-select').value;
+        const updatedViolSubType = card.querySelector('.subviol-input').value;
+        const updatedAmount = card.querySelector('.amt-input').value;
+
+        // Cleanly split full input name into First and Last tokens for your SharePoint columns
+        const nameParts = fullInputName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        const ind = document.getElementById('save-indicator');
+        ind.innerText = "↻ Committing changes and verifying...";
+        ind.className = "save-status saving";
+
+        fetch(flowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                "stewardGuid": stewardGUID,
+                "action": "verify",
+                "titleId": recordId,
+                "FirstName": firstName,
+                "LastName": lastName,
+                "EmployeeID": updatedEmpId,
+                "FileDate": updatedFileDate,
+                "ViolationDate": updatedViolDate,
+                "ViolationType": updatedViolType,
+                "ViolationSubType": updatedViolSubType,
+                "ViolationAmount": updatedAmount
+            })
+        })
+        .then(res => {
+            if (res.ok) {
+                card.style.opacity = '0.3';
+                setTimeout(() => { card.remove(); }, 400);
+                ind.innerText = "✓ Action Complete";
+                ind.className = "save-status";
+            } else {
+                alert("Cloud sync failed. Check connection.");
+            }
+        });
+    }
+
+    function openDrawer(recordId) {
+        const record = fullDataCache.find(r => r.Title === recordId);
+        document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
+        const drawerContent = document.getElementById('drawer-main-content');
+        if (!record) {
+            drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record context dropped.</p>`;
+            return;
         }
+        let safeLink = record.PublicLink || '';
+        let downloadBtnHtml = '';
+        if (safeLink.includes("drive.google.com")) {
+            const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+            if (fileIdMatch && fileIdMatch[1]) {
+                const fileId = fileIdMatch[1];
+                safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+                downloadBtnHtml = `
+                    <div style="text-align: center; margin-top: 12px;">
+                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
+                            📥 Download PDF Copy
+                        </a>
+                    </div>
+                `;
+            }
+        }
+        drawerContent.innerHTML = `
+            <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
+                <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Raw Extracted Name:</b> ${record.RawOCRName || 'N/A'}</p>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
+                <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
+            </div>
+            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Steward Internal Notes</label>
+            <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" placeholder="Type notes here..."></textarea>
+            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
+            ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
+        `;
+        document.getElementById('side-drawer').classList.add('open');
+    }
 
-        loadPending();
+    function closeDrawer() {
+        document.getElementById('side-drawer').classList.remove('open');
+    }
+
+    const drawer = document.getElementById('side-drawer');
+    const handle = document.getElementById('drawerHandle');
+    handle.addEventListener('mousedown', initResize);
+    handle.addEventListener('touchstart', initResize, { passive: true });
+
+    function initResize(e) {
+        document.addEventListener('mousemove', resizeDrawer);
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchmove', resizeDrawer, { passive: false });
+        document.addEventListener('touchend', stopResize);
+    }
+
+    function resizeDrawer(e) {
+        let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const newWidth = window.innerWidth - clientX;
+        if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
+            drawer.style.width = newWidth + 'px';
+        }
+    }
+
+    function stopResize() {
+        document.removeEventListener('mousemove', resizeDrawer);
+        document.removeEventListener('touchmove', resizeDrawer);
+    }
+
+    loadPending();
     </script>
 </body>
 </html>
