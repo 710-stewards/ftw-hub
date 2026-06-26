@@ -217,12 +217,22 @@ function loadPending() {
                 }
                 document.getElementById('steward-info').innerText = `${fullDataCache.length} records assigned for ${stewardName}`;
 
-                // --- PLUMB IN DYNAMIC DROPDOWN OPTIONS ---
-                // Filter the backend bullshit list by Title keys
+                // --- BUILD MASTER ROSTER DATALIST ---
+                let seniorityOptionsHtml = '';
+                seniorityList.forEach(person => {
+                    const fName = person.FirstName || '';
+                    const lName = person.LastName || '';
+                    const eId = person.EmployeeID || '';
+                    const fullRosterName = `${fName} ${lName}`.trim();
+                    if(fullRosterName) {
+                        seniorityOptionsHtml += `<option value="${fullRosterName}" data-empid="${eId}"></option>`;
+                    }
+                });
+
+                // --- BUILD DYNAMIC DROPDOWN OPTION LISTS ---
                 const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
                 const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
 
-                // Generate option strings dynamically from your SharePoint list rows
                 let violTypeOptionsHtml = '';
                 violationTypeRows.forEach(opt => {
                     const val = opt.OptionValue || '';
@@ -234,6 +244,19 @@ function loadPending() {
                     const val = opt.OptionValue || '';
                     subViolOptionsHtml += `<option value="${val}">${val}</option>`;
                 });
+
+                // Inject master global data lists into the page shell once
+                let dataListsContainer = document.getElementById('global-datalists');
+                if(!dataListsContainer) {
+                    dataListsContainer = document.createElement('div');
+                    dataListsContainer.id = 'global-datalists';
+                    dataListsContainer.style.display = 'none';
+                    document.body.appendChild(dataListsContainer);
+                }
+                dataListsContainer.innerHTML = `
+                    <datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>
+                    <datalist id="master-subviolation-list">${subViolOptionsHtml}</datalist>
+                `;
 
                 let htmlContent = '';
                 fullDataCache.forEach((item) => {
@@ -260,7 +283,7 @@ function loadPending() {
                             <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
                                 <div class="input-wrapper" style="flex: 1; min-width: 0;">
                                     <span class="input-label emp-label">Member Name</span>
-                                    <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}">
+                                    <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
                                 </div>
                                 <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
                                     <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
@@ -298,14 +321,11 @@ function loadPending() {
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
                                     <div class="input-wrapper">
                                         <span class="input-label">Violation Date</span>
-                                        <input type="date" value="${fileDate}">
+                                        <input type="date" value="${violDate}">
                                     </div>
                                     <div class="input-wrapper">
                                         <span class="input-label">Sub Violation</span>
-                                        <select>
-                                            <option value="${subType}" hidden>${subType || 'Select...'}</option>
-                                            ${subViolOptionsHtml}
-                                        </select>
+                                        <input type="text" class="subviol-input" value="${subType}" list="master-subviolation-list" placeholder="Select or type...">
                                     </div>
                                     <div class="input-wrapper">
                                         <span class="input-label">Sys ID</span>
@@ -324,6 +344,21 @@ function loadPending() {
                 document.getElementById('loading').innerText = "Interface parsing failure. Check format mappings.";
                 console.error(err);
             });
+        }
+
+        // Automatic ID lookup engine when a clean name is chosen from the list
+        function handleRosterSelection(recordId, inputElem) {
+            const selectedName = inputElem.value;
+            const datalist = document.getElementById('master-seniority-list');
+            const option = Array.from(datalist.options).find(opt => opt.value === selectedName);
+            
+            if (option) {
+                const targetEmpId = option.getAttribute('data-empid');
+                const card = document.getElementById(`card-${recordId}`);
+                if (card && targetEmpId) {
+                    card.querySelector('.id-input').value = targetEmpId;
+                }
+            }
         }
 
         function executeRowCommit(recordId) {
