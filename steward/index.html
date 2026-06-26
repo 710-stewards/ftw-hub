@@ -189,6 +189,7 @@
     let violTypeOptionsHtml = '';
     let subViolOptionsHtml = '';
     let currentStewardName = 'Steward';
+    let currentStewardId = '';
     let lastHiddenCardId = null;
     let undoTimeoutTimer = null;
 
@@ -214,15 +215,11 @@
             fullDataCache = dataBundle.pendingGrievances || [];
             const dropdownOptions = dataBundle.dropdownOptions || [];
             masterSeniorityArray = dataBundle.seniorityList || [];
-            currentStewardName = dataBundle.stewardName || 'Steward';
             
-            // Clean out array brackets if Power Automate parsed it stringified raw
-            if (currentStewardName.startsWith('[') && currentStewardName.endsWith(']')) {
-                try {
-                    const parsed = JSON.parse(currentStewardName);
-                    currentStewardName = parsed[0] || 'Steward';
-                } catch(e) {}
-            }
+            // Unpack your master steward profile row properties dynamically
+            const profile = dataBundle.stewardProfile || {};
+            currentStewardName = profile.StewardName || profile.DisplayName || profile.Full_x0020_Name || 'Steward';
+            currentStewardId = profile.StewardID || profile.Title || ''; 
 
             // Clean display format for the operational layout top bar header
             if (fullDataCache.length === 0) {
@@ -282,20 +279,21 @@
         });
     }
 
-    // Dynamic extraction logic to build cross-coverage options on the fly
     function buildStewardFilters() {
         const grid = document.getElementById('steward-checkbox-grid');
         const stewards = [...new Set(fullDataCache.map(item => item.StewardOfRecord || item['StewardOfRecord']).filter(Boolean))];
         
         if (stewards.length === 0) {
-            grid.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); padding: 5px;">No cross-coverage metadata records detected.</p>';
+            grid.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); padding: 5px;">No cross-coverage records found.</p>';
             return;
         }
 
         let html = '';
-         stewards.forEach(steward => {
-            // BEAR TRAP: Match the record's string name against the cloud-verified steward profile name
-            const isMe = steward.toLowerCase().trim() === currentStewardName.toLowerCase().trim();
+        stewards.forEach(steward => {
+            const cleanSteward = steward.toLowerCase().trim();
+            // BEAR TRAP: Match against either your full name OR short username (K_Owens) to lock in the checkmark
+            const isMe = cleanSteward === currentStewardName.toLowerCase().trim() || 
+                         cleanSteward === currentStewardId.toLowerCase().trim();
             
             html += `
                 <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: white; font-size: 14px; cursor: pointer;">
@@ -316,8 +314,6 @@
         });
         
         renderCards(filtered);
-        
-        // Dynamic operational header update so you always know your exact filtered count
         document.getElementById('steward-info').innerText = `${currentStewardName} | Showing ${filtered.length} of ${fullDataCache.length} Records`;
     }
 
