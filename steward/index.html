@@ -179,7 +179,7 @@
     </div>
 
     <script>
-            const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
     const stewardGUID = urlParams.get('steward');
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
@@ -260,13 +260,13 @@
             let htmlContent = '';
             fullDataCache.forEach((item) => {
                 const sysId = item['Title'] || '';
-                const empId = item['EmployeeID'] || '';
+                let empId = (item['EmployeeID'] || '').toString().trim();
                 const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
-                const cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
+                let cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
                 
                 const displayName = isAiMatched 
                     ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
-                    : item['RawOCRName'] || 'Unknown Driver';
+                    : (item['RawOCRName'] || 'Unknown Driver').trim();
 
                 const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
                 const violType = item['ViolationType'] || '';
@@ -275,6 +275,35 @@
                 
                 const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
                 const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
+
+                // --- BACKEND IDIOT-PROOFING LYNCHPIN CHECK ---
+                let idAlertHtml = '';
+                let inputStyleOverride = '';
+
+                // Try to find this extracted driver name on our official seniority sheet
+                const rosterMatch = masterSeniorityArray.find(person => {
+                    const fName = person.FirstName || person['First Name'] || '';
+                    const lName = person.LastName || person['Last Name'] || '';
+                    return `${fName} ${lName}`.trim().toLowerCase() === displayName.toLowerCase();
+                });
+
+                // If it isn't cleared by the AI pipeline yet, cross-verify it manually on load
+                if (!isAiMatched) {
+                    if (rosterMatch) {
+                        const officialRosterId = (rosterMatch.Title || '').toString().trim();
+                        if (empId !== officialRosterId) {
+                            // MISMATCH TRAP DETECTED! Wipe out the toxic OCR digit error entirely
+                            empId = '';
+                            idAlertHtml = '<span style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
+                            inputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
+                            cardClass = 'ai-fail'; // Force highlight warning state
+                        }
+                    } else if (displayName !== 'Unknown Driver') {
+                        // The driver name isn't even registered on the master seniority list
+                        idAlertHtml = '<span style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ NOT IN ROSTER</span>';
+                        inputStyleOverride = 'border-color: #ffcc00;';
+                    }
+                }
 
                 htmlContent += `
                     <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
@@ -285,7 +314,8 @@
                             </div>
                             <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
                                 <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
-                                <input type="text" class="id-input" value="${empId}" placeholder="-------" maxlength="7">
+                                <input type="text" class="id-input" value="${empId}" style="${inputStyleOverride}" placeholder="-------" maxlength="7">
+                                ${idAlertHtml}
                             </div>
                         </div>
 
@@ -352,18 +382,22 @@
         const card = document.getElementById(`card-${recordId}`);
         if (!card) return;
 
+        const idInput = card.querySelector('.id-input');
+
         const match = masterSeniorityArray.find(person => {
             const fName = person.FirstName || person['First Name'] || '';
             const lName = person.LastName || person['Last Name'] || '';
-            const fullRosterName = `${fName} ${lName}`.trim();
-            return fullRosterName.toLowerCase() === typedName.toLowerCase();
+            return `${fName} ${lName}`.trim().toLowerCase() === typedName.toLowerCase();
         });
         
         if (match) {
-            card.querySelector('.id-input').value = match.Title || match['Title'] || '';
+            // Instantly clear any error styling and populate the correct ID from Title
+            idInput.value = match.Title || match['Title'] || '';
+            idInput.style.cssText = ''; 
+            const existingAlert = idInput.nextElementSibling;
+            if (existingAlert && existingAlert.tagName === 'SPAN') existingAlert.remove();
         } else {
-            // The MOMENT they modify or backspace a name string, the ID completely resets to blank!
-            card.querySelector('.id-input').value = '';
+            idInput.value = '';
         }
     }
 
@@ -386,13 +420,18 @@
         
         const card = document.getElementById(`card-${recordId}`);
         const fullInputName = card.querySelector('.emp-input').value.trim();
-        const updatedEmpId = card.querySelector('.id-input').value;
+        const updatedEmpId = card.querySelector('.id-input').value.trim();
         const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
         const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
         const updatedViolType = card.querySelector('.violtype-select').value;
         const updatedAmount = card.querySelector('.amt-input').value;
 
-        // Smart route selection for Sub Violation parsing
+        // Block approvals if the lynchpin Employee ID field is blank or wiped
+        if (!updatedEmpId) {
+            alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
+            return;
+        }
+
         let updatedViolSubType = card.querySelector('.subviol-select').value;
         if (updatedViolSubType === 'CUSTOM_OTHER') {
             updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
