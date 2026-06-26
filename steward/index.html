@@ -90,39 +90,23 @@
 
         @media (max-width: 799px) { .drawer { width: 100% !important; right: -100%; } .drawer-handle { display: none; } }
 
+        /* MOBILE LANDSCAPE OPTIMIZATION (Frees locked header when turned sideways) */
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            body { display: block; overflow-y: auto; height: auto; }
+            .app-container { display: block; overflow: visible; }
+            .main-content { overflow: visible; padding-top: 10px; }
+            .drawer { position: fixed; height: 100vh; }
+        }
+
         /* PC SPREADSHEET OVERRIDE */
         @media screen and (min-width: 1200px) {
             .record-grid { grid-template-columns: 1fr; }
             .record-card { flex-direction: row; align-items: center; padding: 10px 15px; gap: 10px; }
             .card-split-grid { display: flex; flex: 1; align-items: center; gap: 10px; }
             .card-split-grid > div { flex-direction: row !important; align-items: center; flex: 1; justify-content: space-between; gap: 10px; }
-            .input-label { display: none; } /* Hide labels to save horizontal space */
+            .input-label { display: none; }
             .btn-3d { width: auto; padding: 8px 15px; height: 38px; box-shadow: none; margin-top: 0 !important; }
             .btn-3d:active { transform: translateY(2px); }
-       
-        /* MOBILE LANDSCAPE OPTIMIZATION (Frees the locked header) */
-@media screen and (max-height: 500px) and (orientation: landscape) {
-    /* Break the fixed flexbox layout so the page scrolls normally */
-    body { 
-        display: block; 
-        overflow-y: auto; 
-        height: auto; 
-    }
-    .app-container { 
-        display: block; 
-        overflow: visible; 
-    }
-    .main-content { 
-        overflow: visible; 
-        padding-top: 10px;
-    }
-    /* Lock the drawer to the screen so it doesn't get lost if you scroll down */
-    .drawer { 
-        position: fixed; 
-        height: 100vh; 
-    }
-}
-
         }
 
         /* PRINT STYLES */
@@ -228,7 +212,6 @@
                     const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
                     const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
 
-                    // Added onclick to the card, and stopPropagation to inputs
                     htmlContent += `
                         <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
                             
@@ -399,9 +382,7 @@
         const drawer = document.getElementById('side-drawer');
         const handle = document.getElementById('drawerHandle');
 
-        // Mouse Events
         handle.addEventListener('mousedown', initResize);
-        // Touch Events for Tablet/Phone testing
         handle.addEventListener('touchstart', initResize, { passive: true });
 
         function initResize(e) {
@@ -412,11 +393,8 @@
         }
 
         function resizeDrawer(e) {
-            // Check if it's a touch event or a mouse event to get the correct X coordinate
             let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            
             const newWidth = window.innerWidth - clientX;
-            // Constrain between 30% and 80% of screen
             if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
                 drawer.style.width = newWidth + 'px';
             }
