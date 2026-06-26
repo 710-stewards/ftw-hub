@@ -189,7 +189,7 @@
             document.getElementById('settings-panel').classList.toggle('open');
         }
 
-        function loadPending() {
+function loadPending() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
@@ -216,6 +216,24 @@
                     return;
                 }
                 document.getElementById('steward-info').innerText = `${fullDataCache.length} records assigned for ${stewardName}`;
+
+                // --- PLUMB IN DYNAMIC DROPDOWN OPTIONS ---
+                // Filter the backend bullshit list by Title keys
+                const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
+                const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
+
+                // Generate option strings dynamically from your SharePoint list rows
+                let violTypeOptionsHtml = '';
+                violationTypeRows.forEach(opt => {
+                    const val = opt.OptionValue || '';
+                    violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
+                });
+
+                let subViolOptionsHtml = '';
+                subViolationRows.forEach(opt => {
+                    const val = opt.OptionValue || '';
+                    subViolOptionsHtml += `<option value="${val}">${val}</option>`;
+                });
 
                 let htmlContent = '';
                 fullDataCache.forEach((item) => {
@@ -261,11 +279,13 @@
                                         <span class="input-label">Violation Type</span>
                                         <select>
                                             <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                            <option value="Discharge">Discharge</option>
-                                            <option value="Suspension">Suspension</option>
-                                            <option value="Pay Claim">Pay Claim</option>
-                                            <option value="Protest">Protest</option>
-                                            <option value="Other">Other</option>
+                                            ${violTypeOptionsHtml || `
+                                                <option value="Discharge">Discharge</option>
+                                                <option value="Suspension">Suspension</option>
+                                                <option value="Pay Claim">Pay Claim</option>
+                                                <option value="Protest">Protest</option>
+                                                <option value="Other">Other</option>
+                                            `}
                                         </select>
                                     </div>
                                     <div class="input-wrapper">
@@ -278,12 +298,13 @@
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
                                     <div class="input-wrapper">
                                         <span class="input-label">Violation Date</span>
-                                        <input type="date" value="${violDate}">
+                                        <input type="date" value="${fileDate}">
                                     </div>
                                     <div class="input-wrapper">
                                         <span class="input-label">Sub Violation</span>
                                         <select>
                                             <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                            ${subViolOptionsHtml}
                                         </select>
                                     </div>
                                     <div class="input-wrapper">
