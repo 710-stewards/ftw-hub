@@ -220,8 +220,9 @@ const urlParams = new URLSearchParams(window.location.search);
             // --- BUILD MASTER ROSTER DATALIST ---
             let seniorityOptionsHtml = '';
             masterSeniorityArray.forEach(person => {
-                const fName = person.FirstName || '';
-                const lName = person.LastName || '';
+                // Secure properties with bracket fallbacks to prevent loop clipping
+                const fName = person.FirstName || person['First Name'] || '';
+                const lName = person.LastName || person['Last Name'] || '';
                 const fullRosterName = `${fName} ${lName}`.trim();
                 if (fullRosterName) {
                     seniorityOptionsHtml += `<option value="${fullRosterName}"></option>`;
@@ -234,14 +235,18 @@ const urlParams = new URLSearchParams(window.location.search);
 
             let violTypeOptionsHtml = '';
             violationTypeRows.forEach(opt => {
-                const val = opt.OptionValue || '';
-                violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
+                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
+                if(val) {
+                    violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
+                }
             });
 
             let subViolOptionsHtml = '';
             subViolationRows.forEach(opt => {
-                const val = opt.OptionValue || '';
-                subViolOptionsHtml += `<option value="${val}">${val}</option>`;
+                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
+                if(val) {
+                    subViolOptionsHtml += `<option value="${val}">${val}</option>`;
+                }
             });
 
             let dataListsContainer = document.getElementById('global-datalists');
@@ -341,18 +346,20 @@ const urlParams = new URLSearchParams(window.location.search);
         });
     }
 
-    // Dynamic roster lookup engine to auto-populate Emp ID
     function handleRosterSelection(recordId, inputElem) {
         const typedName = inputElem.value.trim();
         const match = masterSeniorityArray.find(person => {
-            const fullRosterName = `${person.FirstName || ''} ${person.LastName || ''}`.trim();
+            const fName = person.FirstName || person['First Name'] || '';
+            const lName = person.LastName || person['Last Name'] || '';
+            const fullRosterName = `${fName} ${lName}`.trim();
             return fullRosterName.toLowerCase() === typedName.toLowerCase();
         });
         
         if (match) {
             const card = document.getElementById(`card-${recordId}`);
             if (card) {
-                card.querySelector('.id-input').value = match.EmployeeID || '';
+                // Auto-fills the employee ID field from the matched seniority row
+                card.querySelector('.id-input').value = match.EmployeeID || match['EmployeeID'] || '';
             }
         }
     }
@@ -369,7 +376,6 @@ const urlParams = new URLSearchParams(window.location.search);
         const updatedViolSubType = card.querySelector('.subviol-input').value;
         const updatedAmount = card.querySelector('.amt-input').value;
 
-        // Cleanly split full input name into First and Last tokens for your SharePoint columns
         const nameParts = fullInputName.split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
@@ -425,8 +431,7 @@ const urlParams = new URLSearchParams(window.location.search);
                 downloadBtnHtml = `
                     <div style="text-align: center; margin-top: 12px;">
                         <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
-                            📥 Download PDF Copy
-                        </a>
+                            📥 Download PDF Copy </a>
                     </div>
                 `;
             }
