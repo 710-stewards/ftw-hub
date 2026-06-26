@@ -18,7 +18,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 90px; }
 
-        /* HEADER & METRIC CONTROLS */
+        /* HEADER & NAVIGATION */
         .top-navbar {
             position: fixed; top: 0; left: 0; right: 0; height: 75px;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
@@ -36,7 +36,7 @@
         }
         .btn-nav:hover { background: #333; border-color: var(--accent); }
 
-        /* KPI METRIC CARDS OVERHEAD */
+        /* OVERHEAD KPI METRICS */
         .stats-banner {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px; margin-bottom: 25px; background: #161616; padding: 12px;
@@ -46,34 +46,33 @@
         .stat-val { font-size: 16px; font-weight: bold; color: var(--accent); }
         .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-top: 2px; }
 
-        /* THE CARD LAYOUT ENGINE */
+        /* CARD ARCHITECTURE */
         .record-card {
             background-color: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
         }
         .card-split-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;
+            display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 14px;
         }
 
-        /* RESPONSIVE TABLE VIEW FOR TABLET / PC MODE */
         @media (min-width: 768px) {
-            .card-split-grid { grid-template-columns: 1fr 1fr 1fr 1fr; }
+            .card-split-grid { grid-template-columns: 1.2fr 1fr 1fr 1.2fr; }
         }
 
-        /* INPUT WRAPPERS & UTILITIES */
+        /* INPUT WRAPPERS */
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        input, select, .readonly-display-box {
+        input, select {
             width: 100%; height: 42px; background: #262626; border: 1px solid #444;
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
         input:focus, select:focus { border-color: var(--accent); }
-        
-        .readonly-display-box {
-            background: #1a1a1a; border-color: #2a2a2a; color: #ccc;
-            display: flex; align-items: center; font-weight: 500;
+
+        .hold-reason-input {
+            background: #201a00; border-color: #665200; color: #fff;
+            margin-top: 8px; transition: all 0.2s ease;
         }
 
         /* BUTTONS */
@@ -86,7 +85,7 @@
         .btn-settle { background-color: var(--accent-green); color: #111; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
-        /* SIDE PANEL / DRAWER CRADLE */
+        /* SIDE DRAWER */
         .side-drawer {
             position: fixed; top: 0; right: 0; bottom: 0; width: 450px;
             background: #161616; border-left: 2px solid var(--accent);
@@ -107,7 +106,7 @@
 </head>
 <body>
 
-    <!-- TOP NAVIGATION & VERIFICATION PANEL -->
+    <!-- TOP NAVBAR -->
     <div class="top-navbar">
         <div>
             <div class="header-title">Local 710 Processing Hub</div>
@@ -118,7 +117,7 @@
         </div>
     </div>
 
-    <!-- MACRO LIABILITY TRACKER BAR -->
+    <!-- KPI STATS BAR -->
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
@@ -128,20 +127,16 @@
             <div id="metric-liability" class="stat-val">$0.00</div>
             <div class="stat-lbl">Active Exposure</div>
         </div>
-        <div class="stat-box">
-            <div id="metric-settled-sum" class="stat-val">$0.00</div>
-            <div class="stat-lbl">Total Payouts</div>
-        </div>
     </div>
 
-    <!-- MAIN DATA VIEWPORT CONTAINER -->
+    <!-- MAIN DASHBOARD VIEWPORT -->
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
-    <!-- DETAIL / AUDIT DRAWER -->
+    <!-- AUDIT VAULT DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -151,19 +146,19 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <!-- CORE PROCESSING JAVASCRIPT ENGINE -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
-        
-        // Pointing to your exact Power Automate core listener hook
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
         let verifiedCacheArray = [];
+        let dispositionOptionsHtml = '';
         let currentStewardName = 'Executive Admin';
 
-        // Tie the back-button destination up securely so you don't lose your login token
         document.getElementById('lnk-back-home').href = `index.html?steward=${stewardGUID}`;
+
+        // Get standard local date formatted as YYYY-MM-DD safely
+        const getTodayString = () => new Date().toISOString().split('T')[0];
 
         function loadHubData() {
             if (!stewardGUID) {
@@ -171,7 +166,6 @@
                 return;
             }
 
-            // Using the precise action payload block to distinguish operations in your cloud flow
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -183,11 +177,22 @@
 
                 verifiedCacheArray = bundle.pendingGrievances || [];
                 const roster = bundle.stewardRoster || [];
+                const dropdownOptions = bundle.dropdownOptions || [];
 
                 const myProfile = roster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim()) || {};
                 currentStewardName = myProfile.StewardName || 'Executive Admin';
                 
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
+
+                // --- BUILD DYNAMIC DISPOSITION SELECTIONS FROM SHAREPOINT ---
+                const dispRows = dropdownOptions.filter(opt => opt.Title === 'Disposition');
+                dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
+                dispRows.forEach(opt => {
+                    const val = opt.OptionValue || opt.Value || '';
+                    if (val) {
+                        dispositionOptionsHtml += `<option value="${val}">${val}</option>`;
+                    }
+                });
 
                 calculateMetrics();
                 renderHubCards();
@@ -199,11 +204,7 @@
 
         function calculateMetrics() {
             const openCasesCount = verifiedCacheArray.length;
-            
-            const openLiabilitySum = verifiedCacheArray.reduce((acc, curr) => {
-                const amt = parseFloat(curr.ViolationAmount || 0);
-                return acc + amt;
-            }, 0);
+            const openLiabilitySum = verifiedCacheArray.reduce((acc, curr) => acc + parseFloat(curr.ViolationAmount || 0), 0);
 
             document.getElementById('metric-open-cases').innerText = openCasesCount;
             document.getElementById('metric-liability').innerText = `$${openLiabilitySum.toFixed(2)}`;
@@ -211,14 +212,13 @@
 
         function renderHubCards() {
             const display = document.getElementById('data-display');
-            display.style.paddingBottom = '120px'; // Your mobile safety toolbar clearance buffer
+            display.style.paddingBottom = '120px';
 
             if (verifiedCacheArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found.</div>';
                 return;
             }
 
-            // Group the verified records by their Steward of Record automatically for cleaner panel scanning
             const grouped = {};
             verifiedCacheArray.forEach(item => {
                 const st = (item.StewardOfRecord || 'Unassigned Roster').trim();
@@ -245,41 +245,38 @@
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
 
                     html += `
-                        <div class="record-card" id="hub-card-${sysId}">
-                            <!-- LEVEL 1: COMPACT READONLY CONTEXT -->
+                        <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                 <div style="min-width: 0; flex: 1;">
                                     <h4 style="font-size: 15px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
-                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">ID: ${empId} | Type: <b>${violType}</b> [${violSubType}]</p>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
+                                    <p style="font-size: 11px; color: var(--accent); margin-top: 2px;">Type: ${violType} [${violSubType}]</p>
                                 </div>
                                 <div style="text-align: right; flex-shrink: 0;">
-                                    <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Claimed Exposure</span>
+                                    <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Claim</span>
                                     <h5 style="font-size: 15px; color: #ff3333; font-weight: bold; margin-top: 2px;">$${originalAmt}</h5>
                                 </div>
                             </div>
 
-                            <!-- LEVEL 2: EXECUTIVE PANEL CONTROLS -->
                             <div class="card-split-grid" onclick="event.stopPropagation()">
                                 <div class="input-wrapper">
-                                    <span class="input-label">Final Disposition</span>
-                                    <select class="status-select">
-                                        <option value="Claim Allowed">🟢 Claim Allowed</option>
-                                        <option value="Settled / Compromise">🟡 Settled / Compromise</option>
-                                        <option value="Withdrawn">🔴 Withdrawn</option>
-                                        <option value="Deadlocked / Appealed">⚫ Deadlocked / Appealed</option>
+                                    <span class="input-label">Action / Disposition</span>
+                                    <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
+                                        ${dispositionOptionsHtml}
                                     </select>
+                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type reason for hold (optional)..." maxlength="150">
                                 </div>
                                 <div class="input-wrapper">
-                                    <span class="input-label">Final Paid Amt</span>
-                                    <input type="number" step="0.01" class="final-amt-input" value="${originalAmt}">
+                                    <span class="input-label">Settled / Panel Date</span>
+                                    <input type="date" class="settled-date-input" value="${getTodayString()}">
                                 </div>
                                 <div class="input-wrapper">
-                                    <span class="input-label">Company Case #</span>
-                                    <input type="text" class="case-number-input" placeholder="e.g. 2026-FTW-XXX" maxlength="25">
+                                    <span class="input-label">Final Paid Amt ($)</span>
+                                    <input type="number" step="0.01" class="final-amt-input" value="0.00">
                                 </div>
                                 <div style="display: flex; gap: 8px; align-items: flex-end;">
                                     <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
-                                    <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Close Case</button>
+                                    <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
                                 </div>
                             </div>
                         </div>
@@ -290,42 +287,93 @@
             display.innerHTML = html;
         }
 
+        // --- HARDCODED INTELLIGENT INPUT LOGIC ENGINE ---
+        function handleStatusLogic(recordId, selectElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const selectedText = selectElem.value;
+            const origAmt = card.getAttribute('data-orig-amt');
+            
+            const finalAmtInput = card.querySelector('.final-amt-input');
+            const holdReasonInput = card.querySelector('.hold-reason-input');
+
+            // 1. Check for Hold Condition (Dynamic text matching but excluding specific final tags)
+            if (selectedText.toLowerCase().includes('hold') && selectedText.toLowerCase() !== 'held with rights') {
+                holdReasonInput.style.display = 'block';
+                holdReasonInput.focus();
+                finalAmtInput.value = "0.00"; // Holds carry zero active payouts
+            } else {
+                holdReasonInput.style.display = 'none';
+                holdReasonInput.value = '';
+                
+                // 2. Strict Money Auto-Fill Rule
+                if (selectedText === 'Claim Allowed') {
+                    finalAmtInput.value = origAmt; // Face Value Auto-Fill
+                } else {
+                    finalAmtInput.value = ''; // Compromise or withdrawal force-wipe for manual entry
+                    finalAmtInput.placeholder = '0.00';
+                }
+            }
+        }
+
         function executeSettlementCommit(recordId) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            const finalStatus = card.querySelector('.status-select').value;
+            const selectedStatus = card.querySelector('.status-select').value;
+            const targetDate = card.querySelector('.settled-date-input').value;
             const finalPayout = card.querySelector('.final-amt-input').value;
-            const caseNumber = card.querySelector('.case-number-input').value.trim();
+            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
 
-            if (!caseNumber) {
-                alert("Validation Blocked: You must attach a Company Case Number before archiving a record to the master database.");
+            if (!selectedStatus) {
+                alert("Validation Blocked: Please select an action layout selection first.");
                 return;
             }
+
+            // Determine if this is an interim logging block or a final archive block based on the hold string match
+            const isHoldAction = selectedStatus.toLowerCase().includes('hold') && selectedStatus.toLowerCase() !== 'held with rights';
+
+            // Format date presentation style cleanly for the timeline string
+            const dateParts = targetDate.split('-');
+            const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
 
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "stewardGuid": stewardGUID,
-                    "action": "settle_case",
+                    "action": isHoldAction ? "save_hold_note" : "settle_case",
                     "titleId": recordId,
-                    "FinalStatus": finalStatus,
+                    "SelectedStatus": selectedStatus,
+                    "TargetDate": targetDate,
                     "FinalPayoutAmount": finalPayout,
-                    "CompanyCaseNumber": caseNumber
+                    "DisplayDate": displayDate,
+                    "HoldReason": customHoldReason
                 })
             })
             .then(res => {
                 if (res.ok) {
-                    card.style.transition = 'all 0.3s ease';
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateX(100px)';
-                    setTimeout(() => {
-                        card.remove();
-                        verifiedCacheArray = verifiedCacheArray.filter(item => item.Title !== recordId);
-                        calculateMetrics();
-                        if (verifiedCacheArray.length === 0) renderHubCards();
-                    }, 300);
+                    if (isHoldAction) {
+                        // Keep card alive for hold. Flash green interface confirmation box.
+                        card.style.background = '#1a331e';
+                        card.style.borderColor = 'var(--accent-green)';
+                        setTimeout(() => {
+                            card.style.background = 'var(--bg-card)';
+                            card.style.borderColor = 'var(--border)';
+                            card.querySelector('.hold-reason-input').value = '';
+                        }, 1000);
+                        alert(`Note appended successfully: Case remains active under ${selectedStatus}.`);
+                    } else {
+                        // Slide card away completely for final case closure archiving
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateX(100px)';
+                        setTimeout(() => {
+                            card.remove();
+                            verifiedCacheArray = verifiedCacheArray.filter(item => item.Title !== recordId);
+                            calculateMetrics();
+                            if (verifiedCacheArray.length === 0) renderHubCards();
+                        }, 300);
+                    }
                 } else {
-                    alert("Cloud archive mapping dropped out. Check connection.");
+                    alert("Cloud sync failure on status push execution.");
                 }
             });
         }
@@ -348,10 +396,10 @@
                     <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? record.FileDate.split('T')[0] : 'N/A'}</p>
                     <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? record.ViolationDate.split('T')[0] : 'N/A'}</p>
                     <p style="margin-bottom: 6px;"><b>Original Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
-                    <p><b>Steward Audit Trail:</b> Verified Matching Sequence Completed</p>
+                    <p><b>Notes Log History:</b> See SharePoint for appended sequence values.</p>
                 </div>
-                <label class="input-label" style="margin-bottom: 4px; display: block;">Board / Grievance Panel Settlement Notes</label>
-                <textarea id="hub-panel-notes" rows="4" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 13px; resize: vertical;" placeholder="Type definitive settlement notes or panel decisions here..."></textarea>
+                <label class="input-label" style="margin-bottom: 4px; display: block;">Board / Panel Settlement Notes</label>
+                <textarea id="hub-panel-notes" rows="4" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 13px; resize: vertical;" placeholder="Type decision notes here..."></textarea>
                 <label class="input-label" style="margin-top: 15px; margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
                 ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
@@ -361,7 +409,6 @@
 
         function closeDrawer() { document.getElementById('side-drawer').classList.remove('open'); }
 
-        // Slide panel width calculator mechanics
         const drawer = document.getElementById('side-drawer');
         const handle = document.getElementById('drawerHandle');
         handle.addEventListener('mousedown', initResize);
