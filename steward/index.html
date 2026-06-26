@@ -41,11 +41,12 @@
         .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
         .main-content { flex: 1; overflow-y: auto; padding: 20px; transition: margin-right 0.3s; }
 
-        /* HIGH DENSITY RECORD CARD GRID */
+        /* HIGH DENSITY RECORD CARD GRID (Mobile/Tablet View) */
         .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
         @media (max-width: 500px) { .record-grid { grid-template-columns: 1fr; } }
 
-        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; transition: border 0.2s; }
+        .record-card:hover { border-color: #555; }
         .record-card::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 6px; border-radius: 0 4px 4px 0; }
         .record-card.ai-match::before { background-color: var(--success); }
         .record-card.ai-fail::before { background-color: var(--danger); }
@@ -77,12 +78,37 @@
         /* EVIDENCE SLIDE PANEL DRAWER */
         .drawer { width: 450px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -450px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
         .drawer.open { right: 0; }
-        .drawer-header { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
+        
+        /* DRAG HANDLE */
+        .drawer-handle { width: 8px; background: #333; cursor: col-resize; position: absolute; left: 0; top: 0; bottom: 0; z-index: 101; transition: background 0.2s; }
+        .drawer-handle:hover, .drawer-handle:active { background: var(--accent); }
+
+        .drawer-header { padding: 15px 15px 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
         .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
-        .drawer-content { padding: 15px; flex: 1; overflow-y: auto; }
+        .drawer-content { padding: 15px 15px 15px 25px; flex: 1; overflow-y: auto; }
         .pdf-frame { width: 100%; height: 450px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
 
-        @media (max-width: 799px) { .drawer { width: 100%; right: -100%; } }
+        @media (max-width: 799px) { .drawer { width: 100% !important; right: -100%; } .drawer-handle { display: none; } }
+
+        /* PC SPREADSHEET OVERRIDE */
+        @media screen and (min-width: 1200px) {
+            .record-grid { grid-template-columns: 1fr; }
+            .record-card { flex-direction: row; align-items: center; padding: 10px 15px; gap: 10px; }
+            .card-split-grid { display: flex; flex: 1; align-items: center; gap: 10px; }
+            .card-split-grid > div { flex-direction: row !important; align-items: center; flex: 1; justify-content: space-between; gap: 10px; }
+            .input-label { display: none; } /* Hide labels to save horizontal space */
+            .btn-3d { width: auto; padding: 8px 15px; height: 38px; box-shadow: none; margin-top: 0 !important; }
+            .btn-3d:active { transform: translateY(2px); }
+        }
+
+        /* PRINT STYLES */
+        @media print {
+            body { background: white; color: black; height: auto; overflow: visible; }
+            header, .settings-panel, .drawer, .btn-3d { display: none !important; }
+            .main-content { padding: 0; overflow: visible; }
+            .record-card { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; background: white; margin-bottom: 10px; }
+            input, select, .sys-id-display-box { background: transparent; color: black; border: 1px solid #ccc; }
+        }
     </style>
 </head>
 <body>
@@ -115,6 +141,7 @@
         </div>
 
         <div id="side-drawer" class="drawer">
+            <div id="drawerHandle" class="drawer-handle"></div>
             <div class="drawer-header">
                 <h3 id="drawer-title">Deep Dive Evidence</h3>
                 <button class="close-btn" onclick="closeDrawer()">✕</button>
@@ -174,14 +201,14 @@
                     const subType = item['ViolationSubType'] || '';
                     const amt = item['ViolationAmount'] || '0.00';
                     
-                    // Native date formats extracted cleanly
                     const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
                     const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
 
+                    // Added onclick to the card, and stopPropagation to inputs
                     htmlContent += `
-                        <div class="record-card ${cardClass}" id="card-${sysId}">
+                        <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
                             
-                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
                                 <div class="input-wrapper" style="flex: 1; min-width: 0;">
                                     <span class="input-label emp-label">Member Name</span>
                                     <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" oninput="queueFieldChange('${sysId}', 'RawOCRName', this.value)">
@@ -192,7 +219,7 @@
                                 </div>
                             </div>
 
-                            <div class="card-split-grid">
+                            <div class="card-split-grid" onclick="event.stopPropagation()">
                                 
                                 <div style="display: flex; flex-direction: column; gap: 12px;">
                                     <div class="input-wrapper">
@@ -244,11 +271,9 @@
             });
         }
 
-                /* --- SINGLE EXECUTION ROW COMMIT ENGINE --- */
         function executeRowCommit(recordId) {
             if(!confirm("Commit verification and transfer record to Steward Verified status?")) return;
             
-            // Gather all current values straight from the card inputs right at the moment of approval
             const card = document.getElementById(`card-${recordId}`);
             const updatedName = card.querySelector('.emp-input').value;
             const updatedEmpId = card.querySelector('.id-input').value;
@@ -280,10 +305,8 @@
             })
             .then(res => {
                 if(res.ok) {
-                    // Instantly slide the card off the screen now that the cloud confirmed receipt
                     card.style.opacity = '0.3';
                     setTimeout(() => { card.remove(); }, 400);
-                    
                     ind.innerText = "✓ Action Complete";
                     ind.className = "save-status";
                 } else {
@@ -292,10 +315,8 @@
             });
         }
 
-        // Stub out the old background queue function so it doesn't throw errors if left in HTML attributes
         function queueFieldChange(recordId, fieldName, targetValue) {}
 
-        /* --- EVIDENCE SLIDE DRAWER LOGIC --- */
         function openDrawer(recordId) {
             const record = fullDataCache.find(r => r.Title === recordId);
             document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
@@ -348,6 +369,38 @@
 
         function closeDrawer() {
             document.getElementById('side-drawer').classList.remove('open');
+        }
+
+        /* --- DRAWER RESIZE LOGIC (WITH TOUCH SUPPORT) --- */
+        const drawer = document.getElementById('side-drawer');
+        const handle = document.getElementById('drawerHandle');
+
+        // Mouse Events
+        handle.addEventListener('mousedown', initResize);
+        // Touch Events for Tablet/Phone testing
+        handle.addEventListener('touchstart', initResize, { passive: true });
+
+        function initResize(e) {
+            document.addEventListener('mousemove', resizeDrawer);
+            document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', resizeDrawer, { passive: false });
+            document.addEventListener('touchend', stopResize);
+        }
+
+        function resizeDrawer(e) {
+            // Check if it's a touch event or a mouse event to get the correct X coordinate
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            
+            const newWidth = window.innerWidth - clientX;
+            // Constrain between 30% and 80% of screen
+            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
+                drawer.style.width = newWidth + 'px';
+            }
+        }
+
+        function stopResize() {
+            document.removeEventListener('mousemove', resizeDrawer);
+            document.removeEventListener('touchmove', resizeDrawer);
         }
 
         loadPending();
