@@ -36,7 +36,7 @@
         }
         .btn-nav:hover { background: #333; border-color: var(--accent); }
 
-        /* OVERHEAD KPI METRICS */
+        /* KPI STATS BAR */
         .stats-banner {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px; margin-bottom: 25px; background: #161616; padding: 12px;
@@ -106,7 +106,6 @@
 </head>
 <body>
 
-    <!-- TOP NAVBAR -->
     <div class="top-navbar">
         <div>
             <div class="header-title">Local 710 Processing Hub</div>
@@ -117,7 +116,6 @@
         </div>
     </div>
 
-    <!-- KPI STATS BAR -->
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
@@ -129,14 +127,12 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD VIEWPORT -->
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
-    <!-- AUDIT VAULT DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -152,12 +148,12 @@
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
         let verifiedCacheArray = [];
+        let masterDropdownOptionsArray = [];
         let dispositionOptionsHtml = '';
         let currentStewardName = 'Executive Admin';
 
         document.getElementById('lnk-back-home').href = `index.html?steward=${stewardGUID}`;
 
-        // Get standard local date formatted as YYYY-MM-DD safely
         const getTodayString = () => new Date().toISOString().split('T')[0];
 
         function loadHubData() {
@@ -177,15 +173,15 @@
 
                 verifiedCacheArray = bundle.pendingGrievances || [];
                 const roster = bundle.stewardRoster || [];
-                const dropdownOptions = bundle.dropdownOptions || [];
+                masterDropdownOptionsArray = bundle.dropdownOptions || [];
 
                 const myProfile = roster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim()) || {};
                 currentStewardName = myProfile.StewardName || 'Executive Admin';
                 
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
-                // --- BUILD DYNAMIC DISPOSITION SELECTIONS FROM SHAREPOINT ---
-                const dispRows = dropdownOptions.filter(opt => opt.Title === 'Disposition');
+                // Build selections from SharePoint
+                const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
                 dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
                 dispRows.forEach(opt => {
                     const val = opt.OptionValue || opt.Value || '';
@@ -264,7 +260,7 @@
                                     <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
                                         ${dispositionOptionsHtml}
                                     </select>
-                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type reason for hold (optional)..." maxlength="150">
+                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
                                 </div>
                                 <div class="input-wrapper">
                                     <span class="input-label">Settled / Panel Date</span>
@@ -287,7 +283,7 @@
             display.innerHTML = html;
         }
 
-        // --- HARDCODED INTELLIGENT INPUT LOGIC ENGINE ---
+        // --- PURE DATABASE ACTION-TYPE LOGIC ENGINE ---
         function handleStatusLogic(recordId, selectElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
             const selectedText = selectElem.value;
@@ -296,21 +292,29 @@
             const finalAmtInput = card.querySelector('.final-amt-input');
             const holdReasonInput = card.querySelector('.hold-reason-input');
 
-            // 1. Check for Hold Condition (Dynamic text matching but excluding specific final tags)
-            if (selectedText.toLowerCase().includes('hold') && selectedText.toLowerCase() !== 'held with rights') {
+            // Look up row directly in your master array using your ActionType column name
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
+            const mode = chosenOption.ActionType || 'Final'; 
+
+            if (mode === 'Note') {
                 holdReasonInput.style.display = 'block';
-                holdReasonInput.focus();
-                finalAmtInput.value = "0.00"; // Holds carry zero active payouts
-            } else {
+                holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
+                finalAmtInput.value = "0.00";
+            } 
+            else if (mode === 'Settlement') {
+                holdReasonInput.style.display = 'block';
+                holdReasonInput.placeholder = "REQUIRED: Type final settlement terms...";
+                finalAmtInput.value = ''; 
+                finalAmtInput.placeholder = '0.00';
+            } 
+            else {
                 holdReasonInput.style.display = 'none';
                 holdReasonInput.value = '';
                 
-                // 2. Strict Money Auto-Fill Rule
                 if (selectedText === 'Claim Allowed') {
-                    finalAmtInput.value = origAmt; // Face Value Auto-Fill
+                    finalAmtInput.value = origAmt; 
                 } else {
-                    finalAmtInput.value = ''; // Compromise or withdrawal force-wipe for manual entry
-                    finalAmtInput.placeholder = '0.00';
+                    finalAmtInput.value = '0.00';
                 }
             }
         }
@@ -327,10 +331,14 @@
                 return;
             }
 
-            // Determine if this is an interim logging block or a final archive block based on the hold string match
-            const isHoldAction = selectedStatus.toLowerCase().includes('hold') && selectedStatus.toLowerCase() !== 'held with rights';
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus) || {};
+            const mode = chosenOption.ActionType || 'Final';
 
-            // Format date presentation style cleanly for the timeline string
+            if (mode === 'Settlement' && !customHoldReason) {
+                alert("Validation Blocked: Settlement terms notes are required before closing this file.");
+                return;
+            }
+
             const dateParts = targetDate.split('-');
             const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
 
@@ -339,19 +347,19 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "stewardGuid": stewardGUID,
-                    "action": isHoldAction ? "save_hold_note" : "settle_case",
+                    "action": "process_hub_item",
                     "titleId": recordId,
                     "SelectedStatus": selectedStatus,
+                    "ActionType": mode,
                     "TargetDate": targetDate,
-                    "FinalPayoutAmount": finalPayout,
                     "DisplayDate": displayDate,
+                    "FinalPayoutAmount": finalPayout,
                     "HoldReason": customHoldReason
                 })
             })
             .then(res => {
                 if (res.ok) {
-                    if (isHoldAction) {
-                        // Keep card alive for hold. Flash green interface confirmation box.
+                    if (mode === 'Note') {
                         card.style.background = '#1a331e';
                         card.style.borderColor = 'var(--accent-green)';
                         setTimeout(() => {
@@ -359,9 +367,8 @@
                             card.style.borderColor = 'var(--border)';
                             card.querySelector('.hold-reason-input').value = '';
                         }, 1000);
-                        alert(`Note appended successfully: Case remains active under ${selectedStatus}.`);
+                        alert(`Note appended successfully: Case remains active.`);
                     } else {
-                        // Slide card away completely for final case closure archiving
                         card.style.transition = 'all 0.3s ease';
                         card.style.opacity = '0';
                         card.style.transform = 'translateX(100px)';
@@ -396,11 +403,8 @@
                     <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? record.FileDate.split('T')[0] : 'N/A'}</p>
                     <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? record.ViolationDate.split('T')[0] : 'N/A'}</p>
                     <p style="margin-bottom: 6px;"><b>Original Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
-                    <p><b>Notes Log History:</b> See SharePoint for appended sequence values.</p>
                 </div>
-                <label class="input-label" style="margin-bottom: 4px; display: block;">Board / Panel Settlement Notes</label>
-                <textarea id="hub-panel-notes" rows="4" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 6px; padding: 10px; font-size: 13px; resize: vertical;" placeholder="Type decision notes here..."></textarea>
-                <label class="input-label" style="margin-top: 15px; margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
+                <label class="input-label" style="margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
                 ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
 
