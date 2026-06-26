@@ -346,7 +346,7 @@ const urlParams = new URLSearchParams(window.location.search);
         });
     }
 
-    function handleRosterSelection(recordId, inputElem) {
+function handleRosterSelection(recordId, inputElem) {
         const typedName = inputElem.value.trim();
         const match = masterSeniorityArray.find(person => {
             const fName = person.FirstName || person['First Name'] || '';
@@ -358,8 +358,8 @@ const urlParams = new URLSearchParams(window.location.search);
         if (match) {
             const card = document.getElementById(`card-${recordId}`);
             if (card) {
-                // Auto-fills the employee ID field from the matched seniority row
-                card.querySelector('.id-input').value = match.EmployeeID || match['EmployeeID'] || '';
+                // Pulls the Employee ID directly out of the SharePoint 'Title' column!
+                card.querySelector('.id-input').value = match.Title || '';
             }
         }
     }
