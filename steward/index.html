@@ -99,6 +99,30 @@
             .input-label { display: none; } /* Hide labels to save horizontal space */
             .btn-3d { width: auto; padding: 8px 15px; height: 38px; box-shadow: none; margin-top: 0 !important; }
             .btn-3d:active { transform: translateY(2px); }
+       
+        /* MOBILE LANDSCAPE OPTIMIZATION (Frees the locked header) */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    /* Break the fixed flexbox layout so the page scrolls normally */
+    body { 
+        display: block; 
+        overflow-y: auto; 
+        height: auto; 
+    }
+    .app-container { 
+        display: block; 
+        overflow: visible; 
+    }
+    .main-content { 
+        overflow: visible; 
+        padding-top: 10px;
+    }
+    /* Lock the drawer to the screen so it doesn't get lost if you scroll down */
+    .drawer { 
+        position: fixed; 
+        height: 100vh; 
+    }
+}
+
         }
 
         /* PRINT STYLES */
