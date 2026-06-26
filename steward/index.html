@@ -179,12 +179,12 @@
     </div>
 
     <script>
-const urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
     const stewardGUID = urlParams.get('steward');
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
     let fullDataCache = [];
-    let masterSeniorityArray = []; // Global cache for ID lookups
+    let masterSeniorityArray = []; 
 
     function toggleSettings() {
         document.getElementById('settings-panel').classList.toggle('open');
@@ -220,7 +220,6 @@ const urlParams = new URLSearchParams(window.location.search);
             // --- BUILD MASTER ROSTER DATALIST ---
             let seniorityOptionsHtml = '';
             masterSeniorityArray.forEach(person => {
-                // Secure properties with bracket fallbacks to prevent loop clipping
                 const fName = person.FirstName || person['First Name'] || '';
                 const lName = person.LastName || person['Last Name'] || '';
                 const fullRosterName = `${fName} ${lName}`.trim();
@@ -256,10 +255,7 @@ const urlParams = new URLSearchParams(window.location.search);
                 dataListsContainer.style.display = 'none';
                 document.body.appendChild(dataListsContainer);
             }
-            dataListsContainer.innerHTML = `
-                <datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>
-                <datalist id="master-subviolation-list">${subViolOptionsHtml}</datalist>
-            `;
+            dataListsContainer.innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
 
             let htmlContent = '';
             fullDataCache.forEach((item) => {
@@ -326,7 +322,12 @@ const urlParams = new URLSearchParams(window.location.search);
                                 </div>
                                 <div class="input-wrapper">
                                     <span class="input-label">Sub Violation</span>
-                                    <input type="text" class="subviol-input" value="${subType}" list="master-subviolation-list" placeholder="Select or type...">
+                                    <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
+                                        <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                        ${subViolOptionsHtml}
+                                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                                    </select>
+                                    <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px; height: 38px;" placeholder="Type custom violation here...">
                                 </div>
                                 <div class="input-wrapper">
                                     <span class="input-label">Sys ID</span>
@@ -346,8 +347,11 @@ const urlParams = new URLSearchParams(window.location.search);
         });
     }
 
-function handleRosterSelection(recordId, inputElem) {
+    function handleRosterSelection(recordId, inputElem) {
         const typedName = inputElem.value.trim();
+        const card = document.getElementById(`card-${recordId}`);
+        if (!card) return;
+
         const match = masterSeniorityArray.find(person => {
             const fName = person.FirstName || person['First Name'] || '';
             const lName = person.LastName || person['Last Name'] || '';
@@ -356,11 +360,24 @@ function handleRosterSelection(recordId, inputElem) {
         });
         
         if (match) {
-            const card = document.getElementById(`card-${recordId}`);
-            if (card) {
-                // Pulls the Employee ID directly out of the SharePoint 'Title' column!
-                card.querySelector('.id-input').value = match.Title || '';
-            }
+            card.querySelector('.id-input').value = match.Title || match['Title'] || '';
+        } else {
+            // The MOMENT they modify or backspace a name string, the ID completely resets to blank!
+            card.querySelector('.id-input').value = '';
+        }
+    }
+
+    function handleSubViolChange(recordId, selectElem) {
+        const card = document.getElementById(`card-${recordId}`);
+        if (!card) return;
+        const customInput = card.querySelector('.subviol-custom-input');
+        
+        if (selectElem.value === 'CUSTOM_OTHER') {
+            customInput.style.display = 'block';
+            customInput.value = '';
+            customInput.focus();
+        } else {
+            customInput.style.display = 'none';
         }
     }
 
@@ -373,8 +390,13 @@ function handleRosterSelection(recordId, inputElem) {
         const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
         const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
         const updatedViolType = card.querySelector('.violtype-select').value;
-        const updatedViolSubType = card.querySelector('.subviol-input').value;
         const updatedAmount = card.querySelector('.amt-input').value;
+
+        // Smart route selection for Sub Violation parsing
+        let updatedViolSubType = card.querySelector('.subviol-select').value;
+        if (updatedViolSubType === 'CUSTOM_OTHER') {
+            updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
+        }
 
         const nameParts = fullInputName.split(' ');
         const firstName = nameParts[0] || '';
@@ -482,6 +504,7 @@ function handleRosterSelection(recordId, inputElem) {
     }
 
     loadPending();
+
     </script>
 </body>
 </html>
