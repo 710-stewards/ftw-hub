@@ -228,6 +228,60 @@
                     }
                 });
 
+                // Build choices from dynamic list using ActionType column
+                const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
+                dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
+                dispRows.forEach(opt => {
+                    const val = opt.OptionValue || opt.Value || '';
+                    if (val) {
+                        dispositionOptionsHtml += `<option value="${val}">${val}</option>`;
+                    }
+                });
+
+                // --- NEW: LAST & NEXT LOCAL DATE ENGINE ---
+                const localScheduleArray = bundle.localLevelSchedule || [];
+                let nextLocalRaw = null;
+                let lastLocalRaw = null;
+
+                if (localScheduleArray.length > 0) {
+                    // 1. Force sort newest to oldest to guarantee Row 1 and Row 2 are correct
+                    localScheduleArray.sort((a, b) => new Date(b.LocalLevel) - new Date(a.LocalLevel));
+
+                    const date1 = localScheduleArray[0].LocalLevel;
+                    const date1String = date1.split('T')[0];
+                    const todayString = getTodayString();
+
+                    // 2. Apply your exact logic structure
+                    if (date1String >= todayString) {
+                        // Date 1 is in the future (Next Local). Date 2 is the past (Last Local).
+                        nextLocalRaw = date1;
+                        if (localScheduleArray.length > 1) {
+                            lastLocalRaw = localScheduleArray[1].LocalLevel;
+                        }
+                    } else {
+                        // Date 1 is already in the past. It becomes Last Local.
+                        lastLocalRaw = date1;
+                    }
+                }
+
+                // 3. Format and push to the UI
+                const formatMeetingDate = (rawDate) => {
+                    if (!rawDate) return null;
+                    return new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+                };
+
+                document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
+                document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
+                // --- END NEW ENGINE ---
+
+                calculateMetrics();
+                renderHubCards();
+            }).catch(err => {
+                document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
+                console.error(err);
+            });
+        }
+        
                 calculateMetrics();
                 renderHubCards();
             }).catch(err => {
