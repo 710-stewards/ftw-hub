@@ -261,14 +261,18 @@ function renderHubCards() {
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
                     
-                    // Clean Hyphenated Meta Display (Item 5)
+                    // Clean Dates Parsing (Form Date vs Violation Date)
+                    const fDate = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
+                    const vDate = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
+                    
+                    // Clean Hyphenated Meta Display
                     const violType = item.ViolationType || 'Not Set';
                     const violSubType = item.ViolationSubType || '';
                     const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
                     
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                     
-                    // Safe parsing for structural history text data (Item 3)
+                    // Safe parsing for structural history text data
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
                         <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
@@ -277,15 +281,24 @@ function renderHubCards() {
                         </div>
                     ` : '';
 
-                    // Active Worksheet Notes Value (Item 4)
                     const currentWorksheetNotes = item.NotesB || '';
+
+                    // Explicit boolean checks for new columns
+                    const isBofpi = !!item.BOFPITIC;
+                    const isNpc = !!item.NPC;
 
                     html += `
                         <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
-                                <div style="min-width: 0; flex: 1;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                                <div style="min-width: 0; flex: 1; min-width: 250px;">
                                     <h4 style="font-size: 19px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
-                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
+                                    
+                                    <div style="display: flex; gap: 14px; font-size: 11px; font-weight: bold; margin-top: 4px; color: #bbb; flex-wrap: wrap;">
+                                        <span>FILE DATE: <span style="color: #fff;">${fDate}</span></span>
+                                        <span>VIOLATION: <span style="color: #fff;">${vDate}</span></span>
+                                    </div>
+                                    
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
                                     <p style="font-size: 12px; color: var(--accent); margin-top: 3px; font-weight: 600;">${cleanMetaType}</p>
                                 </div>
                                 <div style="text-align: right; flex-shrink: 0;">
@@ -301,6 +314,15 @@ function renderHubCards() {
                                         ${dispositionOptionsHtml}
                                     </select>
                                     <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
+                                    
+                                    <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 10px; font-weight: bold; color: var(--text-muted);">
+                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                            <input type="checkbox" class="chk-bofpi" ${isBofpi ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> B.O.F.P.I.T.I.C.
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                            <input type="checkbox" class="chk-npc" ${isNpc ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> N.P.S.
+                                        </label>
+                                    </div>
                                 </div>
                                 <div class="input-wrapper">
                                     <span class="input-label">Settled / Panel Date</span>
@@ -320,7 +342,6 @@ function renderHubCards() {
                                 <span class="input-label">Active Panel Worksheet Notes (NotesB)</span>
                                 <input type="text" class="worksheet-notes-input" value="${currentWorksheetNotes}" placeholder="Type active adjustments or notes here..." style="margin-top: 4px;">
                             </div>
-
                             ${existingHistoryHtml}
                         </div>
                     `;
@@ -342,7 +363,10 @@ function renderHubCards() {
                             card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
                         }
                         
-                        // Sleek Visual Lock (Item 1)
+                        // Set checklist status dynamically on reloaded data
+                        card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
+                        card.querySelector('.chk-npc').checked = !!item.NPC;
+                        
                         card.style.background = 'var(--bg-card)';
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
@@ -356,7 +380,6 @@ function renderHubCards() {
                 }
             });
         }
-
         // --- PURE DATABASE ACTION-TYPE LOGIC ENGINE ---
         function handleStatusLogic(recordId, selectElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
