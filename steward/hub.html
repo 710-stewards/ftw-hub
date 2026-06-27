@@ -106,14 +106,22 @@
 </head>
 <body>
 
-    <!-- TOP NAVBAR -->
     <div class="top-navbar">
-        <div>
+        <div style="flex: 1;">
             <div class="header-title">Local 710 Processing Hub</div>
             <div id="steward-info" class="header-sub">Connecting Security Token...</div>
         </div>
-        <div class="nav-btn-box">
-            <!-- LOCAL MEETING PROTECTION TOGGLE -->
+        
+        <div style="flex: 1; text-align: center;">
+            <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
+                Last Local: <span id="display-last-local" style="color: white;">Fetching...</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; text-transform: uppercase;">
+                Next Local: <span id="display-next-local">None Scheduled</span>
+            </div>
+        </div>
+
+        <div class="nav-btn-box" style="flex: 1; justify-content: flex-end;">
             <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 8px 12px; border-radius: 6px; border: 1px solid #444;">
                 <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);">
                 HIDE SETTLED
@@ -122,26 +130,31 @@
         </div>
     </div>
 
-    <!-- KPI STATS BAR -->
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
-            <div class="stat-lbl">Verified Cases</div>
+            <div class="stat-lbl">Pending Cases</div>
         </div>
         <div class="stat-box">
             <div id="metric-liability" class="stat-val">$0.00</div>
             <div class="stat-lbl">Active Exposure</div>
         </div>
+        <div class="stat-box" style="border-left: 1px dashed #333;">
+            <div id="metric-today-count" class="stat-val" style="color: var(--accent-green);">0</div>
+            <div class="stat-lbl">Settled Cases</div>
+        </div>
+        <div class="stat-box">
+            <div id="metric-today-paid" class="stat-val" style="color: var(--accent-green);">$0.00</div>
+            <div class="stat-lbl">Total Paid Out</div>
+        </div>
     </div>
 
-    <!-- MAIN DASHBOARD VIEWPORT -->
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
-    <!-- AUDIT VAULT DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -179,7 +192,6 @@
             btnElem.style.backgroundColor = 'var(--accent-green)';
             btnElem.onclick = function() { executeSettlementCommit(recordId); };
         }
-
 
         function toggleSettledVisibility() {
             const hideSettled = document.getElementById('toggle-hide-settled').checked;
@@ -273,14 +285,33 @@
         }
 
         function calculateMetrics() {
-            const openCasesCount = verifiedCacheArray.length;
-            const openLiabilitySum = verifiedCacheArray.reduce((acc, curr) => acc + parseFloat(curr.ViolationAmount || 0), 0);
+            let openCount = 0;
+            let openLiability = 0;
+            let closedCount = 0;
+            let closedPayout = 0;
 
-            document.getElementById('metric-open-cases').innerText = openCasesCount;
-            document.getElementById('metric-liability').innerText = `$${openLiabilitySum.toFixed(2)}`;
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                // If it has a disposition, it counts towards Settled
+                if (currentDisp) {
+                    closedCount++;
+                    closedPayout += parseFloat(item.SettledAmount || 0);
+                } else {
+                    // Otherwise, it is still active exposure
+                    openCount++;
+                    openLiability += parseFloat(item.ViolationAmount || 0);
+                }
+            });
+
+            // Update the UI
+            document.getElementById('metric-open-cases').innerText = openCount;
+            document.getElementById('metric-liability').innerText = `$${openLiability.toFixed(2)}`;
+            document.getElementById('metric-today-count').innerText = closedCount;
+            document.getElementById('metric-today-paid').innerText = `$${closedPayout.toFixed(2)}`;
         }
 
-function renderHubCards() {
+        function renderHubCards() {
             const display = document.getElementById('data-display');
             display.style.paddingBottom = '120px';
 
@@ -433,6 +464,7 @@ function renderHubCards() {
                 }
             });
         }
+        
         // --- PURE DATABASE ACTION-TYPE LOGIC ENGINE ---
         function handleStatusLogic(recordId, selectElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
@@ -500,6 +532,7 @@ function renderHubCards() {
 
             const dateParts = targetDate.split('-');
             const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
+            
             // Generate the silent audit stamp
             const timeStamp = new Date().toLocaleString('en-US');
             const auditSignature = `${currentStewardName} - ${timeStamp}`;
