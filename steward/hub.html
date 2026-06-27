@@ -115,8 +115,8 @@
         <div class="nav-btn-box">
             <!-- LOCAL MEETING PROTECTION TOGGLE -->
             <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 8px 12px; border-radius: 6px; border: 1px solid #444;">
-                <input type="checkbox" id="toggle-panel-mode" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);">
-                LOCAL PANEL MODE
+                <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);">
+                HIDE SETTLED
             </label>
             <a id="lnk-back-home" class="btn-nav" href="#">← Floor Portal</a>
         </div>
@@ -178,6 +178,20 @@
             btnElem.innerText = 'Submit Box';
             btnElem.style.backgroundColor = 'var(--accent-green)';
             btnElem.onclick = function() { executeSettlementCommit(recordId); };
+        }
+
+
+        function toggleSettledVisibility() {
+            const hideSettled = document.getElementById('toggle-hide-settled').checked;
+            document.querySelectorAll('.record-card').forEach(card => {
+                // If the dropdown is disabled, we know the card is in a locked/settled state
+                const isLocked = card.querySelector('.status-select').disabled;
+                if (isLocked) {
+                    card.style.display = hideSettled ? 'none' : 'block';
+                    card.style.opacity = '1'; 
+                    card.style.transform = 'translateX(0)'; 
+                }
+            });
         }
         
         function loadHubData() {
@@ -369,6 +383,11 @@ function renderHubCards() {
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
                         card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+
+                        // Respect the hide toggle on page reload
+                        if (document.getElementById('toggle-hide-settled').checked) {
+                            card.style.display = 'none';
+                        }
                         
                         const actionBtn = card.querySelector('.btn-settle');
                         actionBtn.innerText = 'Edit / Unlock';
@@ -469,8 +488,8 @@ function renderHubCards() {
                 })
             })
             .then(res => {
-                if (res.ok) {
-                    const isPanelModeActive = document.getElementById('toggle-panel-mode').checked;
+               if (res.ok) {
+                    const hideSettledActive = document.getElementById('toggle-hide-settled').checked;
 
                     if (mode === 'Note') {
                         card.style.borderColor = 'var(--accent-green)';
@@ -482,13 +501,12 @@ function renderHubCards() {
                         }, 1200);
                         alert(`Note appended successfully: Case remains active.`);
                     } 
-                    else if (isPanelModeActive) {
-                        // Sleek Visual Lock (Item 1)
+                    else {
+                        // 1. Always lock the card visually upon settlement
                         card.style.transition = 'all 0.3s ease';
                         card.style.background = 'var(--bg-card)'; 
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
-                        
                         card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
                         
                         const actionBtn = card.querySelector('.btn-settle');
@@ -496,18 +514,14 @@ function renderHubCards() {
                         actionBtn.style.backgroundColor = 'var(--accent)';
                         actionBtn.onclick = function() { unlockCard(recordId, this); };
                         
-                        alert(`File archived into SharePoint. Card pinned to layout for meeting reference.`);
-                    } 
-                    else {
-                        card.style.transition = 'all 0.3s ease';
-                        card.style.opacity = '0';
-                        card.style.transform = 'translateX(100px)';
-                        setTimeout(() => {
-                            card.remove();
-                            verifiedCacheArray = verifiedCacheArray.filter(item => item.Title !== recordId);
-                            calculateMetrics();
-                            if (verifiedCacheArray.length === 0) renderHubCards();
-                        }, 300);
+                        // 2. If Hide Settled is checked, slide it off the screen (but keep it in memory)
+                        if (hideSettledActive) {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(100px)';
+                            setTimeout(() => {
+                                card.style.display = 'none';
+                            }, 300);
+                        }
                     }
                 } else {
                     alert(`Cloud sync failed! HTTP Status Code: ${res.status}`);
