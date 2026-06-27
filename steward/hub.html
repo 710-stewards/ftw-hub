@@ -261,7 +261,7 @@ function renderHubCards() {
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
                     
-                    // Clean Dates Parsing (Form Date vs Violation Date)
+                    // Clean Dates Parsing
                     const fDate = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
                     const vDate = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
                     
@@ -272,7 +272,7 @@ function renderHubCards() {
                     
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                     
-                    // Safe parsing for structural history text data
+                    // Safe history text container parsing
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
                         <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
@@ -283,7 +283,6 @@ function renderHubCards() {
 
                     const currentWorksheetNotes = item.NotesB || '';
 
-                    // Explicit boolean checks for new columns
                     const isBofpi = !!item.BOFPITIC;
                     const isNps = !!item.NPS;
 
@@ -363,7 +362,6 @@ function renderHubCards() {
                             card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
                         }
                         
-                        // Set checklist status dynamically on reloaded data
                         card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
                         card.querySelector('.chk-nps').checked = !!item.NPS;
                         
