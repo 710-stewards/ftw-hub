@@ -445,7 +445,10 @@ function renderHubCards() {
 
             const dateParts = targetDate.split('-');
             const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
-
+            // Generate the silent audit stamp
+            const timeStamp = new Date().toLocaleString('en-US');
+            const auditSignature = `${currentStewardName} - ${timeStamp}`;
+            
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -461,7 +464,8 @@ function renderHubCards() {
                     "HoldReason": customHoldReason,
                     "WorksheetNotes": activeWorksheetNotes,
                     "BOFPITIC": bofpiFlag,
-                    "NPS": npsFlag
+                    "NPS": npsFlag,
+                    "UpdatedByStamp": auditSignature
                 })
             })
             .then(res => {
