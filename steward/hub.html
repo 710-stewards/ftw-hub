@@ -301,9 +301,13 @@
             const holdReasonInput = card.querySelector('.hold-reason-input');
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
-            const mode = chosenOption.ActionType || 'Final'; 
+        
+        // --- NEW EXTRACTOR LOGIC ---
+        let mode = chosenOption.ActionType || 'Final'; 
+        if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
+        // ---------------------------
 
-            if (mode === 'Note') {
+        if (mode === 'Note') {
                 holdReasonInput.style.display = 'block';
                 holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
                 finalAmtInput.value = "0.00";
@@ -339,7 +343,11 @@
             }
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus) || {};
-            const mode = chosenOption.ActionType || 'Final';
+            
+            // --- NEW EXTRACTOR LOGIC ---
+            let mode = chosenOption.ActionType || 'Final';
+            if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
+            // ---------------------------
 
             if (mode === 'Settlement' && !customHoldReason) {
                 alert("Validation Blocked: Settlement terms notes are required before closing this file.");
