@@ -400,7 +400,7 @@
                         }, 300);
                     }
                 } else {
-                    alert("Cloud sync failure on status push execution.");
+                    alert(`Cloud sync failed! HTTP Status Code: ${res.status}`);
                 }
             });
         }
