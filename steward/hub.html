@@ -230,40 +230,13 @@
             document.getElementById('metric-liability').innerText = `$${openLiabilitySum.toFixed(2)}`;
         }
 
-        function renderHubCards() {
+function renderHubCards() {
             const display = document.getElementById('data-display');
             display.style.paddingBottom = '120px';
 
             if (verifiedCacheArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found.</div>';
                 return;
-                // --- NEW: AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
-            verifiedCacheArray.forEach(item => {
-                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                
-                if (currentDisp) {
-                    const card = document.getElementById(`hub-card-${item.Title}`);
-                    if (card) {
-                        // Pre-fill the saved data
-                        card.querySelector('.status-select').value = currentDisp;
-                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
-                        if (item.SettledDate) {
-                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
-                        }
-                        
-                        // Lock the card visually and disable inputs
-                        card.style.background = '#1a331e';
-                        card.style.borderColor = 'var(--accent-green)';
-                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
-                        
-                        // Swap the Submit button for the yellow Edit button
-                        const actionBtn = card.querySelector('.btn-settle');
-                        actionBtn.innerText = 'Edit / Unlock';
-                        actionBtn.style.backgroundColor = 'var(--accent)';
-                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
-                    }
-                }
-            });
             }
 
             const grouped = {};
@@ -305,33 +278,63 @@
                                 </div>
                             </div>
 
-<div class="card-split-grid" onclick="event.stopPropagation()">
-    <div class="input-wrapper">
-        <span class="input-label">Action / Disposition</span>
-        <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
-            ${dispositionOptionsHtml}
-        </select>
-        <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
-    </div>
-    <div class="input-wrapper">
-        <span class="input-label">Settled / Panel Date</span>
-        <input type="date" class="settled-date-input" value="${getTodayString()}">
-    </div>
-    <div class="input-wrapper">
-        <span class="input-label">Final Paid Amt ($)</span>
-        <input type="number" step="0.01" class="final-amt-input" value="0.00">
-    </div>
-    <div style="display: flex; gap: 8px; align-items: flex-end;">
-        <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
-        <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
-    </div>
-</div>
+                            <div class="card-split-grid" onclick="event.stopPropagation()">
+                                <div class="input-wrapper">
+                                    <span class="input-label">Action / Disposition</span>
+                                    <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
+                                        ${dispositionOptionsHtml}
+                                    </select>
+                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Settled / Panel Date</span>
+                                    <input type="date" class="settled-date-input" value="${getTodayString()}">
+                                </div>
+                                <div class="input-wrapper">
+                                    <span class="input-label">Final Paid Amt ($)</span>
+                                    <input type="number" step="0.01" class="final-amt-input" value="0.00">
+                                </div>
+                                <div style="display: flex; gap: 8px; align-items: flex-end;">
+                                    <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
+                                    <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
+                                </div>
+                            </div>
                         </div>
                     `;
                 });
             }
 
+            // Draw the cards first...
             display.innerHTML = html;
+
+            // ...THEN run the lock sequence on the cards that were just drawn!
+            // --- NEW: AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                if (currentDisp) {
+                    const card = document.getElementById(`hub-card-${item.Title}`);
+                    if (card) {
+                        // Pre-fill the saved data
+                        card.querySelector('.status-select').value = currentDisp;
+                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
+                        if (item.SettledDate) {
+                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
+                        }
+                        
+                        // Lock the card visually and disable inputs
+                        card.style.background = '#1a331e';
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+                        
+                        // Swap the Submit button for the yellow Edit button
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
+                    }
+                }
+            });
         }
 
         // --- PURE DATABASE ACTION-TYPE LOGIC ENGINE ---
