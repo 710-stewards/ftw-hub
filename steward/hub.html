@@ -164,6 +164,22 @@
 
         const getTodayString = () => new Date().toISOString().split('T')[0];
 
+        function unlockCard(recordId, btnElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            
+            // Re-enable the inputs
+            card.querySelectorAll('input, select').forEach(elem => elem.disabled = false);
+            
+            // Revert colors back to active mode
+            card.style.background = 'var(--bg-card)';
+            card.style.borderColor = 'var(--border)';
+            
+            // Swap the button back to the green Submit Box
+            btnElem.innerText = 'Submit Box';
+            btnElem.style.backgroundColor = 'var(--accent-green)';
+            btnElem.onclick = function() { executeSettlementCommit(recordId); };
+        }
+        
         function loadHubData() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
@@ -221,6 +237,33 @@
             if (verifiedCacheArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found.</div>';
                 return;
+                // --- NEW: AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                if (currentDisp) {
+                    const card = document.getElementById(`hub-card-${item.Title}`);
+                    if (card) {
+                        // Pre-fill the saved data
+                        card.querySelector('.status-select').value = currentDisp;
+                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
+                        if (item.SettledDate) {
+                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
+                        }
+                        
+                        // Lock the card visually and disable inputs
+                        card.style.background = '#1a331e';
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+                        
+                        // Swap the Submit button for the yellow Edit button
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
+                    }
+                }
+            });
             }
 
             const grouped = {};
@@ -387,14 +430,23 @@
                         }, 1000);
                         alert(`Note appended successfully: Case remains active.`);
                     } 
-                    else if (isPanelModeActive) {
-                        // LOCAL PANEL PROTECTION MODE: Lock row down as dark green, freeze on screen
+                   else if (isPanelModeActive) {
+                        // LOCAL PANEL PROTECTION MODE: Lock row down, spawn Edit button
                         card.style.transition = 'all 0.3s ease';
                         card.style.background = '#1a331e'; 
                         card.style.borderColor = 'var(--accent-green)';
-                        card.querySelectorAll('input, select, button').forEach(elem => elem.disabled = true);
+                        
+                        // Only disable inputs, NOT the buttons
+                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+                        
+                        // Swap the button live
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(recordId, this); };
+                        
                         alert(`File archived into SharePoint. Card pinned to layout for meeting reference.`);
-                    } 
+                    }
                     else {
                         // STANDARD MODE CLOSURES: Slide off screen instantly
                         card.style.transition = 'all 0.3s ease';
