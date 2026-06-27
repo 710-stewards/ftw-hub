@@ -426,6 +426,9 @@ function renderHubCards() {
             
             // Capture Dynamic Worksheet field value (Item 4)
             const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
+            // Capture legal panel check flags (1 for checked/True, 0 for false)
+            const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
+            const npcFlag = card.querySelector('.chk-npc').checked ? 1 : 0;
 
             if (!selectedStatus) {
                 alert("Validation Blocked: Please select an action layout selection first.");
@@ -458,7 +461,9 @@ function renderHubCards() {
                     "DisplayDate": displayDate,
                     "FinalPayoutAmount": finalPayout,
                     "HoldReason": customHoldReason,
-                    "WorksheetNotes": activeWorksheetNotes // Dispatched safely to Power Automate!
+                    "WorksheetNotes": activeWorksheetNotes,
+                    "BOFPITIC": bofpiFlag,
+                    "NPC": npcFlag
                 })
             })
             .then(res => {
