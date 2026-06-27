@@ -228,16 +228,6 @@
                     }
                 });
 
-                // Build choices from dynamic list using ActionType column
-                const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
-                dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
-                dispRows.forEach(opt => {
-                    const val = opt.OptionValue || opt.Value || '';
-                    if (val) {
-                        dispositionOptionsHtml += `<option value="${val}">${val}</option>`;
-                    }
-                });
-
                 // --- NEW: LAST & NEXT LOCAL DATE ENGINE ---
                 const localScheduleArray = bundle.localLevelSchedule || [];
                 let nextLocalRaw = null;
@@ -274,14 +264,6 @@
                 document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
                 // --- END NEW ENGINE ---
 
-                calculateMetrics();
-                renderHubCards();
-            }).catch(err => {
-                document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
-                console.error(err);
-            });
-        }
-        
                 calculateMetrics();
                 renderHubCards();
             }).catch(err => {
