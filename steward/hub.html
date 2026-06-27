@@ -262,27 +262,27 @@
                                 </div>
                             </div>
 
-                            <div class="card-split-grid" onclick="event.stopPropagation()">
-                                <div class="input-wrapper">
-                                    <span class="input-label">Action / Disposition</span>
-                                   <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
-                                        ${dispositionOptionsHtml}
-                                    </select>
-                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Settled / Panel Date</span>
-                                    <input type="date" class="settled-date-input" value="${getTodayString()}">
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Final Paid Amt ($)</span>
-                                    <input type="number" step="0.01" class="final-amt-input" value="0.00">
-                                </div>
-                                <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                    <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
-                                    <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
-                                </div>
-                            </div>
+<div class="card-split-grid" onclick="event.stopPropagation()">
+    <div class="input-wrapper">
+        <span class="input-label">Action / Disposition</span>
+        <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
+            ${dispositionOptionsHtml}
+        </select>
+        <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
+    </div>
+    <div class="input-wrapper">
+        <span class="input-label">Settled / Panel Date</span>
+        <input type="date" class="settled-date-input" value="${getTodayString()}">
+    </div>
+    <div class="input-wrapper">
+        <span class="input-label">Final Paid Amt ($)</span>
+        <input type="number" step="0.01" class="final-amt-input" value="0.00">
+    </div>
+    <div style="display: flex; gap: 8px; align-items: flex-end;">
+        <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
+        <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
+    </div>
+</div>
                         </div>
                     `;
                 });
