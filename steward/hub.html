@@ -260,21 +260,37 @@ function renderHubCards() {
                     const sysId = item.Title || '';
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
+                    
+                    // Clean Hyphenated Meta Display (Item 5)
                     const violType = item.ViolationType || 'Not Set';
                     const violSubType = item.ViolationSubType || '';
+                    const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
+                    
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
+                    
+                    // Safe parsing for structural history text data (Item 3)
+                    const rawHistory = item.NotesA || '';
+                    const existingHistoryHtml = rawHistory ? `
+                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
+                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Case Timeline History:</b>
+                            <div style="white-space: pre-wrap;">${rawHistory}</div>
+                        </div>
+                    ` : '';
+
+                    // Active Worksheet Notes Value (Item 4)
+                    const currentWorksheetNotes = item.NotesB || '';
 
                     html += `
-                        <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}">
+                        <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                 <div style="min-width: 0; flex: 1;">
-                                    <h4 style="font-size: 15px; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
+                                    <h4 style="font-size: 19px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
                                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
-                                    <p style="font-size: 11px; color: var(--accent); margin-top: 2px;">Type: ${violType} [${violSubType}]</p>
+                                    <p style="font-size: 12px; color: var(--accent); margin-top: 3px; font-weight: 600;">${cleanMetaType}</p>
                                 </div>
                                 <div style="text-align: right; flex-shrink: 0;">
                                     <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Claim</span>
-                                    <h5 style="font-size: 15px; color: #ff3333; font-weight: bold; margin-top: 2px;">$${originalAmt}</h5>
+                                    <h5 style="font-size: 16px; color: #ff3333; font-weight: bold; margin-top: 2px;">$${originalAmt}</h5>
                                 </div>
                             </div>
 
@@ -299,35 +315,39 @@ function renderHubCards() {
                                     <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
                                 </div>
                             </div>
+
+                            <div class="input-wrapper" style="margin-top: 14px;" onclick="event.stopPropagation()">
+                                <span class="input-label">Active Panel Worksheet Notes (NotesB)</span>
+                                <input type="text" class="worksheet-notes-input" value="${currentWorksheetNotes}" placeholder="Type active adjustments or notes here..." style="margin-top: 4px;">
+                            </div>
+
+                            ${existingHistoryHtml}
                         </div>
                     `;
                 });
             }
 
-            // Draw the cards first...
             display.innerHTML = html;
 
-            // ...THEN run the lock sequence on the cards that were just drawn!
-            // --- NEW: AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
+            // --- AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
             verifiedCacheArray.forEach(item => {
                 const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
                 
                 if (currentDisp) {
                     const card = document.getElementById(`hub-card-${item.Title}`);
                     if (card) {
-                        // Pre-fill the saved data
                         card.querySelector('.status-select').value = currentDisp;
                         card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
                         if (item.SettledDate) {
                             card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
                         }
                         
-                        // Lock the card visually and disable inputs
-                        card.style.background = '#1a331e';
+                        // Sleek Visual Lock (Item 1)
+                        card.style.background = 'var(--bg-card)';
                         card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
                         card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
                         
-                        // Swap the Submit button for the yellow Edit button
                         const actionBtn = card.querySelector('.btn-settle');
                         actionBtn.innerText = 'Edit / Unlock';
                         actionBtn.style.backgroundColor = 'var(--accent)';
@@ -347,13 +367,11 @@ function renderHubCards() {
             const holdReasonInput = card.querySelector('.hold-reason-input');
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
-        
-        // --- NEW EXTRACTOR LOGIC ---
-        let mode = chosenOption.ActionType || 'Final'; 
-        if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
-        // ---------------------------
+            
+            let mode = chosenOption.ActionType || 'Final'; 
+            if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
 
-        if (mode === 'Note') {
+            if (mode === 'Note') {
                 holdReasonInput.style.display = 'block';
                 holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
                 finalAmtInput.value = "0.00";
@@ -382,6 +400,9 @@ function renderHubCards() {
             const targetDate = card.querySelector('.settled-date-input').value;
             const finalPayout = card.querySelector('.final-amt-input').value;
             const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
+            
+            // Capture Dynamic Worksheet field value (Item 4)
+            const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
 
             if (!selectedStatus) {
                 alert("Validation Blocked: Please select an action layout selection first.");
@@ -390,10 +411,8 @@ function renderHubCards() {
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus) || {};
             
-            // --- NEW EXTRACTOR LOGIC ---
             let mode = chosenOption.ActionType || 'Final';
             if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
-            // ---------------------------
 
             if (mode === 'Settlement' && !customHoldReason) {
                 alert("Validation Blocked: Settlement terms notes are required before closing this file.");
@@ -415,7 +434,8 @@ function renderHubCards() {
                     "TargetDate": targetDate,
                     "DisplayDate": displayDate,
                     "FinalPayoutAmount": finalPayout,
-                    "HoldReason": customHoldReason
+                    "HoldReason": customHoldReason,
+                    "WorksheetNotes": activeWorksheetNotes // Dispatched safely to Power Automate!
                 })
             })
             .then(res => {
@@ -423,35 +443,32 @@ function renderHubCards() {
                     const isPanelModeActive = document.getElementById('toggle-panel-mode').checked;
 
                     if (mode === 'Note') {
-                        // HOLDS: Flash green confirmation, card stays active on screen
-                        card.style.background = '#1a331e';
                         card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
                         setTimeout(() => {
-                            card.style.background = 'var(--bg-card)';
                             card.style.borderColor = 'var(--border)';
+                            card.style.borderLeftColor = 'var(--accent)';
                             card.querySelector('.hold-reason-input').value = '';
-                        }, 1000);
+                        }, 1200);
                         alert(`Note appended successfully: Case remains active.`);
                     } 
-                   else if (isPanelModeActive) {
-                        // LOCAL PANEL PROTECTION MODE: Lock row down, spawn Edit button
+                    else if (isPanelModeActive) {
+                        // Sleek Visual Lock (Item 1)
                         card.style.transition = 'all 0.3s ease';
-                        card.style.background = '#1a331e'; 
+                        card.style.background = 'var(--bg-card)'; 
                         card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
                         
-                        // Only disable inputs, NOT the buttons
                         card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
                         
-                        // Swap the button live
                         const actionBtn = card.querySelector('.btn-settle');
                         actionBtn.innerText = 'Edit / Unlock';
                         actionBtn.style.backgroundColor = 'var(--accent)';
                         actionBtn.onclick = function() { unlockCard(recordId, this); };
                         
                         alert(`File archived into SharePoint. Card pinned to layout for meeting reference.`);
-                    }
+                    } 
                     else {
-                        // STANDARD MODE CLOSURES: Slide off screen instantly
                         card.style.transition = 'all 0.3s ease';
                         card.style.opacity = '0';
                         card.style.transform = 'translateX(100px)';
