@@ -102,13 +102,12 @@
         .ctr-meta {
             display: flex; color: var(--accent); font-size: 14px;
             font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            flex: 1 1 100%; order: 3; margin-top: 10px; 
-            justify-content: space-between; /* Pushes items to opposite edges on mobile */
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
         }
         @media (min-width: 650px) {
             .ctr-meta { 
                 flex: 1; order: 0; margin-top: 0; 
-                justify-content: center; gap: 20px; /* Locks them back to the center on PC */
+                justify-content: center; gap: 20px; 
             }
         }
 
@@ -157,6 +156,7 @@
         .drawer-handle {
             position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
         }
+
         /* CUSTOM MODAL OVERLAY */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -269,7 +269,20 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-   <div id="disp-modal-overlay" class="modal-overlay">
+    <div id="note-modal-overlay" class="modal-overlay">
+        <div class="custom-modal">
+            <div class="modal-title">Missing Settlement Notes</div>
+            <div class="modal-text">
+                Are you sure you want to save without adding a note?
+            </div>
+            <div class="modal-btn-row">
+                <button id="btn-note-no" class="btn-modal-no">No, Go Back</button>
+                <button id="btn-note-yes" class="btn-modal-yes">Yes, Save Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="disp-modal-overlay" class="modal-overlay">
         <div class="custom-modal">
             <div class="modal-title">New Disposition Detected</div>
             <div class="modal-text">
@@ -452,7 +465,6 @@
         }
 
         function applyCoverageFilter() {
-            // Get all checked StewardIDs from the sidebar
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
             
             verifiedCacheArray = masterGrievanceCache.filter(item => {
@@ -502,19 +514,16 @@
             // --- THE MASTER SORTING ENGINE ---
             const sortItems = (arr) => {
                 return arr.sort((a, b) => {
-                    // 1. Sort by Last Name
                     const lnA = (a.LastName || '').toLowerCase();
                     const lnB = (b.LastName || '').toLowerCase();
                     if (lnA < lnB) return -1;
                     if (lnA > lnB) return 1;
                     
-                    // 2. Sort by First Name
                     const fnA = (a.FirstName || '').toLowerCase();
                     const fnB = (b.FirstName || '').toLowerCase();
                     if (fnA < fnB) return -1;
                     if (fnA > fnB) return 1;
                     
-                    // 3. Sort by Violation Date (Newest first)
                     const dta = new Date(a.ViolationDate || 0);
                     const dtb = new Date(b.ViolationDate || 0);
                     return dtb - dta;
@@ -524,12 +533,10 @@
             const grouped = {};
             
             if (isGrouped) {
-                // Group by Steward
                 verifiedCacheArray.forEach(item => {
                     const stID = (item.StewardOfRecord || '').trim();
                     let stName = stID;
                     
-                    // Look up their pretty name from the checkbox attributes
                     const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
                     if (checkbox) stName = checkbox.getAttribute('data-name');
                     else if (!stID) stName = 'Unassigned Roster';
@@ -538,7 +545,6 @@
                     grouped[stName].push(item);
                 });
             } else {
-                // Merge everyone into one bucket
                 grouped['All Selected Files'] = [...verifiedCacheArray];
             }
 
@@ -560,7 +566,6 @@
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
                     
-                    // Converted to MM/DD/YYYY
                     const fDateRaw = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
                     const vDateRaw = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
                     const fDate = formatToUsDate(fDateRaw);
@@ -584,7 +589,6 @@
                     const isBofpi = !!item.BOFPITIC;
                     const isNps = !!item.NPS;
 
-                    // --- GRAB STEWARD NAME FOR UNGROUPED VIEW ---
                     let itemStewardName = (item.StewardOfRecord || '').trim();
                     const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
                     if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
@@ -761,12 +765,29 @@
                 if (typeof mode === 'object' && mode.Value) mode = mode.Value;
             }
 
+            // --- INTERCEPT 1: MISSING SETTLEMENT NOTE ---
             if (mode === 'Settlement' && !customHoldReason) {
-                alert("Validation Blocked: Settlement terms notes are required before closing this file.");
-                return;
-            }
+                const noteModal = document.getElementById('note-modal-overlay');
+                noteModal.style.display = 'flex';
 
-            // --- THE NEW INTERCEPT LOGIC ---
+                document.getElementById('btn-note-yes').onclick = function() {
+                    noteModal.style.display = 'none';
+                    processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
+                };
+                
+                document.getElementById('btn-note-no').onclick = function() {
+                    noteModal.style.display = 'none';
+                    // User opted to go back, so we do nothing and let them edit
+                    return; 
+                };
+            } else {
+                // Not missing a note (or note wasn't required), proceed to next check
+                processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
+            }
+        }
+
+        function processDispositionIntercept(recordId, selectedStatus, mode, chosenOption) {
+            // --- INTERCEPT 2: NEW DISPOSITION DETECTED ---
             if (!chosenOption) {
                 document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
                 const modal = document.getElementById('disp-modal-overlay');
@@ -775,25 +796,23 @@
                 actionSelect.value = "Settlement";
                 modal.style.display = 'flex';
 
-                // Wire the YES button (Sends "Yes" as text)
                 document.getElementById('btn-save-disp-yes').onclick = function() {
                     modal.style.display = 'none';
                     const chosenBehavior = actionSelect.value;
                     finalizeCommit(recordId, selectedStatus, chosenBehavior, "Yes"); 
                 };
 
-                // Wire the NO button (Sends "No" as text)
                 document.getElementById('btn-save-disp-no').onclick = function() {
                     modal.style.display = 'none';
                     const chosenBehavior = actionSelect.value; 
                     finalizeCommit(recordId, selectedStatus, chosenBehavior, "No"); 
                 };
             } else {
-                // It already exists, skip the popup and fire immediately
+                // Standard flow: known disposition, skip the popup
                 finalizeCommit(recordId, selectedStatus, mode, "No");
             }
         }
-        
+
         // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
         function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
             const card = document.getElementById(`hub-card-${recordId}`);
@@ -828,7 +847,7 @@
                     "BOFPITIC": bofpiFlag,
                     "NPS": npsFlag,
                     "UpdatedByStamp": auditSignature,
-                    "SaveGlobalDisposition": saveGlobalFlag // The new flag!
+                    "SaveGlobalDisposition": saveGlobalFlag
                 })
             })
             .then(res => {
@@ -874,6 +893,7 @@
                 }
             });
         }
+
         function openHubDrawer(recordId) {
             const record = masterGrievanceCache.find(r => r.Title === recordId);
             if (!record) return;
