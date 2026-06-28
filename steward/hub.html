@@ -16,25 +16,49 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 90px; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
-        /* HEADER & NAVIGATION */
+        /* RESPONSIVE HEADER & NAVIGATION */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
-        .nav-btn-box { display: flex; gap: 12px; align-items: center; }
-        .btn-nav {
-            background: #2a2a2a; border: 1px solid #444; color: white;
-            padding: 8px 14px; font-size: 12px; font-weight: bold;
-            border-radius: 6px; cursor: pointer; text-decoration: none; transition: background 0.2s;
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
-        .btn-nav:hover { background: #333; border-color: var(--accent); }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        /* MAIN NAV DRAWER (LEFT SIDE) */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
         /* OVERHEAD KPI STATS BAR */
         .stats-banner {
@@ -85,7 +109,7 @@
         .btn-settle { background-color: var(--accent-green); color: #111; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
-        /* SIDE DRAWER */
+        /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
             position: fixed; top: 0; right: 0; bottom: 0; width: 450px;
             background: #161616; border-left: 2px solid var(--accent);
@@ -106,13 +130,53 @@
 </head>
 <body>
 
-    <div class="top-navbar">
-        <div style="flex: 1;">
-            <div class="header-title">Local 710 Processing Hub</div>
-            <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+    <!-- LEFT NAV DRAWER & OVERLAY -->
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <div style="flex: 1; text-align: center;">
+        <!-- MOVED HIDE SETTLED TOGGLE -->
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                HIDE SETTLED CASES
+                <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+        
+        <div class="nav-section-title">Portals & Links</div>
+        <a id="lnk-floor-portal" href="#" class="nav-item">← Floor Portal (Intake)</a>
+        <a href="#" class="nav-item active">Processing Hub (Active)</a>
+        <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
+        <a href="#" class="nav-item disabled">Archive (Coming Soon)</a>
+        <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
+        
+        <div class="nav-section-title">Coverage Mode</div>
+        <div style="padding: 10px 20px;">
+            <select id="coverage-steward-select" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
+                <option value="">Loading roster...</option>
+            </select>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">*Select a steward from the roster to view and process their pending files.</p>
+        </div>
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+    </div>
+
+    <!-- RESPONSIVE TOP NAVBAR -->
+    <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Local 710 Processing Hub</div>
+                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+            </div>
+        </div>
+        
+        <!-- CENTER LOCAL DATES (Now right-aligned to balance the header) -->
+        <div style="flex: 1; text-align: right; min-width: 220px;">
             <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
                 Last Local: <span id="display-last-local" style="color: white;">Fetching...</span>
             </div>
@@ -120,16 +184,9 @@
                 Next Local: <span id="display-next-local">None Scheduled</span>
             </div>
         </div>
-
-        <div class="nav-btn-box" style="flex: 1; justify-content: flex-end;">
-            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 8px 12px; border-radius: 6px; border: 1px solid #444;">
-                <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent);">
-                HIDE SETTLED
-            </label>
-            <a id="lnk-back-home" class="btn-nav" href="#">← Floor Portal</a>
-        </div>
     </div>
 
+    <!-- KPI STATS BAR -->
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
@@ -149,17 +206,19 @@
         </div>
     </div>
 
+    <!-- MAIN DASHBOARD VIEWPORT -->
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
+    <!-- AUDIT VAULT DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
             <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Case Details</h3>
-            <button class="btn-nav" onclick="closeDrawer()">✕ Close</button>
+            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
@@ -173,21 +232,26 @@
         let dispositionOptionsHtml = '';
         let currentStewardName = 'Executive Admin';
 
-        document.getElementById('lnk-back-home').href = `index.html?steward=${stewardGUID}`;
+        // Wire up the Floor Portal Link in the Nav Menu
+        document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
 
         const getTodayString = () => new Date().toISOString().split('T')[0];
 
+        // Nav Drawer Controllers
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+
         function unlockCard(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            
-            // Re-enable the inputs
             card.querySelectorAll('input, select').forEach(elem => elem.disabled = false);
-            
-            // Revert colors back to active mode
             card.style.background = 'var(--bg-card)';
             card.style.borderColor = 'var(--border)';
-            
-            // Swap the button back to the green Submit Box
             btnElem.innerText = 'Submit Box';
             btnElem.style.backgroundColor = 'var(--accent-green)';
             btnElem.onclick = function() { executeSettlementCommit(recordId); };
@@ -196,7 +260,6 @@
         function toggleSettledVisibility() {
             const hideSettled = document.getElementById('toggle-hide-settled').checked;
             document.querySelectorAll('.record-card').forEach(card => {
-                // If the dropdown is disabled, we know the card is in a locked/settled state
                 const isLocked = card.querySelector('.status-select').disabled;
                 if (isLocked) {
                     card.style.display = hideSettled ? 'none' : 'block';
@@ -230,6 +293,15 @@
                 
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
+                // --- POPULATE COVERAGE DROPDOWN ---
+                const coverageSelect = document.getElementById('coverage-steward-select');
+                coverageSelect.innerHTML = '<option value="">My Active Cases</option>';
+                roster.forEach(st => {
+                    if (st.StewardName) {
+                        coverageSelect.innerHTML += `<option value="${st.Title || st.GUID}">${st.StewardName}</option>`;
+                    }
+                });
+
                 // Build choices from dynamic list using ActionType column
                 const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
                 dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
@@ -240,33 +312,28 @@
                     }
                 });
 
-                // --- NEW: LAST & NEXT LOCAL DATE ENGINE ---
+                // --- LAST & NEXT LOCAL DATE ENGINE ---
                 const localScheduleArray = bundle.localLevelSchedule || [];
                 let nextLocalRaw = null;
                 let lastLocalRaw = null;
 
                 if (localScheduleArray.length > 0) {
-                    // 1. Force sort newest to oldest to guarantee Row 1 and Row 2 are correct
                     localScheduleArray.sort((a, b) => new Date(b.LocalLevel) - new Date(a.LocalLevel));
 
                     const date1 = localScheduleArray[0].LocalLevel;
                     const date1String = date1.split('T')[0];
                     const todayString = getTodayString();
 
-                    // 2. Apply your exact logic structure
                     if (date1String >= todayString) {
-                        // Date 1 is in the future (Next Local). Date 2 is the past (Last Local).
                         nextLocalRaw = date1;
                         if (localScheduleArray.length > 1) {
                             lastLocalRaw = localScheduleArray[1].LocalLevel;
                         }
                     } else {
-                        // Date 1 is already in the past. It becomes Last Local.
                         lastLocalRaw = date1;
                     }
                 }
 
-                // 3. Format and push to the UI
                 const formatMeetingDate = (rawDate) => {
                     if (!rawDate) return null;
                     return new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
@@ -274,7 +341,6 @@
 
                 document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
                 document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
-                // --- END NEW ENGINE ---
 
                 calculateMetrics();
                 renderHubCards();
@@ -293,18 +359,15 @@
             verifiedCacheArray.forEach(item => {
                 const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
                 
-                // If it has a disposition, it counts towards Settled
                 if (currentDisp) {
                     closedCount++;
                     closedPayout += parseFloat(item.SettledAmount || 0);
                 } else {
-                    // Otherwise, it is still active exposure
                     openCount++;
                     openLiability += parseFloat(item.ViolationAmount || 0);
                 }
             });
 
-            // Update the UI
             document.getElementById('metric-open-cases').innerText = openCount;
             document.getElementById('metric-liability').innerText = `$${openLiability.toFixed(2)}`;
             document.getElementById('metric-today-count').innerText = closedCount;
@@ -342,18 +405,15 @@
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
                     
-                    // Clean Dates Parsing
                     const fDate = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
                     const vDate = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
                     
-                    // Clean Hyphenated Meta Display
                     const violType = item.ViolationType || 'Not Set';
                     const violSubType = item.ViolationSubType || '';
                     const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
                     
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                     
-                    // Safe history text container parsing
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
                         <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
@@ -363,7 +423,6 @@
                     ` : '';
 
                     const currentWorksheetNotes = item.NotesB || '';
-
                     const isBofpi = !!item.BOFPITIC;
                     const isNps = !!item.NPS;
 
@@ -430,7 +489,6 @@
 
             display.innerHTML = html;
 
-            // --- AUTO-LOCK PREVIOUSLY SETTLED CASES ON REFRESH ---
             verifiedCacheArray.forEach(item => {
                 const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
                 
@@ -451,7 +509,6 @@
                         card.style.borderLeftColor = 'var(--accent-green)';
                         card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
 
-                        // Respect the hide toggle on page reload
                         if (document.getElementById('toggle-hide-settled').checked) {
                             card.style.display = 'none';
                         }
@@ -465,7 +522,6 @@
             });
         }
         
-        // --- PURE DATABASE ACTION-TYPE LOGIC ENGINE ---
         function handleStatusLogic(recordId, selectElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
             const selectedText = selectElem.value;
@@ -508,10 +564,7 @@
             const targetDate = card.querySelector('.settled-date-input').value;
             const finalPayout = card.querySelector('.final-amt-input').value;
             const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
-            
-            // Capture Dynamic Worksheet field value (Item 4)
             const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
-            // Capture legal panel check flags (1 for checked/True, 0 for false)
             const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
             const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
 
@@ -521,7 +574,6 @@
             }
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus) || {};
-            
             let mode = chosenOption.ActionType || 'Final';
             if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
 
@@ -532,8 +584,6 @@
 
             const dateParts = targetDate.split('-');
             const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
-            
-            // Generate the silent audit stamp
             const timeStamp = new Date().toLocaleString('en-US');
             const auditSignature = `${currentStewardName} - ${timeStamp}`;
             
@@ -571,7 +621,6 @@
                         alert(`Note appended successfully: Case remains active.`);
                     } 
                     else {
-                        // 1. Always lock the card visually upon settlement
                         card.style.transition = 'all 0.3s ease';
                         card.style.background = 'var(--bg-card)'; 
                         card.style.borderColor = 'var(--accent-green)';
@@ -583,7 +632,6 @@
                         actionBtn.style.backgroundColor = 'var(--accent)';
                         actionBtn.onclick = function() { unlockCard(recordId, this); };
                         
-                        // 2. If Hide Settled is checked, slide it off the screen (but keep it in memory)
                         if (hideSettledActive) {
                             card.style.opacity = '0';
                             card.style.transform = 'translateX(100px)';
