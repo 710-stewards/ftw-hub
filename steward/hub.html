@@ -684,47 +684,6 @@
                 }
             });
         }
-
-            display.innerHTML = html;
-
-            verifiedCacheArray.forEach(item => {
-                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                
-                if (currentDisp) {
-                    const card = document.getElementById(`hub-card-${item.Title}`);
-                    if (card) {
-                        card.querySelector('.status-select').value = currentDisp;
-                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
-                        if (item.SettledDate) {
-                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
-                        }
-                        
-                        card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
-                        card.querySelector('.chk-nps').checked = !!item.NPS;
-                        
-                        card.style.background = 'var(--bg-card)';
-                        card.style.borderColor = 'var(--accent-green)';
-                        card.style.borderLeftColor = 'var(--accent-green)';
-                        
-                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
-                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
-                            elem.style.pointerEvents = 'none';
-                        });
-
-                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
-
-                        if (document.getElementById('toggle-hide-settled').checked) {
-                            card.style.display = 'none';
-                        }
-                        
-                        const actionBtn = card.querySelector('.btn-settle');
-                        actionBtn.innerText = 'Edit / Unlock';
-                        actionBtn.style.backgroundColor = 'var(--accent)';
-                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
-                    }
-                }
-            });
-        }
         
         function handleStatusLogic(recordId, inputElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
