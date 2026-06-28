@@ -100,12 +100,16 @@
         .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
         .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
         .ctr-meta {
-            display: flex; gap: 20px; color: var(--accent); font-size: 14px;
+            display: flex; color: var(--accent); font-size: 14px;
             font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: flex-start;
+            flex: 1 1 100%; order: 3; margin-top: 10px; 
+            justify-content: space-between; /* Pushes items to opposite edges on mobile */
         }
         @media (min-width: 650px) {
-            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; }
+            .ctr-meta { 
+                flex: 1; order: 0; margin-top: 0; 
+                justify-content: center; gap: 20px; /* Locks them back to the center on PC */
+            }
         }
 
         /* INPUT WRAPPERS */
