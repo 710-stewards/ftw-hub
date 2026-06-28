@@ -269,13 +269,23 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <div id="disp-modal-overlay" class="modal-overlay">
+   <div id="disp-modal-overlay" class="modal-overlay">
         <div class="custom-modal">
             <div class="modal-title">New Disposition Detected</div>
             <div class="modal-text">
                 You entered <b id="new-disp-text" style="color: var(--accent);"></b>.<br>
-                Would you like to save this to the global dropdown list for all stewards to use in the future?
+                Would you like to save this to the global dropdown list for all stewards to use?
             </div>
+            
+            <div style="text-align: left; margin-bottom: 22px;">
+                <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">How should this action behave?</label>
+                <select id="modal-action-type" style="margin-top: 6px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px; width: 100%; color: white; font-size: 13px; cursor: pointer;">
+                    <option value="Settlement">Negotiated Settlement (Locks file, requires notes)</option>
+                    <option value="Final">Standard Closure (Locks file, no notes required)</option>
+                    <option value="Note">Active Hold / Update (Keeps file open, logs a note)</option>
+                </select>
+            </div>
+
             <div class="modal-btn-row">
                 <button id="btn-save-disp-no" class="btn-modal-no">No, Just Use Once</button>
                 <button id="btn-save-disp-yes" class="btn-modal-yes">Yes, Save Globally</button>
@@ -761,25 +771,29 @@
             if (!chosenOption) {
                 document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
                 const modal = document.getElementById('disp-modal-overlay');
+                const actionSelect = document.getElementById('modal-action-type');
+                
+                // Reset dropdown to default just in case
+                actionSelect.value = "Settlement";
                 modal.style.display = 'flex';
 
                 // Wire the YES button
                 document.getElementById('btn-save-disp-yes').onclick = function() {
                     modal.style.display = 'none';
-                    finalizeCommit(recordId, selectedStatus, mode, 1); // 1 = Save it
+                    const chosenBehavior = actionSelect.value;
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, 1); // 1 = Save it
                 };
 
                 // Wire the NO button
                 document.getElementById('btn-save-disp-no').onclick = function() {
                     modal.style.display = 'none';
-                    finalizeCommit(recordId, selectedStatus, mode, 0); // 0 = Don't save
+                    const chosenBehavior = actionSelect.value; 
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, 0); // 0 = Don't save
                 };
             } else {
                 // It already exists, skip the popup and fire immediately
                 finalizeCommit(recordId, selectedStatus, mode, 0);
             }
-        }
-
         // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
         function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
             const card = document.getElementById(`hub-card-${recordId}`);
