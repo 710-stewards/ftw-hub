@@ -510,32 +510,10 @@
             }
 
             const isGrouped = document.getElementById('toggle-group-steward').checked;
-
-            // --- THE BULLETPROOF LOCAL SORTER ---
-            const sortItems = (arr) => {
-                return arr.sort((a, b) => {
-                    // 1. Last Name ASC (A-Z)
-                    const lnA = (a.LastName || '').toLowerCase();
-                    const lnB = (b.LastName || '').toLowerCase();
-                    if (lnA < lnB) return -1;
-                    if (lnA > lnB) return 1;
-                    
-                    // 2. First Name ASC (A-Z)
-                    const fnA = (a.FirstName || '').toLowerCase();
-                    const fnB = (b.FirstName || '').toLowerCase();
-                    if (fnA < fnB) return -1;
-                    if (fnA > fnB) return 1;
-                    
-                    // 3. Violation Date ASC (Oldest to Newest)
-                    const dta = new Date(a.ViolationDate || 0);
-                    const dtb = new Date(b.ViolationDate || 0);
-                    return dta - dtb; 
-                });
-            };
-
             const grouped = {};
             
             if (isGrouped) {
+                // The array is already sorted by Power Automate. Push keeps that exact order!
                 verifiedCacheArray.forEach(item => {
                     const stID = (item.StewardOfRecord || '').trim();
                     let stName = stID;
@@ -548,17 +526,17 @@
                     grouped[stName].push(item);
                 });
             } else {
+                // If ungrouped, just pass the perfectly sorted array straight through
                 grouped['All Selected Files'] = [...verifiedCacheArray];
             }
 
             let html = '';
 
-            // Sort the group headers alphabetically (Steward Names)
+            // This only sorts the Group Headers (the Steward Names) alphabetically
             const sortedGroupNames = Object.keys(grouped).sort();
 
             for (const groupName of sortedGroupNames) {
-                // Apply our strict local sort to the files inside each group!
-                const items = sortItems(grouped[groupName]);
+                const items = grouped[groupName]; // No JavaScript scrambling!
 
                 html += `
                     <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
