@@ -19,23 +19,56 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        header { padding: 15px 20px; border-bottom: 2px solid var(--accent); background: var(--bg-panel); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-        .save-status { font-size: 13px; font-weight: bold; padding: 4px 10px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
+        /* RESPONSIVE HEADER */
+        header { 
+            min-height: 75px; 
+            background: #1a1a1a; 
+            border-bottom: 2px solid var(--accent); 
+            flex-shrink: 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 20px; 
+            z-index: 10; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        .save-status { font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
         .save-status.dirty { background: #554400; color: var(--accent); }
         .save-status.saving { background: #004422; color: var(--success); }
 
-        /* HAMBURGER MENU */
-        .menu-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px; display: flex; align-items: center; justify-content: center; }
-        .menu-btn:hover { color: var(--accent); }
-
-        .settings-panel { background: #1a1a1a; border-bottom: 1px solid var(--border); max-height: 0; overflow: hidden; transition: max-height 0.3s ease; width: 100%; display: flex; flex-direction: column; z-index: 5; box-shadow: 0 10px 15px rgba(0,0,0,0.5); }
-        .settings-panel.open { max-height: 300px; }
-        .settings-content { padding: 20px; display: flex; flex-direction: column; gap: 12px; max-width: 600px; margin: 0 auto; width: 100%; }
-
-        .filter-section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 4px; }
-        .steward-checkbox-grid { display: flex; flex-wrap: wrap; gap: 12px; padding: 5px 0; }
-        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-main); cursor: pointer; background: #262626; padding: 6px 12px; border-radius: 4px; border: 1px solid #444; }
-        .checkbox-label input[type="checkbox"] { width: auto; accent-color: var(--accent); }
+        /* MAIN NAV DRAWER (LEFT SIDE) */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
         /* APPLICATION HOUSING */
         .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
@@ -120,7 +153,7 @@
         /* PRINT STYLES */
         @media print {
             body { background: white; color: black; height: auto; overflow: visible; }
-            header, .settings-panel, .drawer, .btn-3d, .spreadsheet-header { display: none !important; }
+            header, .main-nav-drawer, .nav-overlay, .drawer, .btn-3d, .spreadsheet-header { display: none !important; }
             .main-content { padding: 0; overflow: visible; }
             .record-card { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; background: white; margin-bottom: 10px; display: block !important; }
             input, select, .sys-id-display-box { background: transparent; color: black; border: 1px solid #ccc; }
@@ -129,26 +162,45 @@
 </head>
 <body>
 
+    <!-- LEFT NAV DRAWER & OVERLAY -->
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        
+        <div class="nav-section-title">Portals & Links</div>
+        <a href="#" class="nav-item active">Floor Portal (Active)</a>
+        <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
+        <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
+        <a href="#" class="nav-item disabled">Archive (Coming Soon)</a>
+        <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
+        
+        <div class="nav-section-title">Coverage Mode</div>
+        <div style="padding: 10px 20px;">
+            <select id="coverage-steward-select" onchange="filterRecords()" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
+                <option value="CURRENT_USER">Loading roster...</option>
+            </select>
+            <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">*Select a steward from the roster to view and process their pending floor files.</p>
+        </div>
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+    </div>
+
     <header>
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <button class="menu-btn" onclick="toggleSettings()" title="Coverage Filters">☰</button>
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
                 <h1 style="font-size: 22px; line-height: 1.1;">Local 710 Steward Portal</h1>
                 <span id="steward-info" style="color: var(--accent); font-size: 14px;">Initializing live stream...</span>
             </div>
         </div>
-        <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
-    </header>
-
-    <div id="settings-panel" class="settings-panel">
-        <div class="settings-content">
-            <div class="filter-section-title">Operational Coverage Filter</div>
-            <p style="font-size: 13px; color: var(--text-muted);">Toggle active team lists to display cross-coverage pending inputs.</p>
-            <div class="steward-checkbox-grid" id="steward-checkbox-grid">
-                <label class="checkbox-label"><input type="checkbox" checked disabled> Current User</label>
-            </div>
+        <div style="flex: 1; display: flex; justify-content: flex-end; min-width: 150px;">
+            <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
         </div>
-    </div>
+    </header>
 
     <div class="app-container">
         <div class="main-content">
@@ -183,6 +235,9 @@
     const stewardGUID = urlParams.get('steward');
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
+    // Wire up the Hub link dynamically
+    document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
+
     // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
     let masterSeniorityArray = []; 
@@ -194,21 +249,38 @@
     let lastHiddenCardId = null;
     let undoTimeoutTimer = null;
 
-    function toggleSettings() {
-        document.getElementById('settings-panel').classList.toggle('open');
+    // Nav Drawer Controllers
+    function openNavMenu() {
+        document.getElementById('main-nav-menu').classList.add('open');
+        document.getElementById('nav-overlay').classList.add('open');
+    }
+    function closeNavMenu() {
+        document.getElementById('main-nav-menu').classList.remove('open');
+        document.getElementById('nav-overlay').classList.remove('open');
     }
 
-    // --- REAL-TIME HEADER TRACKER ---
+    // --- REAL-TIME HEADER TRACKER & COVERAGE ---
     function updateHeader() {
-        const myCount = fullDataCache.filter(item => {
-            // Do not count records we just verified locally
+        const coverageSelect = document.getElementById('coverage-steward-select');
+        const selectedVal = coverageSelect ? coverageSelect.value : 'CURRENT_USER';
+        let viewName = currentStewardName;
+        
+        const viewCount = fullDataCache.filter(item => {
             if (item.isVerifiedLocally) return false;
             
             const st = (item.StewardOfRecord || '').toLowerCase().trim();
-            return st === currentStewardName.toLowerCase().trim() || st === currentStewardId.toLowerCase().trim();
+            if (selectedVal === 'CURRENT_USER') {
+                return st === currentStewardName.toLowerCase().trim() || st === currentStewardId.toLowerCase().trim();
+            } else {
+                const selectedOption = coverageSelect.options[coverageSelect.selectedIndex];
+                const selectedShortId = selectedOption.getAttribute('data-shortid') || '';
+                viewName = selectedOption.text;
+                return st === selectedVal.toLowerCase().trim() || (selectedShortId && st === selectedShortId.toLowerCase().trim());
+            }
         }).length;
         
-        document.getElementById('steward-info').innerText = `${currentStewardName} | ${myCount} Pending Grievances`;
+        const prefix = selectedVal === 'CURRENT_USER' ? '' : 'Coverage: ';
+        document.getElementById('steward-info').innerText = `${prefix}${viewName} | ${viewCount} Pending Intake`;
     }
 
     function loadPending() {
@@ -298,47 +370,38 @@
     }
 
     function buildStewardFilters() {
-        const grid = document.getElementById('steward-checkbox-grid');
-        if (masterStewardRoster.length === 0) {
-            grid.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); padding: 5px;">No steward roster lines returned from cloud.</p>';
-            return;
-        }
-
-        let html = '';
+        const coverageSelect = document.getElementById('coverage-steward-select');
+        coverageSelect.innerHTML = '<option value="CURRENT_USER">My Active Cases</option>';
+        
         masterStewardRoster.forEach(stewardRow => {
             const sName = stewardRow.StewardName || '';
             const sId = stewardRow.StewardID || '';
-            const rowGuid = (stewardRow.GUID || stewardRow.Title || '').toString().trim();
-
             if (sName || sId) {
-                const isMe = rowGuid.toLowerCase() === stewardGUID.toLowerCase() || 
-                             sId.toLowerCase() === currentStewardId.toLowerCase();
-                
-                html += `
-                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: white; font-size: 14px; cursor: pointer;">
-                        <input type="checkbox" class="steward-chk" value="${sName}" data-shortid="${sId}" ${isMe ? 'checked' : ''} onchange="filterRecords()"> ${sName || sId}
-                    </label>
-                `;
+                coverageSelect.innerHTML += `<option value="${sName || sId}" data-shortid="${sId}">${sName || sId}</option>`;
             }
         });
-        grid.innerHTML = html;
     }
 
     function filterRecords() {
-        const checkboxes = document.querySelectorAll('.steward-chk');
-        const checkedNames = Array.from(checkboxes).filter(chk => chk.checked).map(chk => chk.value.toLowerCase().trim());
-        const checkedIds = Array.from(checkboxes).filter(chk => chk.checked).map(chk => chk.getAttribute('data-shortid').toLowerCase().trim());
+        const coverageSelect = document.getElementById('coverage-steward-select');
+        const selectedVal = coverageSelect.value;
+        const selectedOption = coverageSelect.options[coverageSelect.selectedIndex];
+        const selectedShortId = selectedOption.getAttribute('data-shortid') || '';
         
         const filtered = fullDataCache.filter(item => {
-            if (item.isVerifiedLocally) return false; // Hide cards we already approved
+            if (item.isVerifiedLocally) return false; 
             
             const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').toLowerCase().trim();
             if (!recordSteward) return false;
             
-            return checkedNames.includes(recordSteward) || checkedIds.includes(recordSteward);
+            if (selectedVal === 'CURRENT_USER') {
+                return recordSteward === currentStewardName.toLowerCase().trim() || recordSteward === currentStewardId.toLowerCase().trim();
+            } else {
+                return recordSteward === selectedVal.toLowerCase().trim() || (selectedShortId && recordSteward === selectedShortId.toLowerCase().trim());
+            }
         });
         
-        updateHeader(); // Keep the header strictly on your numbers
+        updateHeader(); 
         renderCards(filtered);
     }
 
@@ -587,7 +650,6 @@
         })
         .then(res => {
             if (res.ok) {
-                // Update local status so it drops off the real-time count
                 const rec = fullDataCache.find(r => r.Title === recordId);
                 if (rec) rec.isVerifiedLocally = true;
                 
@@ -638,7 +700,6 @@
     function executeUndoAction() {
         if (!lastHiddenCardId) return;
 
-        // Restore local status so the header count pops back up
         const rec = fullDataCache.find(r => r.Title === lastHiddenCardId);
         if (rec) rec.isVerifiedLocally = false;
         
@@ -731,5 +792,5 @@
     loadPending();
 
     </script>
-    </body>
+</body>
 </html>
