@@ -157,6 +157,22 @@
         .drawer-handle {
             position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
         }
+        /* CUSTOM MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
+            z-index: 4000; display: none; align-items: center; justify-content: center;
+        }
+        .custom-modal {
+            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
+            width: 90%; max-width: 400px; padding: 25px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
+        .modal-text { font-size: 13px; color: #bbb; margin-bottom: 20px; line-height: 1.5; }
+        .modal-btn-row { display: flex; gap: 12px; }
+        .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -251,6 +267,20 @@
             <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
         <div id="drawer-main-content" class="drawer-body"></div>
+    </div>
+
+    <div id="disp-modal-overlay" class="modal-overlay">
+        <div class="custom-modal">
+            <div class="modal-title">New Disposition Detected</div>
+            <div class="modal-text">
+                You entered <b id="new-disp-text" style="color: var(--accent);"></b>.<br>
+                Would you like to save this to the global dropdown list for all stewards to use in the future?
+            </div>
+            <div class="modal-btn-row">
+                <button id="btn-save-disp-no" class="btn-modal-no">No, Just Use Once</button>
+                <button id="btn-save-disp-yes" class="btn-modal-yes">Yes, Save Globally</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -707,12 +737,7 @@
         function executeSettlementCommit(recordId) {
             const card = document.getElementById(`hub-card-${recordId}`);
             const selectedStatus = card.querySelector('.status-select').value.trim();
-            const targetDate = card.querySelector('.settled-date-input').value;
-            let finalPayout = card.querySelector('.final-amt-input').value;
             const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
-            const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
-            const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
-            const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
 
             if (!selectedStatus) {
                 alert("Validation Blocked: Please type or select an action/disposition first.");
@@ -730,6 +755,40 @@
                 alert("Validation Blocked: Settlement terms notes are required before closing this file.");
                 return;
             }
+
+            // --- THE NEW INTERCEPT LOGIC ---
+            // If the text isn't in our array, it's brand new
+            if (!chosenOption) {
+                document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
+                const modal = document.getElementById('disp-modal-overlay');
+                modal.style.display = 'flex';
+
+                // Wire the YES button
+                document.getElementById('btn-save-disp-yes').onclick = function() {
+                    modal.style.display = 'none';
+                    finalizeCommit(recordId, selectedStatus, mode, 1); // 1 = Save it
+                };
+
+                // Wire the NO button
+                document.getElementById('btn-save-disp-no').onclick = function() {
+                    modal.style.display = 'none';
+                    finalizeCommit(recordId, selectedStatus, mode, 0); // 0 = Don't save
+                };
+            } else {
+                // It already exists, skip the popup and fire immediately
+                finalizeCommit(recordId, selectedStatus, mode, 0);
+            }
+        }
+
+        // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
+        function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const targetDate = card.querySelector('.settled-date-input').value;
+            let finalPayout = card.querySelector('.final-amt-input').value;
+            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
+            const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
+            const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
+            const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
 
             if (finalPayout === '') finalPayout = '0.00';
 
@@ -754,7 +813,8 @@
                     "WorksheetNotes": activeWorksheetNotes,
                     "BOFPITIC": bofpiFlag,
                     "NPS": npsFlag,
-                    "UpdatedByStamp": auditSignature
+                    "UpdatedByStamp": auditSignature,
+                    "SaveGlobalDisposition": saveGlobalFlag // The new flag!
                 })
             })
             .then(res => {
@@ -800,7 +860,6 @@
                 }
             });
         }
-
         function openHubDrawer(recordId) {
             const record = masterGrievanceCache.find(r => r.Title === recordId);
             if (!record) return;
