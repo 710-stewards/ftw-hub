@@ -182,7 +182,7 @@
         
         <div class="nav-section-title">Coverage Mode</div>
         <div style="padding: 10px 20px;">
-            <select id="coverage-steward-select" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
+            <select id="coverage-steward-select" onchange="applyCoverageFilter()" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
                 <option value="">Loading roster...</option>
             </select>
             <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">*Select a steward from the roster to view and process their pending files.</p>
@@ -249,9 +249,11 @@
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
-        let verifiedCacheArray = [];
+        
+        let masterGrievanceCache = []; // SECURE VAULT
+        let verifiedCacheArray = [];   // ACTIVE DISPLAY FILTER
         let masterDropdownOptionsArray = [];
-        let currentStewardName = 'Executive Admin';
+        let currentStewardName = '';
 
         // Wire up the Floor Portal Link in the Nav Menu
         document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
@@ -315,23 +317,31 @@
             })
             .then(res => res.json())
             .then(bundle => {
-                document.getElementById('loading').style.display = 'none';
-
-                verifiedCacheArray = bundle.pendingGrievances || [];
+                // LOAD INTO VAULT, NOT ACTIVE DISPLAY
+                masterGrievanceCache = bundle.pendingGrievances || [];
                 const roster = bundle.stewardRoster || [];
                 masterDropdownOptionsArray = bundle.dropdownOptions || [];
 
-                const myProfile = roster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim()) || {};
-                currentStewardName = myProfile.StewardName || 'Executive Admin';
+                // STRICT SECURITY VERIFICATION CHECK
+                const myProfile = roster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
+                if (!myProfile) {
+                    document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
+                    return; // KILL SCRIPT
+                }
+
+                currentStewardName = myProfile.StewardName;
+                document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
                 // --- POPULATE COVERAGE DROPDOWN ---
                 const coverageSelect = document.getElementById('coverage-steward-select');
                 coverageSelect.innerHTML = '<option value="">My Active Cases</option>';
+                coverageSelect.innerHTML += '<option value="ALL">-- View All Cases --</option>'; // Boardroom override
+                
                 roster.forEach(st => {
-                    if (st.StewardName) {
-                        coverageSelect.innerHTML += `<option value="${st.Title || st.GUID}">${st.StewardName}</option>`;
+                    if (st.StewardName && st.StewardName !== currentStewardName) {
+                        coverageSelect.innerHTML += `<option value="${st.StewardName}">${st.StewardName}</option>`;
                     }
                 });
 
@@ -376,12 +386,29 @@
                 document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
                 document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
 
-                calculateMetrics();
-                renderHubCards();
+                // TRIGGER INITIAL SECURE FILTER RENDER
+                applyCoverageFilter();
             }).catch(err => {
                 document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
                 console.error(err);
             });
+        }
+
+        function applyCoverageFilter() {
+            const selectedCoverage = document.getElementById('coverage-steward-select').value;
+            
+            if (selectedCoverage === "ALL") {
+                verifiedCacheArray = [...masterGrievanceCache];
+            } else {
+                const targetSteward = selectedCoverage === "" ? currentStewardName : selectedCoverage;
+                verifiedCacheArray = masterGrievanceCache.filter(item => {
+                    const st = (item.StewardOfRecord || '').trim();
+                    return st === targetSteward;
+                });
+            }
+
+            calculateMetrics();
+            renderHubCards();
         }
 
         function calculateMetrics() {
@@ -413,7 +440,7 @@
             display.style.paddingBottom = '120px';
 
             if (verifiedCacheArray.length === 0) {
-                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found.</div>';
+                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found for this view.</div>';
                 return;
             }
 
@@ -552,7 +579,6 @@
                             elem.style.pointerEvents = 'none';
                         });
 
-                        // Show the settlement fields
                         card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
 
                         if (document.getElementById('toggle-hide-settled').checked) {
@@ -570,7 +596,6 @@
         
         function handleStatusLogic(recordId, inputElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            // Capture whatever they typed or selected
             const selectedText = inputElem.value.trim();
             const origAmt = card.getAttribute('data-orig-amt');
             
@@ -579,17 +604,14 @@
             const holdReasonInput = card.querySelector('.hold-reason-input');
             const settlementFields = card.querySelectorAll('.settlement-fields');
 
-            // Find if what they typed matches a known dropdown option
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText);
             
-            // If they typed something entirely custom, default to "Settlement" behavior
             let mode = 'Settlement'; 
             if (chosenOption) {
                 mode = chosenOption.ActionType || 'Final';
                 if (typeof mode === 'object' && mode.Value) mode = mode.Value;
             }
 
-            // Reveal Date & Amount fields if they typed anything at all
             if (selectedText) {
                 settlementFields.forEach(field => field.style.display = 'flex');
                 if (!settledDateInput.value) settledDateInput.value = getTodayString();
@@ -717,7 +739,7 @@
         }
 
         function openHubDrawer(recordId) {
-            const record = verifiedCacheArray.find(r => r.Title === recordId);
+            const record = masterGrievanceCache.find(r => r.Title === recordId);
             if (!record) return;
 
             document.getElementById('drawer-title').innerText = `Audit Vault: ${recordId}`;
