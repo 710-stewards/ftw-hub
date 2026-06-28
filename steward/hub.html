@@ -166,10 +166,17 @@
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <div style="padding: 10px 20px 15px;">
+        <div style="padding: 10px 20px 0px;">
             <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
                 HIDE SETTLED CASES
                 <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+        
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                GROUP BY STEWARD
+                <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
             </label>
         </div>
         
@@ -181,11 +188,8 @@
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
-        <div style="padding: 10px 20px;">
-            <select id="coverage-steward-select" onchange="applyCoverageFilter()" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
-                <option value="">Loading roster...</option>
-            </select>
-            <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">*Select a steward from the roster to view and process their pending files.</p>
+        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
         </div>
         
         <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
@@ -253,6 +257,8 @@
         let masterGrievanceCache = []; // SECURE VAULT
         let verifiedCacheArray = [];   // ACTIVE DISPLAY FILTER
         let masterDropdownOptionsArray = [];
+        let masterStewardRoster = [];
+        let myProfileData = {};
         let currentStewardName = '';
 
         // Wire up the Floor Portal Link in the Nav Menu
@@ -317,31 +323,38 @@
             })
             .then(res => res.json())
             .then(bundle => {
-                // LOAD INTO VAULT, NOT ACTIVE DISPLAY
                 masterGrievanceCache = bundle.pendingGrievances || [];
-                const roster = bundle.stewardRoster || [];
+                masterStewardRoster = bundle.stewardRoster || [];
                 masterDropdownOptionsArray = bundle.dropdownOptions || [];
 
                 // STRICT SECURITY VERIFICATION CHECK
-                const myProfile = roster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
+                myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
-                if (!myProfile) {
+                if (!myProfileData) {
                     document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
                     return; // KILL SCRIPT
                 }
 
-                currentStewardName = myProfile.StewardName;
+                currentStewardName = myProfileData.StewardName;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
-                // --- POPULATE COVERAGE DROPDOWN ---
-                const coverageSelect = document.getElementById('coverage-steward-select');
-                coverageSelect.innerHTML = '<option value="">My Active Cases</option>';
-                coverageSelect.innerHTML += '<option value="ALL">-- View All Cases --</option>'; // Boardroom override
+                // --- POPULATE COVERAGE CHECKBOXES ---
+                const coverageContainer = document.getElementById('coverage-checkboxes');
+                coverageContainer.innerHTML = '';
                 
-                roster.forEach(st => {
-                    if (st.StewardName && st.StewardName !== currentStewardName) {
-                        coverageSelect.innerHTML += `<option value="${st.StewardName}">${st.StewardName}</option>`;
+                // Sort roster alphabetically by name
+                const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
+
+                sortedRoster.forEach(st => {
+                    if (st.StewardName && st.StewardID) {
+                        const isMe = st.StewardID === myProfileData.StewardID;
+                        coverageContainer.innerHTML += `
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
+                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyCoverageFilter()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                                ${st.StewardName} ${isMe ? '(Me)' : ''}
+                            </label>
+                        `;
                     }
                 });
 
@@ -395,17 +408,13 @@
         }
 
         function applyCoverageFilter() {
-            const selectedCoverage = document.getElementById('coverage-steward-select').value;
+            // Get all checked StewardIDs from the sidebar
+            const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
             
-            if (selectedCoverage === "ALL") {
-                verifiedCacheArray = [...masterGrievanceCache];
-            } else {
-                const targetSteward = selectedCoverage === "" ? currentStewardName : selectedCoverage;
-                verifiedCacheArray = masterGrievanceCache.filter(item => {
-                    const st = (item.StewardOfRecord || '').trim();
-                    return st === targetSteward;
-                });
-            }
+            verifiedCacheArray = masterGrievanceCache.filter(item => {
+                const st = (item.StewardOfRecord || '').trim();
+                return checkedBoxes.includes(st);
+            });
 
             calculateMetrics();
             renderHubCards();
@@ -444,24 +453,65 @@
                 return;
             }
 
+            const isGrouped = document.getElementById('toggle-group-steward').checked;
+
+            // --- THE MASTER SORTING ENGINE ---
+            const sortItems = (arr) => {
+                return arr.sort((a, b) => {
+                    // 1. Sort by Last Name
+                    const lnA = (a.LastName || '').toLowerCase();
+                    const lnB = (b.LastName || '').toLowerCase();
+                    if (lnA < lnB) return -1;
+                    if (lnA > lnB) return 1;
+                    
+                    // 2. Sort by First Name
+                    const fnA = (a.FirstName || '').toLowerCase();
+                    const fnB = (b.FirstName || '').toLowerCase();
+                    if (fnA < fnB) return -1;
+                    if (fnA > fnB) return 1;
+                    
+                    // 3. Sort by Violation Date (Newest first)
+                    const dta = new Date(a.ViolationDate || 0);
+                    const dtb = new Date(b.ViolationDate || 0);
+                    return dtb - dta;
+                });
+            };
+
             const grouped = {};
-            verifiedCacheArray.forEach(item => {
-                const st = (item.StewardOfRecord || 'Unassigned Roster').trim();
-                if (!grouped[st]) grouped[st] = [];
-                grouped[st].push(item);
-            });
+            
+            if (isGrouped) {
+                // Group by Steward
+                verifiedCacheArray.forEach(item => {
+                    const stID = (item.StewardOfRecord || '').trim();
+                    let stName = stID;
+                    
+                    // Look up their pretty name from the checkbox attributes
+                    const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
+                    if (checkbox) stName = checkbox.getAttribute('data-name');
+                    else if (!stID) stName = 'Unassigned Roster';
+
+                    if (!grouped[stName]) grouped[stName] = [];
+                    grouped[stName].push(item);
+                });
+            } else {
+                // Merge everyone into one bucket
+                grouped['All Selected Files'] = [...verifiedCacheArray];
+            }
 
             let html = '';
 
-            for (const [stewardName, items] of Object.entries(grouped)) {
+            for (const [groupName, items] of Object.entries(grouped)) {
+                
+                const sortedItems = sortItems(items);
+
                 html += `
                     <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Verified By: ${stewardName}</span>
-                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} CASE${items.length > 1 ? 'S' : ''} PENDING SETTLEMENT</span>
+                        <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
+                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${sortedItems.length} CASE${sortedItems.length > 1 ? 'S' : ''} PENDING SETTLEMENT</span>
                     </div>
                 `;
 
-                items.forEach(item => {
+                sortedItems.forEach(item => {
                     const sysId = item.Title || '';
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
