@@ -767,32 +767,30 @@
             }
 
             // --- THE NEW INTERCEPT LOGIC ---
-            // If the text isn't in our array, it's brand new
             if (!chosenOption) {
                 document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
                 const modal = document.getElementById('disp-modal-overlay');
                 const actionSelect = document.getElementById('modal-action-type');
                 
-                // Reset dropdown to default just in case
                 actionSelect.value = "Settlement";
                 modal.style.display = 'flex';
 
-                // Wire the YES button
+                // Wire the YES button (Sends "Yes" as text)
                 document.getElementById('btn-save-disp-yes').onclick = function() {
                     modal.style.display = 'none';
                     const chosenBehavior = actionSelect.value;
-                    finalizeCommit(recordId, selectedStatus, chosenBehavior, 1); // 1 = Save it
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "Yes"); 
                 };
 
-                // Wire the NO button
+                // Wire the NO button (Sends "No" as text)
                 document.getElementById('btn-save-disp-no').onclick = function() {
                     modal.style.display = 'none';
                     const chosenBehavior = actionSelect.value; 
-                    finalizeCommit(recordId, selectedStatus, chosenBehavior, 0); // 0 = Don't save
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "No"); 
                 };
             } else {
                 // It already exists, skip the popup and fire immediately
-                finalizeCommit(recordId, selectedStatus, mode, 0);
+                finalizeCommit(recordId, selectedStatus, mode, "No");
             }
         }
         
