@@ -173,8 +173,8 @@
         <div class="nav-section-title">Portals & Links</div>
         <a href="#" class="nav-item active">Floor Portal (Active)</a>
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
+        <a id="lnk-archive" href="#" class="nav-item">Archive Vault</a>
         <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
-        <a href="#" class="nav-item disabled">Archive (Coming Soon)</a>
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
@@ -237,6 +237,7 @@
 
     // Wire up the Hub link dynamically
     document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
+    document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;    
 
     // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
