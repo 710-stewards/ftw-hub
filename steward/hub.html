@@ -39,9 +39,9 @@
         /* MOBILE OVERLAP & DATE WRAP FIX */
         .local-dates-box { flex: 1; text-align: right; min-width: 220px; }
         @media (max-width: 650px) {
-            body { padding-top: 140px; } /* Pushes content down so wrapped header doesn't cover KPIs */
+            body { padding-top: 140px; } 
             .local-dates-box { 
-                text-align: center; /* Centered as requested */
+                text-align: center; 
                 min-width: 100%; 
                 padding-top: 10px; border-top: 1px dashed #333; 
             }
@@ -92,6 +92,22 @@
             gap: 16px; margin-top: 10px; align-items: flex-start;
         }
 
+        /* NEW HIGH-SPEED HEADER CSS */
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
+        .ctr-meta {
+            display: flex; gap: 20px; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: flex-start;
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; }
+        }
+
         /* INPUT WRAPPERS */
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
@@ -101,6 +117,9 @@
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
         input:focus, select:focus { border-color: var(--accent); }
+        
+        /* Specialized COMBO BOX styling */
+        input.status-select::-webkit-calendar-picker-indicator { display: none !important; }
 
         .hold-reason-input {
             background: #201a00; border-color: #665200; color: #fff;
@@ -137,6 +156,8 @@
     </style>
 </head>
 <body>
+
+    <datalist id="global-disposition-list"></datalist>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
@@ -230,13 +251,20 @@
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
         let verifiedCacheArray = [];
         let masterDropdownOptionsArray = [];
-        let dispositionOptionsHtml = '';
         let currentStewardName = 'Executive Admin';
 
         // Wire up the Floor Portal Link in the Nav Menu
         document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
 
         const getTodayString = () => new Date().toISOString().split('T')[0];
+
+        // Format Date to MM/DD/YYYY securely
+        const formatToUsDate = (isoString) => {
+            if (!isoString || isoString === 'N/A') return 'N/A';
+            const parts = isoString.split('T')[0].split('-');
+            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+            return isoString;
+        };
 
         // Nav Drawer Controllers
         function openNavMenu() {
@@ -250,10 +278,7 @@
 
         function unlockCard(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            
-            // Enable text/select inputs
             card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
-            // Re-enable checkboxes cleanly
             card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
                 elem.style.pointerEvents = 'auto';
             });
@@ -310,15 +335,16 @@
                     }
                 });
 
-                // Build choices from dynamic list using ActionType column
+                // --- BUILD GLOBAL DATALIST COMBOBOX ---
                 const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
-                dispositionOptionsHtml = '<option value="" disabled selected hidden>Select...</option>';
+                let datalistHtml = '';
                 dispRows.forEach(opt => {
                     const val = opt.OptionValue || opt.Value || '';
                     if (val) {
-                        dispositionOptionsHtml += `<option value="${val}">${val}</option>`;
+                        datalistHtml += `<option value="${val}">`;
                     }
                 });
+                document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
                 // --- LAST & NEXT LOCAL DATE ENGINE ---
                 const localScheduleArray = bundle.localLevelSchedule || [];
@@ -413,8 +439,11 @@
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
                     
-                    const fDate = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
-                    const vDate = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
+                    // Converted to MM/DD/YYYY
+                    const fDateRaw = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
+                    const vDateRaw = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
+                    const fDate = formatToUsDate(fDateRaw);
+                    const vDate = formatToUsDate(vDateRaw);
                     
                     const violType = item.ViolationType || 'Not Set';
                     const violSubType = item.ViolationSubType || '';
@@ -437,15 +466,13 @@
                     html += `
                         <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;">
-                                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                    <h4 style="font-size: 18px; font-weight: 800; color: white; margin: 0;">${empName}</h4>
-                                    <span style="color: var(--accent); background: #2a2a2a; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">VIO: ${vDate}</span>
-                                    <span style="color: #ccc; font-size: 13px; font-weight: 700; text-transform: uppercase;">${cleanMetaType}</span>
+                            <div class="card-top-row">
+                                <h4 class="ctr-name">${empName}</h4>
+                                <div class="ctr-meta">
+                                    <span>${vDate}</span>
+                                    <span>${cleanMetaType}</span>
                                 </div>
-                                <div style="font-size: 20px; color: #ff3333; font-weight: 900; letter-spacing: 0.5px;">
-                                    $${originalAmt}
-                                </div>
+                                <div class="ctr-amt">$${originalAmt}</div>
                             </div>
 
                             <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap;">
@@ -457,9 +484,7 @@
                             <div class="card-split-grid" onclick="event.stopPropagation()">
                                 <div class="input-wrapper">
                                     <span class="input-label">Action / Disposition</span>
-                                    <select class="status-select" onchange="handleStatusLogic('${sysId}', this)">
-                                        ${dispositionOptionsHtml}
-                                    </select>
+                                    <input type="text" list="global-disposition-list" class="status-select" placeholder="Select or type..." oninput="handleStatusLogic('${sysId}', this)">
                                     <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
                                     
                                     <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 10px; font-weight: bold; color: var(--text-muted);">
@@ -522,12 +547,13 @@
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
                         
-                        // Disable text/select inputs
                         card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
-                        // Lock checkboxes cleanly without fading them
                         card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
                             elem.style.pointerEvents = 'none';
                         });
+
+                        // Show the settlement fields
+                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
 
                         if (document.getElementById('toggle-hide-settled').checked) {
                             card.style.display = 'none';
@@ -542,23 +568,33 @@
             });
         }
         
-        function handleStatusLogic(recordId, selectElem) {
+        function handleStatusLogic(recordId, inputElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            const selectedText = selectElem.value;
+            // Capture whatever they typed or selected
+            const selectedText = inputElem.value.trim();
             const origAmt = card.getAttribute('data-orig-amt');
             
             const finalAmtInput = card.querySelector('.final-amt-input');
             const settledDateInput = card.querySelector('.settled-date-input');
             const holdReasonInput = card.querySelector('.hold-reason-input');
+            const settlementFields = card.querySelectorAll('.settlement-fields');
 
-            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
+            // Find if what they typed matches a known dropdown option
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText);
             
-            let mode = chosenOption.ActionType || 'Final'; 
-            if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
+            // If they typed something entirely custom, default to "Settlement" behavior
+            let mode = 'Settlement'; 
+            if (chosenOption) {
+                mode = chosenOption.ActionType || 'Final';
+                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
+            }
 
-            // Auto-fill today's date if a selection is made and the date is currently blank
-            if (selectedText && !settledDateInput.value) {
-                settledDateInput.value = getTodayString();
+            // Reveal Date & Amount fields if they typed anything at all
+            if (selectedText) {
+                settlementFields.forEach(field => field.style.display = 'flex');
+                if (!settledDateInput.value) settledDateInput.value = getTodayString();
+            } else {
+                settlementFields.forEach(field => field.style.display = 'none');
             }
 
             if (mode === 'Note') {
@@ -585,7 +621,7 @@
 
         function executeSettlementCommit(recordId) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            const selectedStatus = card.querySelector('.status-select').value;
+            const selectedStatus = card.querySelector('.status-select').value.trim();
             const targetDate = card.querySelector('.settled-date-input').value;
             let finalPayout = card.querySelector('.final-amt-input').value;
             const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
@@ -594,20 +630,22 @@
             const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
 
             if (!selectedStatus) {
-                alert("Validation Blocked: Please select an action layout selection first.");
+                alert("Validation Blocked: Please type or select an action/disposition first.");
                 return;
             }
 
-            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus) || {};
-            let mode = chosenOption.ActionType || 'Final';
-            if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus);
+            let mode = 'Settlement';
+            if (chosenOption) {
+                mode = chosenOption.ActionType || 'Final';
+                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
+            }
 
             if (mode === 'Settlement' && !customHoldReason) {
                 alert("Validation Blocked: Settlement terms notes are required before closing this file.");
                 return;
             }
 
-            // Fallback for empty payout amount
             if (finalPayout === '') finalPayout = '0.00';
 
             const dateParts = targetDate.split('-');
@@ -693,8 +731,8 @@
 
             container.innerHTML = `
                 <div style="background: #222; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 13px;">
-                    <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? record.FileDate.split('T')[0] : 'N/A'}</p>
-                    <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? record.ViolationDate.split('T')[0] : 'N/A'}</p>
+                    <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? formatToUsDate(record.FileDate.split('T')[0]) : 'N/A'}</p>
+                    <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? formatToUsDate(record.ViolationDate.split('T')[0]) : 'N/A'}</p>
                     <p style="margin-bottom: 6px;"><b>Original Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
                 </div>
                 <label class="input-label" style="margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
