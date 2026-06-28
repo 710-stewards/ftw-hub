@@ -36,11 +36,13 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
-        /* MOBILE DATE WRAP FIX */
+        /* MOBILE OVERLAP & DATE WRAP FIX */
         .local-dates-box { flex: 1; text-align: right; min-width: 220px; }
         @media (max-width: 650px) {
+            body { padding-top: 140px; } /* Pushes content down so wrapped header doesn't cover KPIs */
             .local-dates-box { 
-                text-align: left; min-width: 100%; 
+                text-align: center; /* Centered as requested */
+                min-width: 100%; 
                 padding-top: 10px; border-top: 1px dashed #333; 
             }
         }
@@ -87,7 +89,7 @@
         }
         .card-split-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 16px; margin-top: 16px; align-items: flex-start;
+            gap: 16px; margin-top: 10px; align-items: flex-start;
         }
 
         /* INPUT WRAPPERS */
@@ -434,22 +436,22 @@
 
                     html += `
                         <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
-                                <div style="min-width: 0; flex: 1; min-width: 250px;">
-                                    <h4 style="font-size: 22px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
-                                    
-                                    <div style="display: flex; gap: 14px; font-size: 11px; font-weight: bold; margin-top: 8px; align-items: center; flex-wrap: wrap;">
-                                        <span style="color: #bbb;">FILE: <span style="color: #fff;">${fDate}</span></span>
-                                        <span style="color: var(--accent); background: #2a2a2a; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; font-size: 13px;">VIOLATION: ${vDate}</span>
-                                    </div>
-                                    
-                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
-                                    <p style="font-size: 15px; color: var(--accent); margin-top: 4px; font-weight: 700; text-transform: uppercase;">${cleanMetaType}</p>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;">
+                                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <h4 style="font-size: 18px; font-weight: 800; color: white; margin: 0;">${empName}</h4>
+                                    <span style="color: var(--accent); background: #2a2a2a; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">VIO: ${vDate}</span>
+                                    <span style="color: #ccc; font-size: 13px; font-weight: 700; text-transform: uppercase;">${cleanMetaType}</span>
                                 </div>
-                                <div style="text-align: right; flex-shrink: 0;">
-                                    <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Claim</span>
-                                    <h5 style="font-size: 24px; color: #ff3333; font-weight: 900; margin-top: 4px;">$${originalAmt}</h5>
+                                <div style="font-size: 20px; color: #ff3333; font-weight: 900; letter-spacing: 0.5px;">
+                                    $${originalAmt}
                                 </div>
+                            </div>
+
+                            <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap;">
+                                <span>Driver ID: <span style="color: #bbb;">${empId}</span></span>
+                                <span>Sys ID: <span style="color: #bbb;">${sysId}</span></span>
+                                <span>File Date: <span style="color: #bbb;">${fDate}</span></span>
                             </div>
 
                             <div class="card-split-grid" onclick="event.stopPropagation()">
@@ -470,14 +472,14 @@
                                     </div>
                                 </div>
                                 
-                                <div class="input-wrapper settlement-fields" style="display: none;">
+                                <div class="input-wrapper settlement-fields">
                                     <span class="input-label">Date Settled</span>
-                                    <input type="date" class="settled-date-input" value="${getTodayString()}">
+                                    <input type="date" class="settled-date-input" value="">
                                 </div>
                                 
-                                <div class="input-wrapper settlement-fields" style="display: none;">
+                                <div class="input-wrapper settlement-fields">
                                     <span class="input-label">Final Paid Amt ($)</span>
-                                    <input type="number" step="0.01" class="final-amt-input" value="0.00">
+                                    <input type="number" step="0.01" class="final-amt-input" value="">
                                 </div>
                                 
                                 <div class="input-wrapper">
@@ -527,9 +529,6 @@
                             elem.style.pointerEvents = 'none';
                         });
 
-                        // Show the settlement fields
-                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
-
                         if (document.getElementById('toggle-hide-settled').checked) {
                             card.style.display = 'none';
                         }
@@ -549,31 +548,28 @@
             const origAmt = card.getAttribute('data-orig-amt');
             
             const finalAmtInput = card.querySelector('.final-amt-input');
+            const settledDateInput = card.querySelector('.settled-date-input');
             const holdReasonInput = card.querySelector('.hold-reason-input');
-            const settlementFields = card.querySelectorAll('.settlement-fields');
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
             
             let mode = chosenOption.ActionType || 'Final'; 
             if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
 
-            // Reveal Date & Amount fields if a selection is made
-            if (selectedText) {
-                settlementFields.forEach(field => field.style.display = 'flex');
-            } else {
-                settlementFields.forEach(field => field.style.display = 'none');
+            // Auto-fill today's date if a selection is made and the date is currently blank
+            if (selectedText && !settledDateInput.value) {
+                settledDateInput.value = getTodayString();
             }
 
             if (mode === 'Note') {
                 holdReasonInput.style.display = 'block';
                 holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
-                finalAmtInput.value = "0.00";
+                finalAmtInput.value = "";
             } 
             else if (mode === 'Settlement') {
                 holdReasonInput.style.display = 'block';
                 holdReasonInput.placeholder = "REQUIRED: Type final settlement terms...";
                 finalAmtInput.value = ''; 
-                finalAmtInput.placeholder = '0.00';
             } 
             else {
                 holdReasonInput.style.display = 'none';
@@ -581,7 +577,7 @@
                 
                 if (selectedText === 'Claim Allowed') {
                     finalAmtInput.value = origAmt; 
-                } else {
+                } else if (selectedText) {
                     finalAmtInput.value = '0.00';
                 }
             }
@@ -591,7 +587,7 @@
             const card = document.getElementById(`hub-card-${recordId}`);
             const selectedStatus = card.querySelector('.status-select').value;
             const targetDate = card.querySelector('.settled-date-input').value;
-            const finalPayout = card.querySelector('.final-amt-input').value;
+            let finalPayout = card.querySelector('.final-amt-input').value;
             const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
             const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
             const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
@@ -610,6 +606,9 @@
                 alert("Validation Blocked: Settlement terms notes are required before closing this file.");
                 return;
             }
+
+            // Fallback for empty payout amount
+            if (finalPayout === '') finalPayout = '0.00';
 
             const dateParts = targetDate.split('-');
             const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
