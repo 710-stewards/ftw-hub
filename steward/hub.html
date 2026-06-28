@@ -500,7 +500,7 @@
             document.getElementById('metric-today-paid').innerText = `$${closedPayout.toFixed(2)}`;
         }
 
-        function renderHubCards() {
+       function renderHubCards() {
             const display = document.getElementById('data-display');
             display.style.paddingBottom = '120px';
 
@@ -510,25 +510,6 @@
             }
 
             const isGrouped = document.getElementById('toggle-group-steward').checked;
-
-            // --- THE MASTER SORTING ENGINE ---
-            const sortItems = (arr) => {
-                return arr.sort((a, b) => {
-                    const lnA = (a.LastName || '').toLowerCase();
-                    const lnB = (b.LastName || '').toLowerCase();
-                    if (lnA < lnB) return -1;
-                    if (lnA > lnB) return 1;
-                    
-                    const fnA = (a.FirstName || '').toLowerCase();
-                    const fnB = (b.FirstName || '').toLowerCase();
-                    if (fnA < fnB) return -1;
-                    if (fnA > fnB) return 1;
-                    
-                    const dta = new Date(a.ViolationDate || 0);
-                    const dtb = new Date(b.ViolationDate || 0);
-                    return dtb - dta;
-                });
-            };
 
             const grouped = {};
             
@@ -542,6 +523,7 @@
                     else if (!stID) stName = 'Unassigned Roster';
 
                     if (!grouped[stName]) grouped[stName] = [];
+                    // Power Automate sorted it. Push keeps that exact order!
                     grouped[stName].push(item);
                 });
             } else {
@@ -550,18 +532,20 @@
 
             let html = '';
 
-            for (const [groupName, items] of Object.entries(grouped)) {
-                
-                const sortedItems = sortItems(items);
+            // Sort the group headers alphabetically (Steward Names)
+            const sortedGroupNames = Object.keys(grouped).sort();
+
+            for (const groupName of sortedGroupNames) {
+                const items = grouped[groupName];
 
                 html += `
                     <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
                         <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
-                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${sortedItems.length} CASE${sortedItems.length > 1 ? 'S' : ''} PENDING SETTLEMENT</span>
+                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} CASE${items.length > 1 ? 'S' : ''} PENDING SETTLEMENT</span>
                     </div>
                 `;
 
-                sortedItems.forEach(item => {
+                items.forEach(item => {
                     const sysId = item.Title || '';
                     const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
                     const empId = item.EmployeeID || '-------';
@@ -659,6 +643,47 @@
                     `;
                 });
             }
+
+            display.innerHTML = html;
+
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                if (currentDisp) {
+                    const card = document.getElementById(`hub-card-${item.Title}`);
+                    if (card) {
+                        card.querySelector('.status-select').value = currentDisp;
+                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
+                        if (item.SettledDate) {
+                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
+                        }
+                        
+                        card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
+                        card.querySelector('.chk-nps').checked = !!item.NPS;
+                        
+                        card.style.background = 'var(--bg-card)';
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+                        
+                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
+                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                            elem.style.pointerEvents = 'none';
+                        });
+
+                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
+
+                        if (document.getElementById('toggle-hide-settled').checked) {
+                            card.style.display = 'none';
+                        }
+                        
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
+                    }
+                }
+            });
+        }
 
             display.innerHTML = html;
 
