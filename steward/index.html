@@ -3,37 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steward Live Portal</title>
+    <title>Local 710 Intake Hub</title>
     <style>
         /* CORE CONFIGURATION */
         :root {
-            --bg-dark: #121212;
-            --bg-panel: #1e1e1e;
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
             --accent: #ffcc00;
-            --success: #00ff88;
+            --accent-green: #2ecc71;
             --danger: #ff3333;
-            --text-main: #ffffff;
-            --text-muted: #aaaaaa;
             --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* RESPONSIVE HEADER */
-        header { 
-            min-height: 75px; 
-            background: #1a1a1a; 
-            border-bottom: 2px solid var(--accent); 
-            flex-shrink: 0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 20px; 
-            z-index: 10; 
-            flex-wrap: wrap; 
-            gap: 15px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+
+        /* RESPONSIVE HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
         }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
         .hamburger-btn {
             background: none; border: none; color: var(--accent); 
@@ -42,9 +38,15 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
+        /* SAVE STATUS INDICATOR */
+        .local-dates-box { flex: 1; text-align: right; min-width: 200px; display: flex; justify-content: flex-end; align-items: center; }
         .save-status { font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
-        .save-status.dirty { background: #554400; color: var(--accent); }
-        .save-status.saving { background: #004422; color: var(--success); }
+        .save-status.saving { background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
+
+        @media (max-width: 650px) {
+            body { padding-top: 140px; } 
+            .local-dates-box { text-align: center; justify-content: center; min-width: 100%; padding-top: 10px; border-top: 1px dashed #333; }
+        }
 
         /* MAIN NAV DRAWER (LEFT SIDE) */
         .main-nav-drawer {
@@ -56,118 +58,109 @@
         .main-nav-drawer.open { transform: translateX(0); }
         .nav-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
-            backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
         }
         .nav-overlay.open { display: block; }
         
         .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item {
-            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
-            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
-        }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
         .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* APPLICATION HOUSING */
-        .app-container { display: flex; flex: 1; overflow: hidden; position: relative; }
-        .main-content { flex: 1; overflow-y: auto; padding: 20px; transition: margin-right 0.3s; }
-
-        /* SPREADSHEET HEADER (Hidden on mobile cards by default) */
-        .spreadsheet-header { display: none; }
-
-        /* MOBILE CARD GRID LAYOUT */
-        .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
-        @media (max-width: 500px) { .record-grid { grid-template-columns: 1fr; } }
-
-        .record-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; position: relative; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; transition: border 0.2s; }
-        .record-card:hover { border-color: #555; }
-        .record-card::before { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 6px; border-radius: 0 4px 4px 0; }
-        .record-card.ai-match::before { background-color: var(--success); }
-        .record-card.ai-fail::before { background-color: var(--danger); }
-
-        .record-card.ai-match .emp-label { color: var(--text-muted); }
-        .record-card.ai-fail .emp-label { color: var(--danger); }
-        .record-card.ai-fail input.emp-input { color: var(--danger); border-color: rgba(255,51,51,0.4); }
-
-        .card-split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .input-wrapper { display: flex; flex-direction: column; }
-        .input-label { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--text-muted); margin-bottom: 4px; }
+        /* CARD ARCHITECTURE */
+        .record-card {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
+        }
+        .record-card.ai-match { border-left-color: var(--accent-green); }
+        .record-card.ai-fail { border-left-color: var(--danger); border-color: rgba(255,51,51,0.3); }
         
-        input, select { background: #262626; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; font-size: 14px; width: 100%; height: 38px; }
-        input:focus, select:focus { border-color: var(--accent); outline: none; }
-        
-        .sys-id-display-box { background: transparent; color: var(--text-muted); border: 1px dashed #444; padding: 10px; border-radius: 4px; font-size: 13px; font-family: monospace; font-weight: bold; width: 100%; height: 38px; display: flex; align-items: center; }
-
-        input.emp-input { font-size: 18px; font-weight: bold; padding: 6px 8px; }
-        input.emp-input.long-name { font-size: 13px; } 
-        input.id-input { font-size: 14px; font-weight: bold; font-family: monospace; text-align: center; padding: 6px 4px; }
-
-        /* 3D WORK FLOOR INTERACTION BUTTONS */
-        .btn-3d { display: block; width: 100%; padding: 12px; border-radius: 4px; font-size: 14px; font-weight: bold; text-transform: uppercase; text-align: center; cursor: pointer; border: none; transition: transform 0.1s, box-shadow 0.1s; height: 42px; }
-        .btn-deepdive { background: #3a3a3a; color: #ffffff; box-shadow: 0 4px 0 #222; }
-        .btn-deepdive:active { transform: translateY(4px); box-shadow: 0 0px 0 #222; }
-        .btn-approve { background: #2a5e35; color: var(--success); border: 1px solid var(--success); box-shadow: 0 4px 0 #15331c; }
-        .btn-approve:active { transform: translateY(4px); box-shadow: 0 0px 0 #15331c; }
-
-        /* EVIDENCE SLIDE PANEL DRAWER */
-        .drawer { width: 450px; background: #1a1a1a; border-left: 1px solid var(--border); position: absolute; right: -450px; top: 0; bottom: 0; transition: right 0.3s ease; display: flex; flex-direction: column; z-index: 100; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
-        .drawer.open { right: 0; }
-        
-        /* DRAG HANDLE */
-        .drawer-handle { width: 8px; background: #333; cursor: col-resize; position: absolute; left: 0; top: 0; bottom: 0; z-index: 101; transition: background 0.2s; }
-        .drawer-handle:hover, .drawer-handle:active { background: var(--accent); }
-
-        .drawer-header { padding: 15px 15px 15px 25px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #222; }
-        .close-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
-        .drawer-content { padding: 15px 15px 15px 25px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 450px; border: 1px solid var(--border); border-radius: 4px; background: #333; margin-top: 10px; }
-
-        @media (max-width: 799px) { .drawer { width: 100% !important; right: -100%; } .drawer-handle { display: none; } }
-
-        /* MOBILE LANDSCAPE OPTIMIZATION */
-        @media screen and (max-height: 500px) and (orientation: landscape) {
-            body { display: block; overflow-y: auto; height: auto; }
-            .app-container { display: block; overflow: visible; }
-            .main-content { overflow: visible; padding-top: 10px; }
-            .drawer { position: fixed; height: 100vh; }
+        .card-split-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 16px; margin-top: 10px; align-items: flex-start;
         }
 
-        /* HIGH-DENSITY WORKSTATION PC OVERRIDE (Spreadsheet Blueprint) */
-        @media screen and (min-width: 1200px) {
-            .main-content { padding: 0; }
-            .spreadsheet-header { display: grid; grid-template-columns: 2.2fr 1fr 1.2fr 1.5fr 1fr 1.5fr 1.5fr 100px; gap: 8px; background: #161616; padding: 10px 20px; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 8; font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--accent); letter-spacing: 0.5px; }
-            .record-grid { grid-template-columns: 1fr; gap: 0; }
-            .record-card { flex-direction: row; display: grid; grid-template-columns: 2.2fr 1fr 1.2fr 1.5fr 1fr 1.5fr 1.5fr 100px; gap: 8px; padding: 6px 20px; border-radius: 0; border: none; border-bottom: 1px solid var(--border); box-shadow: none; align-items: center; }
-            .record-card::before { top: 0; bottom: 0; width: 4px; border-radius: 0; }
-            .record-card > div, .card-split-grid { display: contents !important; }
-            .card-split-grid > div { display: contents !important; }
-            .input-label { display: none !important; }
-            input, select, .sys-id-display-box { height: 32px; padding: 4px 8px; font-size: 13px !important; text-align: left !important; background: #1c1c1c; border-color: #2b2b2b; }
-            .sys-id-display-box { border-style: solid; font-size: 11px !important; }
-            .btn-3d { height: 32px; padding: 0 10px; font-size: 11px; box-shadow: none; display: flex; align-items: center; justify-content: center; }
-            .btn-deepdive { display: none !important; }
+        /* NEW HIGH-SPEED HEADER CSS */
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
+        .ctr-meta {
+            display: flex; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
         }
 
-        /* PRINT STYLES */
-        @media print {
-            body { background: white; color: black; height: auto; overflow: visible; }
-            header, .main-nav-drawer, .nav-overlay, .drawer, .btn-3d, .spreadsheet-header { display: none !important; }
-            .main-content { padding: 0; overflow: visible; }
-            .record-card { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; background: white; margin-bottom: 10px; display: block !important; }
-            input, select, .sys-id-display-box { background: transparent; color: black; border: 1px solid #ccc; }
+        /* INPUT WRAPPERS */
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+        
+        input, select {
+            width: 100%; height: 42px; background: #262626; border: 1px solid #444;
+            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+        input.emp-input { font-size: 15px; font-weight: bold; }
+        input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
+
+        .sys-id-display-box { 
+            background: transparent; color: var(--text-muted); border: 1px dashed #444; 
+            padding: 0 12px; border-radius: 6px; font-size: 13px; font-family: monospace; 
+            font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
+        }
+
+        /* BUTTONS */
+        .btn-3d {
+            width: 100%; height: 42px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
+        }
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+        .btn-approve { background-color: var(--accent-green); color: #111; }
+        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
+
+        /* RIGHT SIDE AUDIT DRAWER */
+        .side-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 450px;
+            background: #161616; border-left: 2px solid var(--accent);
+            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+        }
+        .side-drawer.open { transform: translateX(0); }
+        .drawer-header {
+            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
+        .drawer-handle {
+            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
         }
     </style>
 </head>
 <body>
 
-    <!-- LEFT NAV DRAWER & OVERLAY -->
+    <div id="global-datalists" style="display: none;"></div>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
             <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                GROUP BY STEWARD
+                <input type="checkbox" id="toggle-group-steward" checked onchange="filterRecords()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
         </div>
         
         <div class="nav-section-title">Portals & Links</div>
@@ -178,56 +171,40 @@
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
-        <div style="padding: 10px 20px;">
-            <select id="coverage-steward-select" onchange="filterRecords()" style="width: 100%; height: 42px; background: #262626; color: white; border: 1px solid #444; border-radius: 6px;">
-                <option value="CURRENT_USER">Loading roster...</option>
-            </select>
-            <p style="font-size: 10px; color: var(--text-muted); margin-top: 6px; line-height: 1.3;">*Select a steward from the roster to view and process their pending floor files.</p>
+        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
         </div>
         
         <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
         <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
     </div>
 
-    <header>
+    <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
             <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
-                <h1 style="font-size: 22px; line-height: 1.1;">Local 710 Intake Hub</h1>
-                <span id="steward-info" style="color: var(--accent); font-size: 14px;">Initializing live stream...</span>
+                <div class="header-title">Local 710 Intake Hub</div>
+                <div id="steward-info" class="header-sub">Initializing live stream...</div>
             </div>
         </div>
-        <div style="flex: 1; display: flex; justify-content: flex-end; min-width: 150px;">
+        <div class="local-dates-box">
             <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
         </div>
-    </header>
+    </div>
 
-    <div class="app-container">
-        <div class="main-content">
-            <div id="loading" style="color: var(--text-muted); padding: 20px;">Parsing records...</div>
-            
-            <div class="spreadsheet-header">
-                <div>Member Name</div>
-                <div>Emp ID</div>
-                <div>File Date</div>
-                <div>Violation Type</div>
-                <div>Claim Amt</div>
-                <div>Violation Date</div>
-                <div>Sys ID</div>
-                <div style="text-align: center;">Actions</div>
-            </div>
-
-            <div id="data-display" class="record-grid"></div>
+    <div id="data-display">
+        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+            ↻ Parsing records...
         </div>
+    </div>
 
-        <div id="side-drawer" class="drawer">
-            <div id="drawerHandle" class="drawer-handle"></div>
-            <div class="drawer-header">
-                <h3 id="drawer-title">Deep Dive Evidence</h3>
-                <button class="close-btn" onclick="closeDrawer()">✕</button>
-            </div>
-            <div class="drawer-content" id="drawer-main-content"></div>
+    <div id="side-drawer" class="side-drawer">
+        <div id="drawerHandle" class="drawer-handle"></div>
+        <div class="drawer-header">
+            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Deep Dive Evidence</h3>
+            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
+        <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
     <script>
@@ -235,7 +212,7 @@
     const stewardGUID = urlParams.get('steward');
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-    // Wire up the Hub link dynamically
+    // Wire up links
     document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
     document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;    
 
@@ -250,6 +227,14 @@
     let lastHiddenCardId = null;
     let undoTimeoutTimer = null;
 
+    // Date Formatter Helper
+    const formatToUsDate = (isoString) => {
+        if (!isoString || isoString === 'N/A') return 'N/A';
+        const parts = isoString.split('T')[0].split('-');
+        if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+        return isoString;
+    };
+
     // Nav Drawer Controllers
     function openNavMenu() {
         document.getElementById('main-nav-menu').classList.add('open');
@@ -261,27 +246,22 @@
     }
 
     // --- REAL-TIME HEADER TRACKER & COVERAGE ---
-    function updateHeader() {
-        const coverageSelect = document.getElementById('coverage-steward-select');
-        const selectedVal = coverageSelect ? coverageSelect.value : 'CURRENT_USER';
-        let viewName = currentStewardName;
+    function updateHeader(checkedBoxes) {
+        let viewName = 'Multiple';
+        if (checkedBoxes && checkedBoxes.length === 1) {
+            const checkbox = document.querySelector(`.steward-filter-chk[value="${checkedBoxes[0]}"]`);
+            if (checkbox) viewName = checkbox.getAttribute('data-name');
+        } else if (checkedBoxes && checkedBoxes.length === 0) {
+            viewName = 'None';
+        }
         
         const viewCount = fullDataCache.filter(item => {
             if (item.isVerifiedLocally) return false;
-            
-            const st = (item.StewardOfRecord || '').toLowerCase().trim();
-            if (selectedVal === 'CURRENT_USER') {
-                return st === currentStewardName.toLowerCase().trim() || st === currentStewardId.toLowerCase().trim();
-            } else {
-                const selectedOption = coverageSelect.options[coverageSelect.selectedIndex];
-                const selectedShortId = selectedOption.getAttribute('data-shortid') || '';
-                viewName = selectedOption.text;
-                return st === selectedVal.toLowerCase().trim() || (selectedShortId && st === selectedShortId.toLowerCase().trim());
-            }
+            const st = (item.StewardOfRecord || '').trim();
+            return checkedBoxes ? checkedBoxes.includes(st) : false;
         }).length;
         
-        const prefix = selectedVal === 'CURRENT_USER' ? '' : 'Coverage: ';
-        document.getElementById('steward-info').innerText = `${prefix}${viewName} | ${viewCount} Pending Intake`;
+        document.getElementById('steward-info').innerText = `Coverage: ${viewName} | ${viewCount} Pending Intake`;
     }
 
     function loadPending() {
@@ -304,7 +284,6 @@
             masterSeniorityArray = dataBundle.seniorityList || [];
             masterStewardRoster = dataBundle.stewardRoster || [];
             
-            // --- VERIFIED SHAREPOINT COLUMN TARGETING ---
             const myProfile = masterStewardRoster.find(s => {
                 const targetGuid = (s.GUID || s.Title || '').toString().toLowerCase().trim();
                 return targetGuid === stewardGUID.toLowerCase().trim();
@@ -314,12 +293,11 @@
             currentStewardId = myProfile.StewardID || ''; 
 
             if (fullDataCache.length === 0) {
-                updateHeader();
-                document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 20px;">No pending records found.</div>';
+                document.getElementById('steward-info').innerText = `Coverage: ${currentStewardName} | 0 Pending Intake`;
+                document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Intake queue is clear. No pending records found.</div>';
                 return;
             }
 
-            // --- BUILD MASTER ROSTER DATALIST ---
             let seniorityOptionsHtml = '';
             masterSeniorityArray.forEach(person => {
                 const fName = person.FirstName || person['First Name'] || '';
@@ -330,39 +308,41 @@
                 }
             });
 
-            // --- BUILD DYNAMIC DROPDOWN OPTION LISTS ---
             const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
             const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
 
             violTypeOptionsHtml = '';
             violationTypeRows.forEach(opt => {
                 const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
-                if(val) {
-                    violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
-                }
+                if(val) violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
             });
 
             subViolOptionsHtml = '';
             subViolationRows.forEach(opt => {
                 const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
-                if(val) {
-                    subViolOptionsHtml += `<option value="${val}">${val}</option>`;
-                }
+                if(val) subViolOptionsHtml += `<option value="${val}">${val}</option>`;
             });
 
             let dataListsContainer = document.getElementById('global-datalists');
-            if (!dataListsContainer) {
-                dataListsContainer = document.createElement('div');
-                dataListsContainer.id = 'global-datalists';
-                dataListsContainer.style.display = 'none';
-                document.body.appendChild(dataListsContainer);
-            }
             dataListsContainer.innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
 
-            // --- BUILD HAMBURGER FILTERS FROM VERIFIED ROSTER ---
-            buildStewardFilters();
+            // Populate checkboxes
+            const coverageContainer = document.getElementById('coverage-checkboxes');
+            coverageContainer.innerHTML = '';
+            const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
 
-            // Render cards based on who is logged in by default
+            sortedRoster.forEach(st => {
+                if (st.StewardName && st.StewardID) {
+                    const isMe = st.StewardID === currentStewardId;
+                    coverageContainer.innerHTML += `
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
+                            <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="filterRecords()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                            ${st.StewardName} ${isMe ? '(Me)' : ''}
+                        </label>
+                    `;
+                }
+            });
+
             filterRecords();
         }).catch(err => {
             document.getElementById('loading').innerText = "Interface parsing failure. Check format mappings.";
@@ -370,71 +350,54 @@
         });
     }
 
-    function buildStewardFilters() {
-        const coverageSelect = document.getElementById('coverage-steward-select');
-        coverageSelect.innerHTML = '<option value="CURRENT_USER">My Active Cases</option>';
-        
-        masterStewardRoster.forEach(stewardRow => {
-            const sName = stewardRow.StewardName || '';
-            const sId = stewardRow.StewardID || '';
-            if (sName || sId) {
-                coverageSelect.innerHTML += `<option value="${sName || sId}" data-shortid="${sId}">${sName || sId}</option>`;
-            }
-        });
-    }
-
     function filterRecords() {
-        const coverageSelect = document.getElementById('coverage-steward-select');
-        const selectedVal = coverageSelect.value;
-        const selectedOption = coverageSelect.options[coverageSelect.selectedIndex];
-        const selectedShortId = selectedOption.getAttribute('data-shortid') || '';
+        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
         
         const filtered = fullDataCache.filter(item => {
             if (item.isVerifiedLocally) return false; 
-            
-            const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').toLowerCase().trim();
-            if (!recordSteward) return false;
-            
-            if (selectedVal === 'CURRENT_USER') {
-                return recordSteward === currentStewardName.toLowerCase().trim() || recordSteward === currentStewardId.toLowerCase().trim();
-            } else {
-                return recordSteward === selectedVal.toLowerCase().trim() || (selectedShortId && recordSteward === selectedShortId.toLowerCase().trim());
-            }
+            const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').trim();
+            return checkedBoxes.includes(recordSteward);
         });
         
-        updateHeader(); 
+        updateHeader(checkedBoxes); 
         renderCards(filtered);
     }
 
     function renderCards(recordsList) {
         const displayContainer = document.getElementById('data-display');
-        
-        // PADDING FIX: Ensure mobile bottom toolbar doesn't block the last card
         displayContainer.style.paddingBottom = '120px';
 
         if (recordsList.length === 0) {
-            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 20px; text-align: center; font-size: 14px;">No active records currently selected.</div>';
+            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Intake queue is clear. No pending records found for this view.</div>';
             return;
         }
 
-        // --- GROUP RECORDS BY STEWARD ---
+        const isGrouped = document.getElementById('toggle-group-steward').checked;
         const groupedRecords = {};
-        recordsList.forEach(item => {
-            const st = (item.StewardOfRecord || item['StewardOfRecord'] || 'Unassigned').trim();
-            if (!groupedRecords[st]) groupedRecords[st] = [];
-            groupedRecords[st].push(item);
-        });
+        
+        if (isGrouped) {
+            recordsList.forEach(item => {
+                const stID = (item.StewardOfRecord || item['StewardOfRecord'] || 'Unassigned').trim();
+                let stName = stID;
+                const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
+                if (checkbox) stName = checkbox.getAttribute('data-name');
+                if (!groupedRecords[stName]) groupedRecords[stName] = [];
+                groupedRecords[stName].push(item);
+            });
+        } else {
+            groupedRecords['All Selected Files'] = [...recordsList];
+        }
 
         let htmlContent = '';
+        const sortedGroupNames = Object.keys(groupedRecords).sort();
 
-        // --- BUILD DIVIDERS AND CARDS ---
-        for (const [stewardName, items] of Object.entries(groupedRecords)) {
-            
-            // Generate the slick visual divider
+        for (const groupName of sortedGroupNames) {
+            const items = groupedRecords[groupName];
+
             htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span style="color: var(--accent); font-size: 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${stewardName}</span>
-                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold; background: #222; padding: 2px 6px; border-radius: 4px;">${items.length} RECORD${items.length > 1 ? 'S' : ''}</span>
+                    <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
+                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} PENDING</span>
                 </div>
             `;
 
@@ -451,9 +414,12 @@
                 const violType = item['ViolationType'] || '';
                 const subType = item['ViolationSubType'] || '';
                 const amt = item['ViolationAmount'] || '0.00';
+                const originalAmt = parseFloat(amt).toFixed(2);
                 
                 const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
                 const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
+                
+                const vDateDisplay = formatToUsDate(violDate);
 
                 let idAlertHtml = '';
                 let nameAlertHtml = '';
@@ -467,88 +433,105 @@
                 });
 
                 if (!isAiMatched) {
-                    if (displayName !== 'Unknown Driver') {
-                        displayName = displayName + ' *'; 
-                    }
-                    nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ RESELECT MEMBER</span>';
+                    if (displayName !== 'Unknown Driver') displayName = displayName + ' *'; 
+                    nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ VERIFY MEMBER</span>';
                     nameInputStyleOverride = 'border-color: #ffcc00;';
 
                     if (rosterMatch) {
                         const officialRosterId = (rosterMatch.Title || '').toString().trim();
                         if (empId !== officialRosterId) {
                             empId = ''; 
-                            idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
+                            idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
                             idInputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
                             cardClass = 'ai-fail'; 
                         }
                     } else if (displayName !== 'Unknown Driver *') {
-                        idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: center; margin-top: 4px; letter-spacing: 0.3px;">⚠️ NOT IN ROSTER</span>';
+                        idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ MISSING ID</span>';
                         idInputStyleOverride = 'border-color: #ffcc00;';
                     }
                 }
 
-                const nameLengthClass = displayName.length > 14 ? 'long-name' : '';
+                let itemStewardName = (item.StewardOfRecord || '').trim();
+                const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
+                if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
+                const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
 
                 htmlContent += `
-                    <div class="record-card ${cardClass}" id="card-${sysId}" onclick="openDrawer('${sysId}')">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;" onclick="event.stopPropagation()">
-                            <div class="input-wrapper" style="flex: 1; min-width: 0;">
+                    <div class="record-card ${cardClass}" id="card-${sysId}" style="transition: all 0.2s ease;">
+                        
+                        <div class="card-top-row">
+                            <h4 class="ctr-name">${displayName.replace(' *', '')}</h4>
+                            <div class="ctr-meta">
+                                <span>${vDateDisplay}</span>
+                                <span>${violType} ${subType ? '— ' + subType : ''}</span>
+                            </div>
+                            <div class="ctr-amt">$${originalAmt}</div>
+                        </div>
+
+                        <div style="display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap;" onclick="event.stopPropagation()">
+                            <div class="input-wrapper" style="flex: 1; min-width: 180px;">
                                 <span class="input-label emp-label">Member Name</span>
-                                <input type="text" class="emp-input ${nameLengthClass}" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
+                                <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
                                 ${nameAlertHtml}
                             </div>
-                            <div class="input-wrapper" style="width: 85px; flex-shrink: 0;">
-                                <span class="input-label emp-label" style="text-align: center;">Emp ID</span>
+                            <div class="input-wrapper" style="width: 120px;">
+                                <span class="input-label emp-label">Emp ID</span>
                                 <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
                                 ${idAlertHtml}
                             </div>
                         </div>
 
+                        ${stewardBadgeHtml ? `<div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">${stewardBadgeHtml}</div>` : ''}
+
                         <div class="card-split-grid" onclick="event.stopPropagation()">
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div class="input-wrapper">
-                                    <span class="input-label">File Date</span>
-                                    <input type="date" value="${fileDate}">
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Violation Type</span>
-                                    <select class="violtype-select">
-                                        <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                        ${violTypeOptionsHtml || `
-                                            <option value="Discharge">Discharge</option>
-                                            <option value="Suspension">Suspension</option>
-                                            <option value="Pay Claim">Pay Claim</option>
-                                            <option value="Protest">Protest</option>
-                                            <option value="Other">Other</option>
-                                        `}
-                                    </select>
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Claim Amt</span>
-                                    <input type="number" step="0.01" class="amt-input" value="${amt}">
-                                </div>
-                                <button class="btn-3d btn-deepdive" onclick="openDrawer('${sysId}')" style="margin-top: 5px;">Deep Dive</button>
+                            <div class="input-wrapper">
+                                <span class="input-label">File Date</span>
+                                <input type="date" value="${fileDate}">
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Violation Date</span>
+                                <input type="date" value="${violDate}">
+                            </div>
+                            
+                            <div class="input-wrapper">
+                                <span class="input-label">Violation Type</span>
+                                <select class="violtype-select">
+                                    <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                    ${violTypeOptionsHtml || `
+                                        <option value="Discharge">Discharge</option>
+                                        <option value="Suspension">Suspension</option>
+                                        <option value="Pay Claim">Pay Claim</option>
+                                        <option value="Protest">Protest</option>
+                                        <option value="Other">Other</option>
+                                    `}
+                                </select>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Sub Violation</span>
+                                <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
+                                    <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                    ${subViolOptionsHtml}
+                                    <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                                </select>
+                                <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
                             </div>
 
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div class="input-wrapper">
-                                    <span class="input-label">Violation Date</span>
-                                    <input type="date" value="${violDate}">
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Sub Violation</span>
-                                    <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
-                                        <option value="${subType}" hidden>${subType || 'Select...'}</option>
-                                        ${subViolOptionsHtml}
-                                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
-                                    </select>
-                                    <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px; height: 38px;" placeholder="Type custom violation here...">
-                                </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Sys ID</span>
-                                    <div class="sys-id-display-box">${sysId}</div>
-                                </div>
-                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')" style="margin-top: 5px;">Approve</button>
+                            <div class="input-wrapper">
+                                <span class="input-label">Claim Amt ($)</span>
+                                <input type="number" step="0.01" class="amt-input" value="${amt}">
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Sys ID</span>
+                                <div class="sys-id-display-box">${sysId}</div>
+                            </div>
+
+                            <div class="input-wrapper">
+                                <span class="input-label">&nbsp;</span>
+                                <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">Review PDF File</button>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">&nbsp;</span>
+                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
                             </div>
                         </div>
                     </div>
@@ -654,7 +637,8 @@
                 const rec = fullDataCache.find(r => r.Title === recordId);
                 if (rec) rec.isVerifiedLocally = true;
                 
-                updateHeader();
+                const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+                updateHeader(checkedBoxes);
 
                 card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                 card.style.opacity = '0';
@@ -670,6 +654,8 @@
                 triggerUndoToast(recordId);
             } else {
                 alert("Cloud sync failed. Check connection.");
+                ind.innerText = "⚠️ Sync Error";
+                ind.className = "save-status dirty";
             }
         });
     }
@@ -704,7 +690,8 @@
         const rec = fullDataCache.find(r => r.Title === lastHiddenCardId);
         if (rec) rec.isVerifiedLocally = false;
         
-        updateHeader();
+        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+        updateHeader(checkedBoxes);
 
         const card = document.getElementById(`card-${lastHiddenCardId}`);
         if (card) {
@@ -739,7 +726,7 @@
                 safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
                 downloadBtnHtml = `
                     <div style="text-align: center; margin-top: 12px;">
-                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00;">
+                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: var(--accent); padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid var(--accent);">
                             📥 Download PDF Copy </a>
                     </div>
                 `;
