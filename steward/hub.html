@@ -794,6 +794,8 @@
                 // It already exists, skip the popup and fire immediately
                 finalizeCommit(recordId, selectedStatus, mode, 0);
             }
+        }
+        
         // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
         function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
             const card = document.getElementById(`hub-card-${recordId}`);
