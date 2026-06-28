@@ -77,10 +77,14 @@
         .record-card.ai-match { border-left-color: var(--accent-green); }
         .record-card.ai-fail { border-left-color: var(--danger); border-color: rgba(255,51,51,0.3); }
         
-        .card-split-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 16px; margin-top: 10px; align-items: flex-start;
+                .card-split-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Locks exactly 2 columns on ALL devices */
+            gap: 15px; 
+            margin-top: 10px; 
+            align-items: flex-start;
         }
+
 
         /* NEW HIGH-SPEED HEADER CSS */
         .card-top-row {
@@ -468,18 +472,19 @@
                             <div class="ctr-amt">$${originalAmt}</div>
                         </div>
 
-                        <div style="display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap;" onclick="event.stopPropagation()">
-                            <div class="input-wrapper" style="flex: 1; min-width: 180px;">
+                                                <div style="display: flex; gap: 15px; margin-bottom: 14px;" onclick="event.stopPropagation()">
+                            <div class="input-wrapper" style="flex: 1;">
                                 <span class="input-label emp-label">Member Name</span>
                                 <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
                                 ${nameAlertHtml}
                             </div>
-                            <div class="input-wrapper" style="width: 120px;">
+                            <div class="input-wrapper" style="width: 110px; flex-shrink: 0;">
                                 <span class="input-label emp-label">Emp ID</span>
                                 <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
                                 ${idAlertHtml}
                             </div>
                         </div>
+
 
                         ${stewardBadgeHtml ? `<div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">${stewardBadgeHtml}</div>` : ''}
 
@@ -525,7 +530,7 @@
                                 <div class="sys-id-display-box">${sysId}</div>
                             </div>
 
-                            <div class="input-wrapper">
+                                                        <div class="input-wrapper">
                                 <span class="input-label">&nbsp;</span>
                                 <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">Review PDF File</button>
                             </div>
@@ -533,6 +538,8 @@
                                 <span class="input-label">&nbsp;</span>
                                 <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
                             </div>
+
+                            
                         </div>
                     </div>
                 `;
