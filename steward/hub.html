@@ -36,6 +36,15 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
+        /* MOBILE DATE WRAP FIX */
+        .local-dates-box { flex: 1; text-align: right; min-width: 220px; }
+        @media (max-width: 650px) {
+            .local-dates-box { 
+                text-align: left; min-width: 100%; 
+                padding-top: 10px; border-top: 1px dashed #333; 
+            }
+        }
+
         /* MAIN NAV DRAWER (LEFT SIDE) */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
@@ -77,11 +86,8 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
         }
         .card-split-grid {
-            display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 14px;
-        }
-
-        @media (min-width: 768px) {
-            .card-split-grid { grid-template-columns: 1.2fr 1fr 1fr 1.2fr; }
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 16px; margin-top: 16px; align-items: flex-start;
         }
 
         /* INPUT WRAPPERS */
@@ -130,7 +136,6 @@
 </head>
 <body>
 
-    <!-- LEFT NAV DRAWER & OVERLAY -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
@@ -138,7 +143,6 @@
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <!-- MOVED HIDE SETTLED TOGGLE -->
         <div style="padding: 10px 20px 15px;">
             <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
                 HIDE SETTLED CASES
@@ -165,7 +169,6 @@
         <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
     </div>
 
-    <!-- RESPONSIVE TOP NAVBAR -->
     <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
             <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
@@ -175,8 +178,7 @@
             </div>
         </div>
         
-        <!-- CENTER LOCAL DATES (Now right-aligned to balance the header) -->
-        <div style="flex: 1; text-align: right; min-width: 220px;">
+        <div class="local-dates-box">
             <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
                 Last Local: <span id="display-last-local" style="color: white;">Fetching...</span>
             </div>
@@ -186,7 +188,6 @@
         </div>
     </div>
 
-    <!-- KPI STATS BAR -->
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
@@ -194,7 +195,7 @@
         </div>
         <div class="stat-box">
             <div id="metric-liability" class="stat-val">$0.00</div>
-            <div class="stat-lbl">Active Exposure</div>
+            <div class="stat-lbl">Pending Amount</div>
         </div>
         <div class="stat-box" style="border-left: 1px dashed #333;">
             <div id="metric-today-count" class="stat-val" style="color: var(--accent-green);">0</div>
@@ -206,14 +207,12 @@
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD VIEWPORT -->
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
-    <!-- AUDIT VAULT DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -249,7 +248,14 @@
 
         function unlockCard(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
-            card.querySelectorAll('input, select').forEach(elem => elem.disabled = false);
+            
+            // Enable text/select inputs
+            card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
+            // Re-enable checkboxes cleanly
+            card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                elem.style.pointerEvents = 'auto';
+            });
+            
             card.style.background = 'var(--bg-card)';
             card.style.borderColor = 'var(--border)';
             btnElem.innerText = 'Submit Box';
@@ -430,19 +436,19 @@
                         <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
                                 <div style="min-width: 0; flex: 1; min-width: 250px;">
-                                    <h4 style="font-size: 19px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
+                                    <h4 style="font-size: 22px; font-weight: 800; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${empName}</h4>
                                     
-                                    <div style="display: flex; gap: 14px; font-size: 11px; font-weight: bold; margin-top: 4px; color: #bbb; flex-wrap: wrap;">
-                                        <span>FILE DATE: <span style="color: #fff;">${fDate}</span></span>
-                                        <span>VIOLATION: <span style="color: #fff;">${vDate}</span></span>
+                                    <div style="display: flex; gap: 14px; font-size: 11px; font-weight: bold; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                                        <span style="color: #bbb;">FILE: <span style="color: #fff;">${fDate}</span></span>
+                                        <span style="color: var(--accent); background: #2a2a2a; padding: 3px 8px; border-radius: 4px; border: 1px solid #444; font-size: 13px;">VIOLATION: ${vDate}</span>
                                     </div>
                                     
-                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
-                                    <p style="font-size: 12px; color: var(--accent); margin-top: 3px; font-weight: 600;">${cleanMetaType}</p>
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">System ID: <b>${sysId}</b> | Driver ID: ${empId}</p>
+                                    <p style="font-size: 15px; color: var(--accent); margin-top: 4px; font-weight: 700; text-transform: uppercase;">${cleanMetaType}</p>
                                 </div>
                                 <div style="text-align: right; flex-shrink: 0;">
                                     <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Claim</span>
-                                    <h5 style="font-size: 16px; color: #ff3333; font-weight: bold; margin-top: 2px;">$${originalAmt}</h5>
+                                    <h5 style="font-size: 24px; color: #ff3333; font-weight: 900; margin-top: 4px;">$${originalAmt}</h5>
                                 </div>
                             </div>
 
@@ -463,17 +469,23 @@
                                         </label>
                                     </div>
                                 </div>
-                                <div class="input-wrapper">
-                                    <span class="input-label">Settled / Panel Date</span>
+                                
+                                <div class="input-wrapper settlement-fields" style="display: none;">
+                                    <span class="input-label">Date Settled</span>
                                     <input type="date" class="settled-date-input" value="${getTodayString()}">
                                 </div>
-                                <div class="input-wrapper">
+                                
+                                <div class="input-wrapper settlement-fields" style="display: none;">
                                     <span class="input-label">Final Paid Amt ($)</span>
                                     <input type="number" step="0.01" class="final-amt-input" value="0.00">
                                 </div>
-                                <div style="display: flex; gap: 8px; align-items: flex-end;">
-                                    <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">Audit</button>
-                                    <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
+                                
+                                <div class="input-wrapper">
+                                    <span class="input-label">&nbsp;</span>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">View File</button>
+                                        <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -507,7 +519,16 @@
                         card.style.background = 'var(--bg-card)';
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
-                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+                        
+                        // Disable text/select inputs
+                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
+                        // Lock checkboxes cleanly without fading them
+                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                            elem.style.pointerEvents = 'none';
+                        });
+
+                        // Show the settlement fields
+                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
 
                         if (document.getElementById('toggle-hide-settled').checked) {
                             card.style.display = 'none';
@@ -529,11 +550,19 @@
             
             const finalAmtInput = card.querySelector('.final-amt-input');
             const holdReasonInput = card.querySelector('.hold-reason-input');
+            const settlementFields = card.querySelectorAll('.settlement-fields');
 
             const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText) || {};
             
             let mode = chosenOption.ActionType || 'Final'; 
             if (typeof mode === 'object' && mode.Value) mode = mode.Value; 
+
+            // Reveal Date & Amount fields if a selection is made
+            if (selectedText) {
+                settlementFields.forEach(field => field.style.display = 'flex');
+            } else {
+                settlementFields.forEach(field => field.style.display = 'none');
+            }
 
             if (mode === 'Note') {
                 holdReasonInput.style.display = 'block';
@@ -625,7 +654,11 @@
                         card.style.background = 'var(--bg-card)'; 
                         card.style.borderColor = 'var(--accent-green)';
                         card.style.borderLeftColor = 'var(--accent-green)';
-                        card.querySelectorAll('input, select').forEach(elem => elem.disabled = true);
+                        
+                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
+                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                            elem.style.pointerEvents = 'none';
+                        });
                         
                         const actionBtn = card.querySelector('.btn-settle');
                         actionBtn.innerText = 'Edit / Unlock';
