@@ -163,7 +163,7 @@
         <a id="lnk-floor-portal" href="#" class="nav-item">→ Intake Hub</a>
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
         <a href="#" class="nav-item active">Archive Vault (Active)</a>
-        <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
+        <a id="lnk-Seniority-Master" href="#" class="nav-item">→ Seniority List</a>
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
@@ -225,6 +225,8 @@
         // Wire up links
         document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
         document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-Seniority-Master').href = `seniority.html?steward=${stewardGUID}`;
+
 
         // Format Date to MM/DD/YYYY securely
         const formatToUsDate = (isoString) => {
