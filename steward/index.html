@@ -147,6 +147,48 @@
         .drawer-handle {
             position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
         }
+        
+        /* EMPTY QUEUE CENTERED LAYOUT */
+.empty-queue-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh; /* Pushes it down to true center below the header */
+    text-align: center;
+    gap: 20px; /* Perfect spacing between the text and the button */
+}
+
+.empty-text-msg {
+    color: var(--text-muted);
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btn-redirect {
+    background-color: var(--accent); /* Matches your yellow theme */
+    color: #000;
+    padding: 14px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.1s, background-color 0.2s;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-redirect:active {
+    transform: translateY(2px);
+}
+.btn-redirect:hover {
+    background-color: #ffdb4d;
+}
+        
     </style>
 </head>
 <body>
@@ -298,11 +340,21 @@
             currentStewardName = myProfile.StewardName || myProfile.DisplayName || 'Steward';
             currentStewardId = myProfile.StewardID || ''; 
 
-            if (fullDataCache.length === 0) {
-                document.getElementById('steward-info').innerText = `Coverage: ${currentStewardName} | 0 Pending Intake`;
-                document.getElementById('data-display').innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Intake queue is clear. No pending records found.</div>';
-                return;
-            }
+            if (list.length === 0) {
+    container.innerHTML = `
+        <div class="empty-queue-wrapper">
+            <div class="empty-text-msg">
+                <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                Intake queue is clear. No pending records found for this view.
+            </div>
+            
+            <button onclick="window.location.href='portal-links.html?steward=' + stewardGUID" class="btn-redirect">
+                → Head to Dispatch Hub
+            </button>
+        </div>
+    `;
+    return;
+}
 
             let seniorityOptionsHtml = '';
             masterSeniorityArray.forEach(person => {
