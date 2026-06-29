@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contract Reference | Local 710</title>
+    <title>Steward Document Hub | Local 710</title>
     <style>
         :root {
             --bg-main: #121212;
@@ -14,34 +14,43 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* Flexbox body ensures the PDF viewer perfectly fills the screen under the navbar */
+        /* Flexbox structure prevents vertical clipping on mobile screens */
         body { 
             background-color: var(--bg-main); 
             color: var(--text-main); 
             height: 100vh; 
             display: flex; 
             flex-direction: column; 
-            padding-top: 75px; 
             overflow: hidden;
         }
 
-        /* RESPONSIVE HEADER & NAVIGATION */
+        /* TOP NAVBAR */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; height: 75px;
-            background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            height: 70px; background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; padding: 0 20px; flex: 0 0 auto; z-index: 1000;
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
         .hamburger-btn {
             background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; transition: transform 0.2s;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
         }
-        .hamburger-btn:active { transform: scale(0.9); }
 
-        /* MAIN NAV DRAWER */
+        /* DROPDOWN SELECT BANNER */
+        .control-banner {
+            background: #161616; padding: 12px 20px; border-bottom: 1px solid #333;
+            display: flex; align-items: center; gap: 12px; flex: 0 0 auto;
+        }
+        .banner-label { font-size: 14px; font-weight: bold; color: var(--accent); white-space: nowrap; }
+        
+        .styled-select {
+            flex: 1; height: 40px; background: #262626; color: white; border: 1px solid #444;
+            border-radius: 6px; padding: 0 10px; font-size: 15px; outline: none;
+        }
+        .styled-select:focus { border-color: var(--accent); }
+
+        /* NAVIGATION DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -56,25 +65,22 @@
         .nav-overlay.open { display: block; }
         
         .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* PDF VIEWER */
-        iframe { flex: 1; width: 100%; height: 100%; border: none; background: #222; }
-
+        /* PDF VIEWER WINDOW */
+        iframe { flex: 1 1 auto; width: 100%; border: none; background: #222; }
     </style>
 </head>
 <body>
 
-    <!-- NAVIGATION DRAWER -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
+        <div class="drawer-header" style="padding: 20px 20px 10px;">
             <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
                 Navigation Panel
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
             </h3>
         </div>
         
@@ -82,55 +88,70 @@
         <a id="lnk-floor-portal" href="#" class="nav-item">→ Intake Hub</a>
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
         <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
-        <!-- Ensure you update this link below to match your actual seniority list HTML filename! -->
-        <a id="lnk-seniority" href="seniority.html" class="nav-item">→ Seniority List</a>
-        
-        <!-- Setting Contract Viewer as the active page -->
-        <a href="#" class="nav-item active">Contract Viewer (Active)</a>
-        
+        <a id="lnk-seniority" href="#" class="nav-item">→ Seniority List</a>
+        <a href="#" class="nav-item active">Document Hub (Active)</a>
         <a id="lnk-portal-links" href="#" class="nav-item">→ Member Portal Links</a> 
         
         <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
         <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
     </div>
 
-    <!-- TOP HEADER -->
     <div class="top-navbar">
         <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
         <div>
-            <div class="header-title">Local 710 Contract Viewer</div>
-            <div class="header-sub">Master Agreement Reference</div>
+            <div class="header-title">Local 710 Hub</div>
+            <div class="header-sub">Steward Resource Cabinet</div>
         </div>
     </div>
 
-    <!-- MOZILLA PDF ENGINE -->
-    <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://710-stewards.github.io/ftw-hub/contract.pdf"></iframe>
+    <div class="control-banner">
+        <span class="banner-label">View File:</span>
+        <select id="doc-selector" class="styled-select" onchange="switchDocument()">
+            <option value="https://710-stewards.github.io/ftw-hub/contract.pdf">Master Contract (2023–2028)</option>
+            <option value="https://710-stewards.github.io/ftw-hub/ups-340-methods.pdf">UPS 340 Methods Manual</option>
+            <option value="https://710-stewards.github.io/ftw-hub/contract-2018.pdf">2018–2023 Contract Archive</option>
+            <option value="https://710-stewards.github.io/ftw-hub/contract-2013.pdf">2013–2018 Contract Archive</option>
+        </select>
+    </div>
 
-    <!-- JAVASCRIPT LOGIC -->
+    <iframe id="pdf-viewer" src=""></iframe>
+
     <script>
-        // 1. Grab the security token from the URL if it exists
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
 
-        // 2. Attach the token to all links so the user stays authenticated as they jump around
+        // Route navigation drawer backwards to root folder with security token
         if (stewardGUID) {
-            document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
-            document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
-            document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
-            // Change 'seniority.html' here if your list is named something different
-            document.getElementById('lnk-seniority').href = `seniority.html?steward=${stewardGUID}`; 
-            document.getElementById('lnk-portal-links').href = `portal-links.html?steward=${stewardGUID}`;
+            document.getElementById('lnk-floor-portal').href = `../index.html?steward=${stewardGUID}`;
+            document.getElementById('lnk-processing-hub').href = `../hub.html?steward=${stewardGUID}`;
+            document.getElementById('lnk-archive').href = `../archive.html?steward=${stewardGUID}`;
+            document.getElementById('lnk-seniority').href = `../seniority.html?steward=${stewardGUID}`; 
+            document.getElementById('lnk-portal-links').href = `../portal-links.html?steward=${stewardGUID}`;
         }
 
-        // 3. Menu Drawer Controls
+        // Dropdown Engine: Changes the iframe target on the fly
+        function switchDocument() {
+            const selector = document.getElementById('doc-selector');
+            const viewer = document.getElementById('pdf-viewer');
+            const targetPDF = selector.value;
+            
+            // Re-renders the engine targeting the selected file location
+            viewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(targetPDF);
+        }
+
+        // Drawer Controls
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
         }
         function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('remove');
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
+
+        // Run automatically on page load to initialize the default file
+        window.onload = switchDocument;
     </script>
 </body>
 </html>
