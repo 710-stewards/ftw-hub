@@ -147,7 +147,6 @@
                         <th>FT Sen Date</th>
                         <th>Active</th>
                         <th>Phone</th>
-                        <th>GUID</th>
                         <th>Modified By</th>
                     </tr>
                 </thead>
@@ -273,7 +272,7 @@
             const tbody = document.getElementById('table-body');
             
             if (dataArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
                 return;
             }
 
@@ -284,7 +283,12 @@
                 const lName = p.LastName || '';
                 const center = p.Center || '---';
                 const jobClass = p.JobClass || '---';
-                const ftpt = p['FT/PT'] || '---';
+                
+                // CATCHING SHAREPOINT'S INTERNAL SLASH RENAMING
+                let ftptRaw = p['FT/PT'] || p['FT_x002f_PT'] || p.OData_FT_x002f_PT || p.FTPT || '---';
+                // If it's a choice column dropdown, pull the value directly
+                if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
+                const ftpt = ftptRaw;
                 
                 const hireDate = formatToUsDate(p.HireDate);
                 const ptDate = formatToUsDate(p.PTSeniorityDate);
@@ -295,16 +299,13 @@
                 const activePill = isActive ? `<span class="pill pill-yes">Yes</span>` : `<span class="pill pill-no">No</span>`;
                 
                 const phone = formatPhone(p.PhoneNumber);
-                const guid = p.GUID || '---';
                 
-                // Catch Modified By depending on how SharePoint sends the object
+                // EXACT match to your custom ModifiedBy column ONLY. No system fallbacks.
                 let modifiedBy = '---';
                 if (p.ModifiedBy && typeof p.ModifiedBy === 'object') {
-                    modifiedBy = p.ModifiedBy.DisplayName || p.ModifiedBy.Email || '---';
+                    modifiedBy = p.ModifiedBy.DisplayName || p.ModifiedBy.Value || '---';
                 } else if (p.ModifiedBy) {
                     modifiedBy = p.ModifiedBy;
-                } else if (p.Editor && typeof p.Editor === 'object') {
-                    modifiedBy = p.Editor.DisplayName || p.Editor.Email || '---';
                 }
 
                 rowsHtml += `
@@ -320,7 +321,6 @@
                         <td>${ftDate}</td>
                         <td>${activePill}</td>
                         <td>${phone}</td>
-                        <td class="monospace" style="font-size: 11px;">${guid}</td>
                         <td style="color: var(--text-muted);">${modifiedBy}</td>
                     </tr>
                 `;
