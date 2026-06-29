@@ -8,7 +8,8 @@
         body { margin: 0; padding: 0; background-color: #121212; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; }
         header { background: #1e1e1e; color: white; padding: 15px 20px; border-bottom: 2px solid #ffcc00; }
         h1 { font-size: 20px; margin: 0; }
-        #adobe-pdf-view { flex: 1; width: 100%; height: 100%; background: #222; }
+        /* Forces the viewer to fill the rest of the screen perfectly */
+        iframe { flex: 1; width: 100%; height: 100%; border: none; background: #222; }
     </style>
 </head>
 <body>
@@ -17,35 +18,8 @@
         <h1>Local 710 Contract Viewer</h1>
     </header>
 
-    <div id="adobe-pdf-view"></div>
+    <!-- This uses Mozilla's open-source PDF viewer and points it straight at your file -->
+    <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://710-stewards.github.io/ftw-hub/contract.pdf"></iframe>
 
-    <script src="https://documentservices.adobe.com/view-sdk/viewer.js"></script>
-    
-    <script>
-        document.addEventListener("adobe_dc_view_sdk.ready", function() { 
-            var adobeDCView = new AdobeDC.DCView({
-                clientId: "3625b4b1694e48f68dcb1a336ca4cd6d", 
-                divId: "adobe-pdf-view"
-            });
-            
-            // The "?t=" math forces your phone to download a fresh PDF every time
-            var freshURL = "https://710-stewards.github.io/ftw-hub/contract.pdf?t=" + new Date().getTime();
-
-            adobeDCView.previewFile({
-                content: { location: { url: freshURL }},
-                metaData: { fileName: "contract.pdf" }
-            }, {
-                embedMode: "SIZED_CONTAINER",
-                showAnnotationTools: false, 
-                showLeftHandPanel: true,     
-                showDownloadPDF: true,      
-                showPrintPDF: true          
-            })
-            // If Adobe fails, this forces an alert box to pop up on your phone screen with the exact reason
-            .catch(function(error) {
-                alert("Adobe Error: " + JSON.stringify(error));
-            });
-        });
-    </script>
 </body>
 </html>
