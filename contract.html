@@ -3,23 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Union Contract Reference</title>
+    <title>Contract Reference | Local 710</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #121212; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', sans-serif; }
-        header { background: #1e1e1e; color: white; padding: 15px 20px; border-bottom: 2px solid #ffcc00; }
-        h1 { font-size: 20px; margin: 0; }
-        /* Forces the viewer to fill the rest of the screen perfectly */
+        :root {
+            --bg-main: #121212;
+            --accent: #ffcc00;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            padding-top: 75px; 
+            overflow: hidden;
+        }
+
+        /* RESPONSIVE HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        /* MAIN NAV DRAWER */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
+
+        /* PDF VIEWER */
         iframe { flex: 1; width: 100%; height: 100%; border: none; background: #222; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Local 710 Contract Viewer</h1>
-    </header>
+    <!-- NAVIGATION DRAWER -->
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
+            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
+                Member Menu
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
+            </h3>
+        </div>
+        
+        <div class="nav-section-title">Resources</div>
+        
+        <!-- Setting Contract Viewer as the active page -->
+        <a href="#" class="nav-item active">Master Agreement</a>
+        <a id="lnk-portal-links" href="portal-links.html" class="nav-item">→ Useful Links</a> 
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+    </div>
 
-    <!-- This uses Mozilla's open-source PDF viewer and points it straight at your file -->
+    <!-- TOP HEADER -->
+    <div class="top-navbar">
+        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+        <div>
+            <div class="header-title">Local 710 Contract</div>
+            <div class="header-sub">Member Reference Portal</div>
+        </div>
+    </div>
+
+    <!-- MOZILLA PDF ENGINE -->
     <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=https://710-stewards.github.io/ftw-hub/contract.pdf"></iframe>
 
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Menu Drawer Controls (No Token Logic Needed)
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+    </script>
 </body>
 </html>
