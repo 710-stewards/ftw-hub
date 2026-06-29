@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Dispatch Hub</title>
+    <style>
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --danger: #ff3333;
+            --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+
+        /* RESPONSIVE HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        /* MAIN NAV DRAWER */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
+
+        /* SEARCH BANNER */
+        .search-banner {
+            background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
+        }
+        .search-input {
+            flex: 1; min-width: 250px; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
+        }
+        .search-input:focus { border-color: var(--accent); }
+
+        /* RECORD GRID */
+        .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 16px; }
+        @media (max-width: 500px) { .record-grid { grid-template-columns: 1fr; } }
+
+        .record-card {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
+            display: flex; flex-direction: column; gap: 12px; position: relative;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
+        .member-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .member-meta { font-size: 13px; color: #aaaaaa; margin-top: 4px; }
+        
+        .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+        .btn-send { flex: 1; min-width: 110px; text-align: center; padding: 12px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: transform 0.1s; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+        .btn-send:active { transform: translateY(2px); }
+        .btn-android { background-color: #3DDC84; color: #000; }
+        .btn-iphone { background-color: #A2AAAD; color: #000; }
+        .btn-copy { background-color: var(--accent); color: #000; }
+        .btn-reset { background-color: #333; color: #fff; border: 1px solid #555; }
+        .btn-generate { background-color: var(--accent-green); color: #000; width: 100%; }
+
+        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #555; }
+        .pill-yes { background: rgba(46, 204, 113, 0.1); color: var(--accent-green); border-color: var(--accent-green); }
+        .pill-no { background: rgba(255, 51, 51, 0.1); color: var(--danger); border-color: var(--danger); }
+        
+        .warning-box { flex: 2; min-width: 230px; text-align: center; background-color: #333333; color: #777777; padding: 12px; border-radius: 4px; font-size: 13px; font-weight: bold; border: 1px dashed #444; }
+
+        /* LOADING SPINNER OVERLAY FOR CARDS */
+        .card-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,30,30,0.9); border-radius: 8px; display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 10; color: var(--accent); font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
+            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
+                Navigation Panel
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
+            </h3>
+        </div>
+        
+        <div class="nav-section-title">Portals & Links</div>
+        <a id="lnk-floor-portal" href="#" class="nav-item">→ Intake Hub</a>
+        <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
+        <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
+        <a id="lnk-seniority" href="#" class="nav-item">→ Seniority List</a>
+        <a href="#" class="nav-item active">Dispatch Hub (Active)</a>
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+    </div>
+
+    <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Local 710 Dispatch Hub</div>
+                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-banner">
+        <input type="text" id="live-search-box" class="search-input" onkeyup="filterDrivers()" placeholder="🔍 Search Driver Name or Emp ID...">
+        <div style="font-size: 12px; color: var(--accent); font-weight: bold; padding: 0 10px;" id="record-counter">Loading...</div>
+    </div>
+
+    <div id="data-display" style="padding-bottom: 120px;">
+        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+            ↻ Fetching Dispatch Roster...
+        </div>
+        <div class="record-grid" id="roster-grid"></div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const stewardGUID = urlParams.get('steward');
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
+        
+        let masterSeniority = [];
+        let masterStewardRoster = [];
+
+        // Wire up cross-app navigation
+        document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-seniority').href = `seniority.html?steward=${stewardGUID}`;
+
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+        
+        // Securely generate a standard 36-character UUID v4
+        function generateUUID() {
+            return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+                (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+            );
+        }
+
+        function loadDispatchData() {
+            if (!stewardGUID) {
+                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
+                return;
+            }
+
+            // We reuse the load_seniority action because it pulls the exact table we need!
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_seniority" })
+            })
+            .then(res => res.json())
+            .then(bundle => {
+                masterSeniority = bundle.seniorityList || [];
+                masterStewardRoster = bundle.stewardRoster || [];
+
+                // STRICT SECURITY VERIFICATION
+                const myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
+                
+                if (!myProfileData) {
+                    document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
+                    return; 
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('steward-info').innerText = `${myProfileData.StewardName || 'Authorized Viewer'} | Active Dispatch`;
+
+                // Sort Alphabetically
+                masterSeniority.sort((a, b) => {
+                    const lnA = (a.LastName || '').toLowerCase();
+                    const lnB = (b.LastName || '').toLowerCase();
+                    if (lnA < lnB) return -1;
+                    if (lnA > lnB) return 1;
+                    return 0;
+                });
+
+                filterDrivers();
+            }).catch(err => {
+                document.getElementById('loading').innerText = "Interface parsing failure on handshake.";
+                console.error(err);
+            });
+        }
+
+        function filterDrivers() {
+            const query = document.getElementById('live-search-box').value.toLowerCase().trim();
+            
+            const filtered = masterSeniority.filter(d => {
+                const searchTarget = `${d.Title || ''} ${d.FirstName || ''} ${d.LastName || ''}`.toLowerCase();
+                return searchTarget.includes(query);
+            });
+            
+            renderRoster(filtered);
+        }
+
+        function renderRoster(list) {
+            const container = document.getElementById('roster-grid');
+            document.getElementById('record-counter').innerText = `Displaying ${list.length} Drivers`;
+            
+            if (list.length === 0) {
+                container.innerHTML = `<div style="color: var(--text-muted); font-style: italic; padding: 20px;">No matching members found.</div>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(driver => {
+                const fName = driver.FirstName || '';
+                const lName = driver.LastName || '';
+                const empId = driver.Title || 'NO_ID';
+                const guid = driver.GUID || '';
+                
+                // Strip formatting for the tel link
+                const rawPhone = driver.PhoneNumber || '';
+                const cleanPhone = rawPhone.replace(/\D/g, ''); 
+                
+                const isActiveStr = (driver.Active || '').toString().toLowerCase();
+                const isActive = isActiveStr === 'yes' || isActiveStr === 'true' || isActiveStr === '1';
+                const activePill = isActive ? `<span class="status-pill pill-yes">Active</span>` : `<span class="status-pill pill-no">Inactive</span>`;
+
+                const hasPhone = cleanPhone !== "";
+                
+                // Pre-encode the portal URL for the text messages
+                const targetUrl = `https://710-stewards.github.io/ftw-hub/?id=${guid}`;
+                const textMessage = `Local 710 Grievance Portal Link:\n${targetUrl}`;
+                const encodedMsg = encodeURIComponent(textMessage);
+                
+                const androidLink = hasPhone ? `sms:${cleanPhone}?body=${encodedMsg}` : '#';
+                const iphoneLink = hasPhone ? `sms:${cleanPhone}&body=${encodedMsg}` : '#';
+
+                let actionRowHtml = '';
+
+                if (!guid) {
+                    // MISSING GUID: Show generation button
+                    actionRowHtml = `
+                        <button class="btn-send btn-generate" onclick="resetGuid('${empId}', true)">
+                            ⚡ Generate Secure Portal Link
+                        </button>
+                    `;
+                } else {
+                    // HAS GUID: Show Send/Copy buttons + Reset option
+                    actionRowHtml = `
+                        ${hasPhone ? `
+                            <a href="${androidLink}" class="btn-send btn-android">🤖 Android SMS</a>
+                            <a href="${iphoneLink}" class="btn-send btn-iphone">🍏 iPhone SMS</a>
+                        ` : `
+                            <div class="warning-box">⚠️ Missing Phone Number</div>
+                        `}
+                        <button onclick="copyToClipboard('${targetUrl}', this)" class="btn-send btn-copy">📋 Copy Link</button>
+                        <button onclick="resetGuid('${empId}', false)" class="btn-send btn-reset" style="flex: 1 1 100%;">↻ Revoke & Generate New Link</button>
+                    `;
+                }
+
+                html += `
+                    <div class="record-card" id="card-${empId}">
+                        <div class="card-loader" id="loader-${empId}">
+                            <div style="font-size: 24px; margin-bottom: 10px;">↻</div>
+                            Securing Link...
+                        </div>
+                        
+                        <div class="card-header">
+                            <div>
+                                <h3 class="member-name">${fName} ${lName}</h3>
+                                <div class="member-meta">
+                                    Emp ID: <b>${empId}</b> ${rawPhone ? `&nbsp;|&nbsp; 📱 ${rawPhone}` : ''}
+                                </div>
+                            </div>
+                            <div>${activePill}</div>
+                        </div>
+
+                        <div class="action-row">
+                            ${actionRowHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Generate and Sync a new GUID
+        function resetGuid(empId, isNew) {
+            if (!isNew) {
+                const confirmed = confirm("Are you sure? This will instantly break their current portal link and lock them out until you text them the new one.");
+                if (!confirmed) return;
+            }
+
+            const newGuid = generateUUID();
+            const loader = document.getElementById(`loader-${empId}`);
+            if (loader) loader.style.display = 'flex';
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    "stewardGuid": stewardGUID, 
+                    "action": "reset_guid",
+                    "empId": empId,
+                    "newGuid": newGuid
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Update local cache so we don't have to reload the whole page
+                    const driver = masterSeniority.find(d => d.Title === empId);
+                    if (driver) driver.GUID = newGuid;
+                    
+                    // Re-render to show the new buttons instantly
+                    filterDrivers();
+                } else {
+                    alert("Cloud sync failed. The link was not generated.");
+                    if (loader) loader.style.display = 'none';
+                }
+            })
+            .catch(err => {
+                alert("Network error occurred.");
+                if (loader) loader.style.display = 'none';
+                console.error(err);
+            });
+        }
+
+        // Native clipboard bridge worker
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = "✅ Copied!";
+                btn.style.backgroundColor = "#2ecc71";
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "var(--accent)";
+                }, 1500);
+            }).catch(err => {
+                alert("Failed to copy link. Copy text manually:\n" + text);
+            });
+        }
+
+        loadDispatchData();
+    </script>
+</body>
+</html>
