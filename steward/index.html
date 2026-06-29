@@ -427,7 +427,18 @@
         displayContainer.style.paddingBottom = '120px';
 
         if (recordsList.length === 0) {
-            displayContainer.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Intake queue is clear. No pending records found for this view.</div>';
+            displayContainer.innerHTML = `
+                <div class="empty-queue-wrapper">
+                    <div class="empty-text-msg">
+                        <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                        Intake queue is clear. No pending records found for this view.
+                    </div>
+                    
+                    <button onclick="window.location.href='portal-links.html?steward=' + stewardGUID" class="btn-redirect">
+                        → Head to Dispatch Hub
+                    </button>
+                </div>
+            `;
             return;
         }
 
