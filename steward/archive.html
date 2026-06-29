@@ -145,10 +145,17 @@
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
+        <div style="padding: 10px 20px 0px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                HIDE PENDING CASES
+                <input type="checkbox" id="toggle-hide-pending" onchange="applyFilters()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+
         <div style="padding: 10px 20px 15px;">
             <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
                 GROUP BY STEWARD
-                <input type="checkbox" id="toggle-group-steward" checked onchange="applyFilters()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+                <input type="checkbox" id="toggle-group-steward" onchange="applyFilters()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
             </label>
         </div>
         
@@ -179,17 +186,15 @@
     </div>
 
     <div class="search-banner">
-        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, Driver ID, Sys ID, or Violation...">
+        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, ID, Amount, Date, or Status...">
         <select id="sort-dropdown" class="sort-select" onchange="applyFilters()">
             <option value="newest">Sort: Newest Violation Date</option>
             <option value="oldest">Sort: Oldest Violation Date</option>
-            <option value="az">Sort: Member Name (A-Z)</option>
+            <option value="settled_date">Sort: Settled Date (Newest)</option>
+            <option value="az">Sort: Last Name (A-Z)</option>
+            <option value="first_name">Sort: First Name (A-Z)</option>
             <option value="payout">Sort: Highest Final Payout</option>
         </select>
-        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444;">
-            HIDE PENDING CASES
-            <input type="checkbox" id="toggle-hide-pending" onchange="applyFilters()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
-        </label>
     </div>
 
     <div id="data-display">
@@ -212,7 +217,7 @@
         const stewardGUID = urlParams.get('steward');
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
         
-        let masterGrievanceCache = []; // SECURE VAULT
+        let masterGrievanceCache = []; 
         let masterStewardRoster = [];
         let myProfileData = {};
         let currentStewardName = '';
@@ -255,19 +260,18 @@
                 masterGrievanceCache = bundle.pendingGrievances || [];
                 masterStewardRoster = bundle.stewardRoster || [];
 
-                // STRICT SECURITY VERIFICATION CHECK
                 myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
                 if (!myProfileData) {
                     document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
-                    return; // KILL SCRIPT
+                    return; 
                 }
 
                 currentStewardName = myProfileData.StewardName;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Authorized Viewer`;
 
-                // --- POPULATE COVERAGE CHECKBOXES ---
+                // --- POPULATE COVERAGE CHECKBOXES (ALL CHECKED BY DEFAULT) ---
                 const coverageContainer = document.getElementById('coverage-checkboxes');
                 coverageContainer.innerHTML = '';
                 
@@ -275,11 +279,10 @@
 
                 sortedRoster.forEach(st => {
                     if (st.StewardName && st.StewardID) {
-                        const isMe = st.StewardID === myProfileData.StewardID;
                         coverageContainer.innerHTML += `
                             <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
-                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyFilters()" style="width: 16px; height: 16px; accent-color: var(--accent);">
-                                ${st.StewardName} ${isMe ? '(Me)' : ''}
+                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" checked onchange="applyFilters()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                                ${st.StewardName}
                             </label>
                         `;
                     }
@@ -292,28 +295,24 @@
             });
         }
 
-        // --- MASTER FILTER & SORT ENGINE ---
         function applyFilters() {
-            // 1. Get Control States
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
             const isGrouped = document.getElementById('toggle-group-steward').checked;
             const hidePending = document.getElementById('toggle-hide-pending').checked;
             const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
             const sortMode = document.getElementById('sort-dropdown').value;
 
-            // 2. Filter the Master Vault
+            // --- FILTER THE MASTER VAULT ---
             let filteredArray = masterGrievanceCache.filter(item => {
                 const st = (item.StewardOfRecord || '').trim();
                 
-                // Check Coverage
                 if (!checkedBoxes.includes(st)) return false;
 
-                // Check "Hide Pending"
                 const disp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
                 const isPending = !disp || disp.toUpperCase() === 'PENDING';
                 if (hidePending && isPending) return false;
 
-                // Check Search Text
+                // --- THE EXPANDED SUPER-SEARCH ---
                 if (searchText !== '') {
                     const searchTarget = `
                         ${item.FirstName || ''} ${item.LastName || ''} 
@@ -322,6 +321,13 @@
                         ${item.Title || ''} 
                         ${item.ViolationType || ''} 
                         ${item.ViolationSubType || ''}
+                        ${item.ViolationAmount || ''}
+                        ${item.SettledAmount || ''}
+                        ${formatToUsDate(item.ViolationDate ? item.ViolationDate.split('T')[0] : '')}
+                        ${formatToUsDate(item.FileDate ? item.FileDate.split('T')[0] : '')}
+                        ${formatToUsDate(item.SettledDate ? item.SettledDate.split('T')[0] : '')}
+                        ${item.StewardOfRecord || ''}
+                        ${disp || ''}
                     `.toLowerCase();
                     
                     if (!searchTarget.includes(searchText)) return false;
@@ -330,18 +336,26 @@
                 return true;
             });
 
-            // 3. Sort the Filtered Results
+            // --- THE EXPANDED SORTER ---
             filteredArray.sort((a, b) => {
                 if (sortMode === 'newest') {
                     return new Date(b.ViolationDate || 0) - new Date(a.ViolationDate || 0);
                 } else if (sortMode === 'oldest') {
                     return new Date(a.ViolationDate || 0) - new Date(b.ViolationDate || 0);
+                } else if (sortMode === 'settled_date') {
+                    return new Date(b.SettledDate || 0) - new Date(a.SettledDate || 0);
                 } else if (sortMode === 'payout') {
                     const payA = parseFloat(a.SettledAmount || 0);
                     const payB = parseFloat(b.SettledAmount || 0);
-                    return payB - payA; // Highest first
+                    return payB - payA; 
+                } else if (sortMode === 'first_name') {
+                    const fnA = (a.FirstName || '').toLowerCase();
+                    const fnB = (b.FirstName || '').toLowerCase();
+                    if (fnA < fnB) return -1;
+                    if (fnA > fnB) return 1;
+                    return 0;
                 } else {
-                    // Default to A-Z
+                    // Default to A-Z Last Name
                     const lnA = (a.LastName || '').toLowerCase();
                     const lnB = (b.LastName || '').toLowerCase();
                     if (lnA < lnB) return -1;
@@ -354,10 +368,8 @@
                 }
             });
 
-            // 4. Send to Renderer
             renderArchiveCards(filteredArray, isGrouped);
         }
-
 
         function renderArchiveCards(filteredData, isGrouped) {
             const display = document.getElementById('data-display');
@@ -387,7 +399,6 @@
             }
 
             let html = '';
-
             const sortedGroupNames = Object.keys(grouped).sort();
 
             for (const groupName of sortedGroupNames) {
@@ -416,6 +427,7 @@
                     
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                     
+                    // NOTES / TIMELINE LOGIC
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
                         <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
@@ -424,12 +436,20 @@
                         </div>
                     ` : '';
 
+                    const rawNotesB = item.NotesB || '';
+                    const stewardsNotesHtml = rawNotesB ? `
+                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
+                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Stewards Meeting Notes:</b>
+                            <div style="white-space: pre-wrap;">${rawNotesB}</div>
+                        </div>
+                    ` : '';
+
+                    // STEWARD BADGE (Always Visible)
                     let itemStewardName = (item.StewardOfRecord || '').trim();
                     const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
                     if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
                     else if (!itemStewardName) itemStewardName = 'Unassigned Roster';
-
-                    const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+                    const stewardBadgeHtml = `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>`;
 
                     // STATUS TERMINAL LOGIC
                     const dispTextRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
@@ -479,6 +499,7 @@
                                 </div>
                             </div>
 
+                            ${stewardsNotesHtml}
                             ${existingHistoryHtml}
 
                             <div style="margin-top: 14px;">
