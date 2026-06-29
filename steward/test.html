@@ -376,9 +376,18 @@
             .then(res => res.json())
             .then(bundle => {
                 // Map incoming cloud parameters, accounting for choice formatting variations
-                masterSeniority = (bundle.seniorityList || []).map(item => {
+                                masterSeniority = (bundle.seniorityList || []).map(item => {
+                    // Safety check for FT/PT Choice Column object
                     let ftptRaw = item['FT/PT'] || item['FT_x002f_PT'] || item.OData_FT_x002f_PT || item.FTPT || '---';
                     if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
+
+                    // 🔥 NEW: Safety check for HubBucket Choice Column object 🔥
+                    let bucketRaw = item.HubBucket || item.Bucket || 'NONE';
+                    if (typeof bucketRaw === 'object' && bucketRaw && bucketRaw.Value) {
+                        bucketRaw = bucketRaw.Value;
+                    } else if (typeof bucketRaw === 'object') {
+                        bucketRaw = 'NONE';
+                    }
 
                     return {
                         sysId: item.ID || item.Title || '',
@@ -394,9 +403,10 @@
                         active: (item.Active || 'Yes').toString(),
                         phoneNumber: item.PhoneNumber || '',
                         modifiedBy: item.ModifiedBy || '---',
-                        bucket: (item.HubBucket || item.Bucket || 'NONE').toUpperCase().trim()
+                        bucket: bucketRaw.toString().toUpperCase().trim()
                     };
                 });
+
 
                 masterStewardRoster = bundle.stewardRoster || [];
 
