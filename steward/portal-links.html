@@ -238,57 +238,60 @@
         }
 
         function commitPhoneNumber() {
-            if (!editingPhoneEmpId) return;
-            
-            const rawDigits = document.getElementById('modal-phone-input').value.replace(/\D/g, '');
-            
-            if (rawDigits.length !== 10) {
-                alert("Validation Failed: Please enter a valid 10-digit area code and phone number.");
-                return;
-            }
+    if (!editingPhoneEmpId) return;
+    
+    const rawDigits = document.getElementById('modal-phone-input').value.replace(/\D/g, '');
+    
+    if (rawDigits.length !== 10) {
+        alert("Validation Failed: Please enter a valid 10-digit area code and phone number.");
+        return;
+    }
 
-            const finalPhoneToSave = '1' + rawDigits;
-            const timeStamp = new Date().toLocaleString('en-US');
-            const auditSignature = `${currentStewardName} - ${timeStamp}`;
-            
-            const loader = document.getElementById(`loader-${editingPhoneEmpId}`);
-            if (loader) {
-                loader.innerHTML = '<div style="font-size: 24px; margin-bottom: 10px;">↻</div>Syncing Roster...';
-                loader.style.display = 'flex';
-            }
-            
-            closePhoneModal();
+    const finalPhoneToSave = '1' + rawDigits;
+    const timeStamp = new Date().toLocaleString('en-US');
+    const auditSignature = `${currentStewardName} - ${timeStamp}`;
+    
+    // 🔥 CAPTURE THE ID BEFORE CLOSING THE MODAL 🔥
+    const safeEmpId = editingPhoneEmpId;
+    
+    const loader = document.getElementById(`loader-${safeEmpId}`);
+    if (loader) {
+        loader.innerHTML = '<div style="font-size: 24px; margin-bottom: 10px;">↻</div>Syncing Roster...';
+        loader.style.display = 'flex';
+    }
+    
+    closePhoneModal(); // This erases editingPhoneEmpId, but we saved it above!
 
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    "stewardGuid": stewardGUID, 
-                    "action": "update_phone",
-                    "empId": editingPhoneEmpId,
-                    "newPhone": finalPhoneToSave,
-                    "auditSignature": auditSignature
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    const driver = masterSeniority.find(d => d.Title === editingPhoneEmpId);
-                    if (driver) {
-                        driver.PhoneNumber = finalPhoneToSave;
-                        driver.ModifiedBy = auditSignature;
-                    }
-                    filterDrivers();
-                } else {
-                    alert("Cloud sync failed. Phone number was not saved.");
-                    if (loader) loader.style.display = 'none';
-                }
-            })
-            .catch(err => {
-                alert("Network error occurred.");
-                if (loader) loader.style.display = 'none';
-                console.error(err);
-            });
+    fetch(flowUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            "stewardGuid": stewardGUID, 
+            "action": "update_phone",
+            "empId": safeEmpId, // Use the safely captured ID
+            "newPhone": finalPhoneToSave,
+            "auditSignature": auditSignature
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+            const driver = masterSeniority.find(d => d.Title === safeEmpId);
+            if (driver) {
+                driver.PhoneNumber = finalPhoneToSave;
+                driver.ModifiedBy = auditSignature;
+            }
+            filterDrivers();
+        } else {
+            alert("Cloud sync failed. Phone number was not saved.");
+            if (loader) loader.style.display = 'none';
         }
+    })
+    .catch(err => {
+        alert("Network error occurred.");
+        if (loader) loader.style.display = 'none';
+        console.error(err);
+    });
+}
 
         function loadDispatchData() {
             if (!stewardGUID) {
