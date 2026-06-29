@@ -28,15 +28,22 @@
                 divId: "adobe-pdf-view"
             });
             
+            // The "?t=" math forces your phone to download a fresh PDF every time
+            var freshURL = "https://710-stewards.github.io/ftw-hub/contract.pdf?t=" + new Date().getTime();
+
             adobeDCView.previewFile({
-                content: { location: { url: "https://710-stewards.github.io/ftw-hub/contract.pdf" }},
+                content: { location: { url: freshURL }},
                 metaData: { fileName: "contract.pdf" }
             }, {
                 embedMode: "SIZED_CONTAINER",
                 showAnnotationTools: false, 
-                showLeftHandPanel: true,     // This gives you the automatic chapter index side-panel
+                showLeftHandPanel: true,     
                 showDownloadPDF: true,      
                 showPrintPDF: true          
+            })
+            // If Adobe fails, this forces an alert box to pop up on your phone screen with the exact reason
+            .catch(function(error) {
+                alert("Adobe Error: " + JSON.stringify(error));
             });
         });
     </script>
