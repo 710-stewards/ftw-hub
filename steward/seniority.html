@@ -108,7 +108,7 @@
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
         <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
         <a href="#" class="nav-item active">Seniority List (Active)</a>
-        <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
+        <a id="lnk-portal-links" href="#" class="nav-item">→ Member Portal Links</a> 
         
         <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
         <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
@@ -169,6 +169,7 @@
         document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
         document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
         document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-portal-links').href = `portal-links.html?steward=${stewardGUID}`;
 
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return '------';
