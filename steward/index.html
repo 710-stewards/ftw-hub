@@ -171,7 +171,7 @@
         <a href="#" class="nav-item active">Intake Hub (Active)</a>
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
         <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
-        <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
+        <a id="lnk-Seniority-Master" href="#" class="nav-item">→ Seniority List</a>
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
@@ -218,7 +218,8 @@
 
     // Wire up links
     document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
-    document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;    
+    document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
+    document.getElementById('lnk-Seniority-Master').href = `seniority.html?steward=${stewardGUID}`;
 
     // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
