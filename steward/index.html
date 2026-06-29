@@ -340,21 +340,22 @@
             currentStewardName = myProfile.StewardName || myProfile.DisplayName || 'Steward';
             currentStewardId = myProfile.StewardID || ''; 
 
-            if (list.length === 0) {
-    container.innerHTML = `
-        <div class="empty-queue-wrapper">
-            <div class="empty-text-msg">
-                <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
-                Intake queue is clear. No pending records found for this view.
-            </div>
-            
-            <button onclick="window.location.href='portal-links.html?steward=' + stewardGUID" class="btn-redirect">
-                → Head to Dispatch Hub
-            </button>
-        </div>
-    `;
-    return;
-}
+            if (fullDataCache.length === 0) {
+                document.getElementById('steward-info').innerText = `Coverage: ${currentStewardName} | 0 Pending Intake`;
+                document.getElementById('data-display').innerHTML = `
+                    <div class="empty-queue-wrapper">
+                        <div class="empty-text-msg">
+                            <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                            Intake queue is clear. No pending records found for this view.
+                        </div>
+                        
+                        <button onclick="window.location.href='portal-links.html?steward=' + stewardGUID" class="btn-redirect">
+                            → Head to Dispatch Hub
+                        </button>
+                    </div>
+                `;
+                return;
+            }
 
             let seniorityOptionsHtml = '';
             masterSeniorityArray.forEach(person => {
