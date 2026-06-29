@@ -180,7 +180,6 @@
                 return;
             }
 
-            // We reuse the load_seniority action because it pulls the exact table we need!
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -243,7 +242,13 @@
                 const fName = driver.FirstName || '';
                 const lName = driver.LastName || '';
                 const empId = driver.Title || 'NO_ID';
-                const guid = driver.GUID || '';
+                
+                // --- THE FIX: CATCH SHAREPOINT'S GHOST COLUMN RENAMING ---
+                let guid = driver.OData_GUID || driver.GUID0 || driver.GUID || '';
+                if (!guid) {
+                    const hiddenKey = Object.keys(driver).find(k => k.toUpperCase().includes('GUID'));
+                    if (hiddenKey) guid = driver[hiddenKey];
+                }
                 
                 // Strip formatting for the tel link
                 const rawPhone = driver.PhoneNumber || '';
@@ -335,11 +340,13 @@
             })
             .then(res => {
                 if (res.ok) {
-                    // Update local cache so we don't have to reload the whole page
+                    // Update local cache for ALL potential internal column names
                     const driver = masterSeniority.find(d => d.Title === empId);
-                    if (driver) driver.GUID = newGuid;
+                    if (driver) {
+                        driver.OData_GUID = newGuid;
+                        driver.GUID = newGuid;
+                    }
                     
-                    // Re-render to show the new buttons instantly
                     filterDrivers();
                 } else {
                     alert("Cloud sync failed. The link was not generated.");
