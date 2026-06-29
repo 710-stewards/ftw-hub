@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Seniority Roster</title>
+    <style>
+        /* CORE CONFIGURATION SYSTEM */
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --danger: #ff3333;
+            --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 110px; }
+
+        /* FIXED TOP HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 95px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; flex-direction: column; justify-content: center;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .header-row { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 10px; }
+        .header-title { font-size: 18px; font-weight: bold; }
+        
+        .filter-tabs { display: flex; gap: 8px; width: 100%; overflow-x: auto; padding-bottom: 2px; }
+        .tab-btn {
+            background: #262626; border: 1px solid #444; color: var(--text-muted);
+            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase; white-space: nowrap;
+        }
+        .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        .btn-add-master {
+            background-color: var(--accent-green); color: #111; font-weight: 900;
+            padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* DENSE ROSTER TABLE CONFIGURATION */
+        .table-container { width: 100%; overflow-x: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th { background: #161616; border-bottom: 2px solid var(--border); color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; padding: 12px 16px; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #242424; }
+
+        /* TABLE OPERATION BADGES */
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-east { background: #1e3a5f; color: #3b82f6; }
+        .badge-west { background: #5c3a21; color: #f97316; }
+        .badge-none { background: #333; color: var(--text-muted); }
+
+        .btn-table-edit { background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; transition: background 0.1s; }
+        .btn-table-edit:hover { background: #3a3a3a; border-color: var(--accent); }
+
+        /* MODAL INTERACTIVE POPUP SCREEN */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
+            z-index: 5000; display: none; align-items: center; justify-content: center;
+            padding: 15px;
+        }
+        .modal-overlay.open { display: flex; }
+
+        /* TWO-COLUMN MOBILE HARDLOCK CARD */
+        .record-card {
+            background-color: var(--bg-card); border: 2px solid var(--border);
+            border-radius: 8px; padding: 20px; width: 100%; max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); border-left: 6px solid var(--accent);
+        }
+        .record-card.mode-add { border-left-color: var(--accent-green); }
+        
+        .card-split-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Rigid 2-column balancing lock */
+            gap: 15px; 
+            margin-top: 15px; 
+            align-items: flex-start;
+        }
+
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+        .required-star { color: var(--danger); margin-left: 2px; }
+        
+        input, select {
+            width: 100%; height: 42px; background: #262626; border: 1px solid #444;
+            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+        
+        .btn-3d {
+            width: 100%; height: 42px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
+            margin-top: 10px;
+        }
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+        .btn-save { background-color: var(--accent-green); color: #111; }
+        .btn-cancel { background: #333; color: white; border: 1px solid #555; }
+        
+        .save-status { font-size: 13px; font-weight: bold; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+    <!-- TOP CONTROL NAVIGATION -->
+    <div class="top-navbar">
+        <div class="header-row">
+            <div>
+                <div class="header-title">Seniority Roster Management</div>
+                <div id="roster-count" class="save-status">Loading master roster...</div>
+            </div>
+            <button class="btn-add-master" onclick="openAddModal()">➕ Add New Member</button>
+        </div>
+        <div class="filter-tabs">
+            <button class="tab-btn active" onclick="switchView('ALL', this)">View All</button>
+            <button class="tab-btn" onclick="switchView('EAST', this)">East Hub</button>
+            <button class="tab-btn" onclick="switchView('WEST', this)">West Hub</button>
+            <button class="tab-btn" onclick="switchView('NONE', this)">Unassigned</button>
+        </div>
+    </div>
+
+    <!-- MAIN GRID DATA VIEW -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Last Name</th>
+                    <th>First Name</th>
+                    <th>Employee ID</th>
+                    <th>Operational Bucket</th>
+                    <th style="text-align: center; width: 90px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px; font-weight: bold;">
+                        ↻ Fetching seniority data bundle...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FLOATING INTERACTIVE OPERATION DRAWER MODAL -->
+    <div id="member-modal" class="modal-overlay" onclick="closeMemberModal()">
+        <div class="record-card" id="modal-card" onclick="event.stopPropagation()">
+            <h3 id="modal-header-title" style="color: white; font-size: 16px; font-weight: 900; text-transform: uppercase;">Manage Profile Context</h3>
+            
+            <div class="card-split-grid">
+                
+                <div class="input-wrapper">
+                    <span class="input-label">First Name<span class="required-star">*</span></span>
+                    <input type="text" id="modal-first" placeholder="John">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Last Name<span class="required-star">*</span></span>
+                    <input type="text" id="modal-last" placeholder="Doe">
+                </div>
+
+                <div class="input-wrapper">
+                    <span class="input-label">Employee ID<span class="required-star">*</span></span>
+                    <input type="text" id="modal-id" placeholder="7-Digit ID" maxlength="7" style="font-family: monospace; text-align: center;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Operational Bucket</span>
+                    <select id="modal-bucket">
+                        <option value="NONE">Unassigned</option>
+                        <option value="EAST">East Hub</option>
+                        <option value="WEST">West Hub</option>
+                    </select>
+                </div>
+
+                <div class="input-wrapper">
+                    <button class="btn-3d btn-cancel" onclick="closeMemberModal()">Cancel</button>
+                </div>
+                <div class="input-wrapper">
+                    <button class="btn-3d btn-save" onclick="commitModalTransaction()">Confirm & Save</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const stewardGUID = urlParams.get('steward');
+    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+
+    let masterSeniorityArray = [];
+    let currentActiveFilter = 'ALL';
+    let currentTransactionMode = 'NEW'; // NEW or EDIT
+    let currentActiveSysId = null;
+
+    // --- INITIAL LIVE FETCH ---
+    function loadSeniorityRoster() {
+        if (!stewardGUID) {
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">Security Halt: Token missing.</td></tr>`;
+            return;
+        }
+
+        fetch(flowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+        })
+        .then(res => res.json())
+        .then(dataBundle => {
+            masterSeniorityArray = (dataBundle.seniorityList || []).map(item => ({
+                sysId: item.ID || item.Title || '', 
+                empId: item.Title || item.EmployeeID || '', 
+                firstName: item.FirstName || item['First Name'] || '',
+                lastName: item.LastName || item['Last Name'] || '',
+                bucket: (item.HubBucket || item.Bucket || 'NONE').toUpperCase().trim()
+            }));
+
+            // Force rigid alphabetical sorting by default
+            masterSeniorityArray.sort((a, b) => a.lastName.localeCompare(b.lastName));
+            renderRosterTable();
+        })
+        .catch(err => {
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">Error syncing data pipeline.</td></tr>`;
+            console.error(err);
+        });
+    }
+
+    // --- TAB FILTER TRIGGER ---
+    function switchView(filterType, element) {
+        currentActiveFilter = filterType;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        renderRosterTable();
+    }
+
+    // --- RENDER DENSE TABLE LAYOUT ---
+    function renderRosterTable() {
+        const tbody = document.getElementById('table-body');
+        
+        const filteredList = masterSeniorityArray.filter(item => {
+            if (currentActiveFilter === 'ALL') return true;
+            return item.bucket === currentActiveFilter;
+        });
+
+        document.getElementById('roster-count').innerText = `Displaying ${filteredList.length} Members`;
+
+        if (filteredList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px; font-weight: bold;">✓ No members found assigned to this view criteria.</td></tr>`;
+            return;
+        }
+
+        let htmlContent = '';
+        filteredList.forEach(member => {
+            let bucketBadge = `<span class="badge badge-none">Unassigned</span>`;
+            if (member.bucket === 'EAST') bucketBadge = `<span class="badge badge-east">East Hub</span>`;
+            if (member.bucket === 'WEST') bucketBadge = `<span class="badge badge-west">West Hub</span>`;
+
+            htmlContent += `
+                <tr id="row-${member.sysId}">
+                    <td style="font-weight: 800; color: #fff;">${member.lastName}</td>
+                    <td>${member.firstName}</td>
+                    <td style="font-family: monospace; font-weight: bold; color: var(--accent);">${member.empId}</td>
+                    <td>${bucketBadge}</td>
+                    <td style="text-align: center;">
+                        <button class="btn-table-edit" onclick="openEditModal('${member.sysId}')">✏️ Edit</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = htmlContent;
+    }
+
+    // --- MODAL DRAWER WINDOW CONTROLLERS ---
+    function openAddModal() {
+        currentTransactionMode = 'NEW';
+        currentActiveSysId = null;
+        
+        document.getElementById('modal-card').className = "record-card mode-add";
+        document.getElementById('modal-header-title').innerText = "🆕 Provision New Member Profile";
+        
+        // Reset and clear inputs
+        document.getElementById('modal-first').value = '';
+        document.getElementById('modal-last').value = '';
+        
+        const idInput = document.getElementById('modal-id');
+        idInput.value = '';
+        idInput.readOnly = false;
+        idInput.style.cssText = ''; // Normal styles
+
+        document.getElementById('modal-bucket').value = 'NONE';
+        
+        document.getElementById('member-modal').classList.add('open');
+    }
+
+    function openEditModal(sysId) {
+        currentTransactionMode = 'EDIT';
+        currentActiveSysId = sysId;
+        
+        const member = masterSeniorityArray.find(m => m.sysId === sysId);
+        if (!member) return;
+
+        document.getElementById('modal-card').className = "record-card"; // Default style
+        document.getElementById('modal-header-title').innerText = `✏️ Edit Profile: ${member.lastName}`;
+        
+        document.getElementById('modal-first').value = member.firstName;
+        document.getElementById('modal-last').value = member.lastName;
+        
+        // Lock ID on modification profiles
+        const idInput = document.getElementById('modal-id');
+        idInput.value = member.empId;
+        idInput.readOnly = true;
+        idInput.style.cssText = "color: var(--text-muted); background: #1a1a1a; pointer-events: none;";
+
+        document.getElementById('modal-bucket').value = member.bucket;
+        
+        document.getElementById('member-modal').classList.add('open');
+    }
+
+    function closeMemberModal() {
+        document.getElementById('member-modal').classList.remove('open');
+    }
+
+    // --- TRANSACTION PROCESSING ENGINE WITH BRICK-WALL INTERFACES ---
+    function commitModalTransaction() {
+        const first = document.getElementById('modal-first').value.trim();
+        const last = document.getElementById('modal-last').value.trim();
+        const id = document.getElementById('modal-id').value.trim();
+        const bucket = document.getElementById('modal-bucket').value;
+
+        // CRITICAL INPUT VALIDATION LOCK
+        if (!id || !first || !last) {
+            alert("❌ Transaction Rejected: Employee ID, First Name, and Last Name are strict operational requirements.");
+            return;
+        }
+
+        if (currentTransactionMode === 'NEW') {
+            // Check for localized data collisons before hitting the network pipeline
+            const collisionMatch = masterSeniorityArray.find(m => m.empId === id);
+            if (collisionMatch) {
+                alert(`❌ Collision Error: Employee ID ${id} is already mapped to ${collisionMatch.firstName} ${collisionMatch.lastName}.`);
+                return;
+            }
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "add_member",
+                    "EmployeeID": id,
+                    "FirstName": first,
+                    "LastName": last,
+                    "HubBucket": bucket
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    closeMemberModal();
+                    alert(`✓ ${first} ${last} successfully logged into master registry.`);
+                    loadSeniorityRoster(); // Reload bundle to capture new system IDs
+                } else {
+                    alert("Cloud sync failure occurred while executing database append.");
+                }
+            });
+
+        } else if (currentTransactionMode === 'EDIT') {
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "update_member",
+                    "titleId": currentActiveSysId,
+                    "EmployeeID": id,
+                    "FirstName": first,
+                    "LastName": last,
+                    "HubBucket": bucket
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    closeMemberModal();
+                    
+                    // Directly refresh localized context cache footprint
+                    const cachedMember = masterSeniorityArray.find(m => m.sysId === currentActiveSysId);
+                    if (cachedMember) {
+                        cachedMember.firstName = first;
+                        cachedMember.lastName = last;
+                        cachedMember.bucket = bucket;
+                    }
+                    
+                    masterSeniorityArray.sort((a, b) => a.lastName.localeCompare(b.lastName));
+                    renderRosterTable();
+                    alert("✓ Seniority adjustments verified and updated instantly.");
+                } else {
+                    alert("Cloud pipeline rejected the entry formatting parameters.");
+                }
+            });
+        }
+    }
+
+    // Execute setup chain immediately upon interface activation
+    loadSeniorityRoster();
+    </script>
+</body>
+</html>
