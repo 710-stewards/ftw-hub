@@ -204,7 +204,7 @@
         <a id="lnk-floor-portal" href="#" class="nav-item">→ Intake Hub</a>
         <a href="#" class="nav-item active">Processing Hub (Active)</a>
         <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
-        <a href="#" class="nav-item disabled">Seniority List (Coming Soon)</a>
+        <a id="lnk-Seniority-Master" href="#" class="nav-item">→ Seniority List</a>
         <a href="#" class="nav-item disabled">Member Portal (Coming Soon)</a>
         
         <div class="nav-section-title">Coverage Mode</div>
@@ -321,6 +321,7 @@
         // Wire up the Floor Portal Link in the Nav Menu
         document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
         document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
+        document.getElementById('lnk-Seniority-Master').href = `seniority.html?steward=${stewardGUID}`;
 
         const getTodayString = () => new Date().toISOString().split('T')[0];
 
