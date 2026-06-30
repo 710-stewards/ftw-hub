@@ -137,16 +137,21 @@
 
     <script>
         // 1. Setup GUIDs for Navigation
-        const urlParams = new URLSearchParams(window.location.search);
-        const memberGUID = urlParams.get('member');
+const urlParams = new URLSearchParams(window.location.search);
+const memberGUID = urlParams.get('member');
 
-        if (memberGUID) {
-            const portalLink = document.getElementById('lnk-member-portal');
-            if (portalLink) portalLink.href = `/index.html?member=${memberGUID}`;
+const portalLink = document.getElementById('lnk-member-portal');
+const docHubLink = document.getElementById('lnk-document-hub');
 
-            const docHubLink = document.getElementById('lnk-document-hub');
-            if (docHubLink) docHubLink.href = `/contract.html?member=${memberGUID}`;
-        }
+// If there is an ID, attach it. If not, just link to the page normally so testing isn't broken.
+if (portalLink) {
+    portalLink.href = memberGUID ? `index.html?member=${memberGUID}` : `index.html`;
+}
+
+if (docHubLink) {
+    docHubLink.href = memberGUID ? `contract.html?member=${memberGUID}` : `contract.html`;
+}
+
 
         // 2. Fetch and Build Accordions
         fetch('templates.json')
