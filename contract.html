@@ -109,18 +109,21 @@
     <iframe id="pdf-viewer" src=""></iframe>
 
     <script>
-    // 1. Grab the member GUID from the URL bar first!
-    const urlParams = new URLSearchParams(window.location.search);
-    const memberGUID = urlParams.get('member');
+            // 1. Setup GUIDs for Navigation
+const urlParams = new URLSearchParams(window.location.search);
+const memberGUID = urlParams.get('member');
 
-    // 2. Safely apply the links ONLY to the elements that actually exist in your HTML
-    if (memberGUID) {
-        const portalLink = document.getElementById('lnk-member-portal');
-        if (portalLink) portalLink.href = `/index.html?member=${memberGUID}`;
+const portalLink = document.getElementById('lnk-member-portal');
+const templateLink = document.getElementById('lnk-templates');
 
-        const templatesLink = document.getElementById('lnk-templates');
-        if (templatesLink) templatesLink.href = `/templates.html?member=${memberGUID}`;
-    }
+// If there is an ID, attach it. If not, just link to the page normally so testing isn't broken.
+if (portalLink) {
+    portalLink.href = memberGUID ? `index.html?member=${memberGUID}` : `index.html`;
+}
+
+if (templateLink) {
+    templateLink.href = memberGUID ? `templates.html?member=${memberGUID}` : `templates.html`;
+}
 
     // 3. Document switching logic
     function switchDocument() {
