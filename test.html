@@ -194,35 +194,31 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <script>
+<script>
         // Global Variables
         window.grievanceCache = [];
         
         const urlParams = new URLSearchParams(window.location.search);
-        const driverId = urlParams.get('id');
+        const memberGuid = urlParams.get('id');
         
-        // Link up the dynamic contract page
-        document.getElementById('lnk-contract').href = `contract.html?id=${driverId}`;
+        // Link up the dynamic contract page using the secure GUID
+        document.getElementById('lnk-contract').href = `contract.html?id=${memberGuid}`;
 
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/fd2d27578a944fed84277c9a0e2c5985/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=SD5cbPfDHuVdyQ8YHqSgNjGZeoZZ3DnMqHPvusYj8WY";
+        // REPLACE THIS WITH YOUR NEW MEMBER-SPECIFIC FLOW URL
+        const flowUrl = "YOUR_NEW_POWER_AUTOMATE_URL_HERE";
 
         // Date Formatter
         const formatToUsDate = (dateString) => {
             if (!dateString || dateString === 'N/A') return 'N/A';
-            
-            // Handle native Excel Serial numbers if the flow returns them
             if (!isNaN(dateString) && dateString > 10000) {
                 const utc_days = Math.floor(dateString - 25569);
                 const utc_value = utc_days * 86400;  
                 const date_info = new Date(utc_value * 1000);
                 return (date_info.getMonth() + 1) + '/' + date_info.getDate() + '/' + date_info.getFullYear();
             }
-
-            // Handle standard ISO dates from SharePoint list
             if (dateString.includes('T')) dateString = dateString.split('T')[0];
             const parts = dateString.split('-');
             if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-            
             return dateString;
         };
 
@@ -237,22 +233,43 @@
         }
 
         function loadDriverData() {
-            if (!driverId) {
-                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
+            if (!memberGuid) {
+                document.getElementById('loading').innerText = "Security Halt: No secure routing token provided.";
                 return;
             }
 
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "driverId": driverId })
+                body: JSON.stringify({ "memberGuid": memberGuid })
             })
             .then(res => res.json())
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
                 
-                if (!data || data.length === 0) {
-                    document.getElementById('driver-info').innerText = "Active Driver Connection";
+                // Parse the separated Profile and Grievance arrays from Power Automate
+                const profile = data.profile || {};
+                const grievances = data.grievances || [];
+                
+                if (!profile.EmployeeID) {
+                    document.getElementById('driver-info').innerText = "Authentication Failed";
+                    document.getElementById('data-display').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <h3 style="color: #ff3333; margin-bottom: 10px;">Security Access Denied</h3>
+                            <p style="color: var(--text-muted);">Could not locate an active member profile for this secure link.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // We now get the name securely from the Seniority List, even if they have 0 grievances!
+                const firstName = profile.FirstName || profile['First Name'] || 'Driver';
+                const lastName = profile.LastName || profile['Last Name'] || '';
+                const employeeId = profile.EmployeeID || profile.Title || 'N/A';
+                
+                document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
+
+                if (grievances.length === 0) {
                     document.getElementById('data-display').innerHTML = `
                         <div style="text-align: center; padding: 40px;">
                             <h3 style="color: var(--accent); margin-bottom: 10px;">No Active Grievances Found</h3>
@@ -262,16 +279,7 @@
                     return;
                 }
 
-                window.grievanceCache = data;
-
-                // Set header profile info gracefully supporting both SP and Excel keys
-                const firstRow = data[0];
-                const firstName = firstRow.FirstName || firstRow.field_0 || 'Driver';
-                const lastName = firstRow.LastName || firstRow.field_1 || '';
-                const employeeId = firstRow.EmployeeID || firstRow.Title || driverId;
-                
-                document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
-
+                window.grievanceCache = grievances;
                 applyFilters();
             }).catch(err => {
                 document.getElementById('loading').innerText = "Connection error. Cloud failed to respond.";
@@ -314,10 +322,8 @@
                 const dateB = new Date(b.ViolationDate || b.field_2 || 0);
 
                 if (sortMode === 'default') {
-                    // Pending records go to the top
                     if (isPendingA && !isPendingB) return -1;
                     if (!isPendingA && isPendingB) return 1;
-                    // Inside their groups, sort newest violation to oldest
                     return dateB - dateA;
                 } else if (sortMode === 'newest') {
                     return dateB - dateA;
@@ -355,12 +361,8 @@
             `;
 
             filteredData.forEach(item => {
-                // Map values supporting both SP and older formatting
                 const sysId = item.Title || item.field_11 || '';
-                
-                const fDate = formatToUsDate(item.FileDate || item.field_2 || '');
                 const vDate = formatToUsDate(item.ViolationDate || item.field_2 || '');
-                
                 const violType = item.ViolationType || item.field_3 || 'Not Set';
                 const violSubType = item.ViolationSubType || '';
                 const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
@@ -369,14 +371,12 @@
                 const settledAmtDisplay = parseFloat(item.SettledAmount || item.field_7 || 0).toFixed(2);
                 const settledDateDisplay = (item.SettledDate || item.field_5) ? formatToUsDate(item.SettledDate || item.field_5) : '------';
 
-                // Status formatting
                 const dispTextRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : (item.Disposition || item.field_6);
                 const dispText = dispTextRaw ? dispTextRaw : 'PENDING';
                 const isPending = dispText.toUpperCase() === 'PENDING' || dispText.toUpperCase() === 'NOTE' || !dispTextRaw;
                 const statusColor = isPending ? 'var(--accent)' : 'var(--accent-green)';
                 const cardBorderColor = isPending ? '#ffcc00' : 'var(--accent-green)';
 
-                // Build Card
                 html += `
                     <div class="record-card" style="border-left: 5px solid ${cardBorderColor}; transition: all 0.2s ease;">
                         
@@ -414,7 +414,6 @@
         }
 
         function openDrawer(recordId) {
-            // Find record matching the dynamic keys
             const record = window.grievanceCache.find(r => (r.Title || r.field_11 || '') === recordId);
             if (!record) return;
 
@@ -490,5 +489,6 @@
         // Initialize Fetch
         loadDriverData();
     </script>
+    
 </body>
 </html>
