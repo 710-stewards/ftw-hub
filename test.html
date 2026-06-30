@@ -119,11 +119,13 @@
 
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 450px;
-            background: #161616; border-left: 2px solid var(--accent);
-            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
-        }
+    position: fixed; top: 0; right: 0; bottom: 0; 
+    width: 100%; max-width: 450px; /* <--- THIS FIXES THE BUG */
+    background: #161616; border-left: 2px solid var(--accent);
+    z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+}
+
         .side-drawer.open { transform: translateX(0); }
         .drawer-header {
             padding: 20px; background: #222; border-bottom: 1px solid var(--border);
@@ -414,51 +416,100 @@
         }
 
         function openDrawer(recordId) {
-            const record = window.grievanceCache.find(r => (r.Title || r.field_11 || '') === recordId);
-            if (!record) return;
+    const record = window.grievanceCache.find(r => (r.Title || r.field_11 || '') === recordId);
+    if (!record) return;
 
-            document.getElementById('drawer-title').innerText = `Grievance View: ${recordId}`;
-            const container = document.getElementById('drawer-main-content');
-            
-            let safeLink = record.PublicLink || record.field_9 || '';
-            let downloadBtnHtml = '';
+    document.getElementById('drawer-title').innerText = `File Details`;
+    const container = document.getElementById('drawer-main-content');
+    
+    let safeLink = record.PublicLink || record.field_9 || '';
+    let downloadBtnHtml = '';
 
-            if (safeLink.includes("drive.google.com")) {
-                const match = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-                if (match && match[1]) {
-                    const fileId = match[1];
-                    safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                    downloadBtnHtml = `
-                        <div style="text-align: center; margin-top: 15px;">
-                            <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                                📥 Download PDF Copy
-                            </a>
-                        </div>
-                    `;
-                }
-            }
-
-            const rawNotes = record.NotesA || record.field_8 || '';
-            const historyHtml = rawNotes ? `
-                <div style="background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-style: italic; color: #dddddd; font-size: 13px; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #666; white-space: pre-wrap;">${rawNotes}</div>
-            ` : '<div style="color: #666; font-size: 13px; margin-bottom: 20px; font-style: italic;">No operational notes attached to this case.</div>';
-
-            container.innerHTML = `
-                <div style="background: #222; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 13px;">
-                    <p style="margin-bottom: 6px;"><b>File Date:</b> ${formatToUsDate(record.FileDate || record.field_2 || '')}</p>
-                    <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${formatToUsDate(record.ViolationDate || record.field_2 || '')}</p>
-                    <p style="margin-bottom: 6px;"><b>Steward of Record:</b> ${record.StewardOfRecord || record.field_12 || 'N/A'}</p>
+    if (safeLink.includes("drive.google.com")) {
+        const match = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+        if (match && match[1]) {
+            const fileId = match[1];
+            safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+            downloadBtnHtml = `
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                        📥 Download PDF Evidence
+                    </a>
                 </div>
-                
-                <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">File History & Notes</label>
-                ${historyHtml}
-
-                <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Evidence PDF Document</label>
-                ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
-
-            document.getElementById('side-drawer').classList.add('open');
         }
+    }
+
+    const rawNotes = record.NotesA || record.field_8 || '';
+    const historyHtml = rawNotes ? `
+        <div style="background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-style: italic; color: #dddddd; font-size: 13px; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #666; white-space: pre-wrap;">${rawNotes}</div>
+    ` : '<div style="color: #666; font-size: 13px; margin-bottom: 20px; font-style: italic;">No operational notes attached to this case.</div>';
+
+    // --- EXPANDED DATA PARSING ---
+    const violType = record.ViolationType || record.field_3 || 'N/A';
+    const subType = record.ViolationSubType || '';
+    const fullType = subType ? `${violType} — ${subType}` : violType;
+    const claimAmt = parseFloat(record.ViolationAmount || record.field_4 || 0).toFixed(2);
+    const settledAmt = parseFloat(record.SettledAmount || record.field_7 || 0).toFixed(2);
+    const status = (record.Disposition && typeof record.Disposition === 'object') ? record.Disposition.Value : (record.Disposition || record.field_6 || 'PENDING');
+    const steward = record.StewardOfRecord || record.field_12 || 'Unassigned';
+    const claimHours = record.ClaimHours || 'N/A';
+    const statusColor = status.toUpperCase() === 'PENDING' || status.toUpperCase() === 'NOTE' ? 'var(--accent)' : 'var(--accent-green)';
+
+    // --- NEW DETAILED TABLE LAYOUT ---
+    container.innerHTML = `
+        <div style="background: #222; padding: 15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
+            <h4 style="color: var(--accent); margin-bottom: 12px; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 6px;">Master Case Data</h4>
+            
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Tracking ID:</b></td>
+                    <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #ccc;">${recordId}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Current Status:</b></td>
+                    <td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${statusColor};">${status}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Assigned Steward:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #fff;">${steward}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Violation Date:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #fff;">${formatToUsDate(record.ViolationDate || record.field_2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Date Filed:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #fff;">${formatToUsDate(record.FileDate || record.field_2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Violation Type:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #fff;">${fullType}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Claim Hours:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #fff;">${claimHours}</td>
+                </tr>
+                <tr style="border-bottom: 1px dashed #333;">
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Original Claim:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: #888; font-weight: bold;">$${claimAmt}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: var(--text-muted);"><b>Settled For:</b></td>
+                    <td style="padding: 8px 0; text-align: right; color: var(--accent-green); font-weight: bold; font-size: 15px;">$${settledAmt}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">File History & Notes</label>
+        ${historyHtml}
+
+        <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Evidence PDF Document</label>
+        ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
+    `;
+
+    document.getElementById('side-drawer').classList.add('open');
+}
 
         function closeDrawer() { 
             document.getElementById('side-drawer').classList.remove('open'); 
