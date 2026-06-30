@@ -1,0 +1,29 @@
+<div id="accordion-container" style="padding: 20px;">
+    <!-- JavaScript will inject the accordions here -->
+</div>
+
+<script>
+    fetch('templates.json')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('accordion-container');
+            for (const category in data) {
+                const section = document.createElement('details');
+                section.style = "margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #1a1a1a;";
+                
+                section.innerHTML = `
+                    <summary style="padding: 20px; color: var(--accent); font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between;">
+                        ${category} <span>▼</span>
+                    </summary>
+                    <div style="padding: 10px 20px 20px; border-top: 1px solid #333;">
+                        ${data[category].map(item => `
+                            <a href="${item.url}" target="_blank" class="record-card" style="display: block; text-decoration: none; margin-bottom: 10px; border-left: 3px solid var(--accent); padding: 15px; background: #222; color: white;">
+                                ${item.name}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            }
+        });
+</script>
