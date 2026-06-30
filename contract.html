@@ -116,10 +116,10 @@
     // 2. Safely apply the links ONLY to the elements that actually exist in your HTML
     if (memberGUID) {
         const portalLink = document.getElementById('lnk-member-portal');
-        if (portalLink) portalLink.href = `../index.html?member=${memberGUID}`;
+        if (portalLink) portalLink.href = `/index.html?member=${memberGUID}`;
 
         const templatesLink = document.getElementById('lnk-templates');
-        if (templatesLink) templatesLink.href = `../templates.html?member=${memberGUID}`;
+        if (templatesLink) templatesLink.href = `/templates.html?member=${memberGUID}`;
     }
 
     // 3. Document switching logic
