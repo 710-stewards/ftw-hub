@@ -109,32 +109,41 @@
     <iframe id="pdf-viewer" src=""></iframe>
 
     <script>
-        function switchDocument() {
-            const selector = document.getElementById('doc-selector');
-            const viewer = document.getElementById('pdf-viewer');
-            const targetPDF = selector.value;
-            
-            viewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(targetPDF);
-        }
+    // 1. Grab the member GUID from the URL bar first!
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberGUID = urlParams.get('member');
 
-        function openNavMenu() {
-            document.getElementById('main-nav-menu').classList.add('open');
-            document.getElementById('nav-overlay').classList.add('open');
-        }
-        if (memberGUID) {
-    document.getElementById('lnk-member-portal').href = `../index.html?member=${memberGUID}`;
-    document.getElementById('lnk-processing-hub').href = `../hub.html?member=${memberGUID}`;
-    document.getElementById('lnk-document-hub').href = `../contract.html?member=${memberGUID}`;
-    document.getElementById('lnk-seniority').href = `../seniority.html?member=${memberGUID}`; 
-    document.getElementById('lnk-portal-links').href = `../portal-links.html?member=${memberGUID}`;
-}
+    // 2. Safely apply the links ONLY to the elements that actually exist in your HTML
+    if (memberGUID) {
+        const portalLink = document.getElementById('lnk-member-portal');
+        if (portalLink) portalLink.href = `../index.html?member=${memberGUID}`;
 
-        function closeNavMenu() {
-            document.getElementById('main-nav-menu').classList.remove('open');
-            document.getElementById('nav-overlay').classList.remove('open');
-        }
+        const templatesLink = document.getElementById('lnk-templates');
+        if (templatesLink) templatesLink.href = `../templates.html?member=${memberGUID}`;
+    }
 
-        window.onload = switchDocument;
-    </script>
+    // 3. Document switching logic
+    function switchDocument() {
+        const selector = document.getElementById('doc-selector');
+        const viewer = document.getElementById('pdf-viewer');
+        const targetPDF = selector.value;
+        
+        viewer.src = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(targetPDF);
+    }
+
+    // 4. Hamburger menu controls
+    function openNavMenu() {
+        document.getElementById('main-nav-menu').classList.add('open');
+        document.getElementById('nav-overlay').classList.add('open');
+    }
+
+    function closeNavMenu() {
+        document.getElementById('main-nav-menu').classList.remove('open');
+        document.getElementById('nav-overlay').classList.remove('open');
+    }
+
+    // Load the first document when the page opens
+    window.onload = switchDocument;
+</script>
 </body>
 </html>
