@@ -142,10 +142,10 @@
 
         if (memberGUID) {
             const portalLink = document.getElementById('lnk-member-portal');
-            if (portalLink) portalLink.href = `../index.html?member=${memberGUID}`;
+            if (portalLink) portalLink.href = `/index.html?member=${memberGUID}`;
 
             const docHubLink = document.getElementById('lnk-document-hub');
-            if (docHubLink) docHubLink.href = `../contract.html?member=${memberGUID}`;
+            if (docHubLink) docHubLink.href = `/contract.html?member=${memberGUID}`;
         }
 
         // 2. Fetch and Build Accordions
