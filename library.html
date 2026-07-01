@@ -160,13 +160,17 @@
                 document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
             });
 
-        // 3. Document Switching Logic
         function openDocument(url, title) {
             document.getElementById('library-view').style.display = 'none';
             document.getElementById('viewer-view').style.display = 'flex';
             
             document.getElementById('doc-title').innerText = title;
-            const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+            
+            // This line magically converts your short link into the full GitHub web address
+            const absoluteUrl = new URL(url, window.location.href).href;
+            
+            // Now we send the FULL address to Mozilla so it knows where to look
+            const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
             document.getElementById('pdf-viewer').src = mozillaUrl;
         }
 
