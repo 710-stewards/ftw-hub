@@ -6,14 +6,14 @@
     { "name": "Suspension", "url": "https://drive.google.com/..." }
   ],
   "Contracts": [
-    { "name": "Contract (2023-2028)", "url": "https://github.com/710-stewards/ftw-hub/pdf/contract-2023.pdf" },
-    { "name": "Contract (2018-2023)", "url": "https://github.com/710-stewards/ftw-hub/pdf/contract-2018.pdf" },
-    { "name": "Contract (2013-2018)", "url": "https://github.com/710-stewards/ftw-hub/pdf/contract-2013.pdf" }
+    { "name": "Contract (2023-2028)", "url": "pdf/contract-2023.pdf" },
+    { "name": "Contract (2018-2023)", "url": "pdf/contract-2018.pdf" },
+    { "name": "Contract (2013-2018)", "url": "pdf/contract-2013.pdf" }
   ],
   "UPS Methods": [
-    { "name": "340 Methods", "url": "https://github.com/710-stewards/ftw-hub/pdf/340methods.pdf" }
+    { "name": "340 Methods", "url": "pdf/340methods.pdf" }
   ],
   "Misc Documents": [
-    { "name": "Teamsters Constitution", "url": "https://github.com/710-stewards/ftw-hub/pdf/73119teamstersconstitution.pdf" }
+    { "name": "Teamsters Constitution", "url": "pdf/73119teamstersconstitution.pdf" }
   ]
 }
