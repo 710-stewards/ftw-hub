@@ -127,13 +127,16 @@
     </div>
 
     <script>
-        // 1. Navigation Routing (Maintains the member GUID)
+        // 1. Navigation Routing (Maintains the secure 'id' GUID)
         const urlParams = new URLSearchParams(window.location.search);
-        const memberGUID = urlParams.get('member');
+        
+        // Grab the ID using the exact label the Portal uses
+        const memberGUID = urlParams.get('id'); 
 
         const portalLink = document.getElementById('lnk-member-portal');
         if (portalLink) {
-            portalLink.href = memberGUID ? `index.html?member=${memberGUID}` : `index.html`;
+            // Pass it back as 'id' so the Portal recognizes it
+            portalLink.href = memberGUID ? `index.html?id=${memberGUID}` : `index.html`;
         }
 
         // 2. Fetch the JSON and build the folders
