@@ -665,10 +665,16 @@
                                 </div>
                             </div>
 
-                            <div class="input-wrapper" style="margin-top: 14px;" onclick="event.stopPropagation()">
-                                <span class="input-label">Active Panel Worksheet Notes (NotesB)</span>
-                                <input type="text" class="worksheet-notes-input" value="${currentWorksheetNotes}" placeholder="Type active adjustments or notes here..." style="margin-top: 4px;">
+                                                        <div class="input-wrapper" style="margin-top: 14px;" onclick="event.stopPropagation()">
+                                <span class="input-label">Internal Steward Notes (Private / Not Visible to Member)</span>
+                                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                    <input type="text" class="worksheet-notes-input" value="${currentWorksheetNotes}" placeholder="Type private notes or active adjustments here..." style="flex: 1; margin: 0;">
+                                    <button class="btn-3d btn-save-note" style="width: 48px; flex-shrink: 0; background: #333; color: var(--accent); border: 1px solid #555; font-size: 18px;" onclick="saveQuickNote('${sysId}', this)">
+                                        💾
+                                    </button>
+                                </div>
                             </div>
+
                             ${existingHistoryHtml}
                         </div>
                     `;
@@ -908,6 +914,44 @@
                 }
             });
         }
+
+                function saveQuickNote(recordId, btnElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const noteValue = card.querySelector('.worksheet-notes-input').value.trim();
+            
+            // Visual feedback so you know it's saving
+            const originalHtml = btnElem.innerHTML;
+            btnElem.innerHTML = '⏳';
+            btnElem.style.pointerEvents = 'none';
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "quick_save_note",
+                    "titleId": recordId,
+                    "WorksheetNotes": noteValue
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Turn button green with a checkmark on success
+                    btnElem.innerHTML = '✅';
+                    btnElem.style.borderColor = 'var(--accent-green)';
+                    setTimeout(() => {
+                        btnElem.innerHTML = originalHtml;
+                        btnElem.style.borderColor = '#555';
+                        btnElem.style.pointerEvents = 'auto';
+                    }, 2000);
+                } else {
+                    alert("Failed to save note. Check connection.");
+                    btnElem.innerHTML = '⚠️';
+                    btnElem.style.pointerEvents = 'auto';
+                }
+            });
+        }
+
 
         function openHubDrawer(recordId) {
             const record = masterGrievanceCache.find(r => r.Title === recordId);
