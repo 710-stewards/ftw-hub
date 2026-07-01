@@ -541,29 +541,31 @@
             for (const groupName of sortedGroupNames) {
                             const items = grouped[groupName]; // No JavaScript scrambling!
 
-            // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
+                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
             items.sort((a, b) => {
-                // 1. Extract Last Names (with fallback to OCR if unmatched)
-                let lastA = (a.LastName || '').toLowerCase();
-                let lastB = (b.LastName || '').toLowerCase();
-                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop().toLowerCase();
-                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop().toLowerCase();
+                // 1. Safe Last Name extraction
+                let lastA = (a.LastName || '').trim();
+                let lastB = (b.LastName || '').trim();
+                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
+                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
 
-                if (lastA < lastB) return -1;
-                if (lastA > lastB) return 1;
+                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
+                if (lastCompare !== 0) return lastCompare;
 
-                // 2. Extract First Names
-                let firstA = (a.FirstName || '').toLowerCase();
-                let firstB = (b.FirstName || '').toLowerCase();
+                // 2. Safe First Name extraction (Fixed OCR Fallback)
+                let firstA = (a.FirstName || '').trim();
+                let firstB = (b.FirstName || '').trim();
+                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
+                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
                 
-                if (firstA < firstB) return -1;
-                if (firstA > firstB) return 1;
+                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
+                if (firstCompare !== 0) return firstCompare;
 
-                // 3. Extract Violation Dates (Oldest to Newest)
-                let dateA = a.ViolationDate ? new Date(a.ViolationDate) : new Date(0);
-                let dateB = b.ViolationDate ? new Date(b.ViolationDate) : new Date(0);
+                // 3. Bulletproof Date Sort (Oldest first)
+                let dateA = a.ViolationDate || '9999-12-31';
+                let dateB = b.ViolationDate || '9999-12-31';
                 
-                return dateA - dateB;
+                return dateA.localeCompare(dateB);
             });
 
 
