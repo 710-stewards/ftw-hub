@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Library | Local 710</title>
+    <style>
+        :root {
+            --bg-main: #121212;
+            --accent: #ffcc00;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        
+        body { 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            height: 70px; background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; padding: 0 20px; flex: 0 0 auto; z-index: 1000;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+        }
+
+        /* Drawer Styles */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        
+        /* Accordion Styles (Library View) */
+        #library-view { padding: 20px; overflow-y: auto; flex: 1; display: block; }
+        details.accordion-section {
+            margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #1a1a1a;
+        }
+        details summary {
+            padding: 20px; color: var(--accent); font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+        }
+        details summary::-webkit-details-marker { display: none; }
+        details[open] summary { background: #222; border-bottom: 1px solid #333; }
+        
+        .record-card {
+            display: block; width: 100%; text-align: left; border: none; font-size: 15px;
+            margin-bottom: 10px; border-left: 3px solid var(--accent); padding: 15px; 
+            background: #262626; color: white; border-radius: 4px; cursor: pointer;
+        }
+
+        /* Mozilla Viewer Styles (Viewer View) */
+        #viewer-view { display: none; flex-direction: column; height: 100%; flex: 1; }
+        .viewer-controls {
+            background: #161616; padding: 12px 20px; border-bottom: 1px solid #333;
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        }
+        .back-btn {
+            background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        }
+        #doc-title { font-size: 14px; color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+        iframe { flex: 1; width: 100%; border: none; background: #222; }
+    </style>
+</head>
+<body>
+
+    <!-- Nav Drawer -->
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="padding: 20px 20px 10px;">
+            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
+                Member Menu
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </h3>
+        </div>
+        
+        <div class="nav-section-title">Resources</div>
+        <a id="lnk-member-portal" href="#" class="nav-item">→ Member Portal</a>
+        <a href="#" class="nav-item active">Document Library (Active)</a>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-navbar">
+        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+        <div>
+            <div class="header-title">Local 710 Portal</div>
+            <div class="header-sub">Document Library</div>
+        </div>
+    </div>
+
+    <!-- VIEW 1: The Accordion Folders -->
+    <div id="library-view">
+        <div id="accordion-container">
+            <!-- JavaScript loads JSON here -->
+        </div>
+    </div>
+
+    <!-- VIEW 2: The Mozilla PDF Viewer -->
+    <div id="viewer-view">
+        <div class="viewer-controls">
+            <button class="back-btn" onclick="closeDocument()">← Back</button>
+            <span id="doc-title"></span>
+        </div>
+        <iframe id="pdf-viewer" src=""></iframe>
+    </div>
+
+    <script>
+        // 1. Navigation Routing (Maintains the member GUID)
+        const urlParams = new URLSearchParams(window.location.search);
+        const memberGUID = urlParams.get('member');
+
+        const portalLink = document.getElementById('lnk-member-portal');
+        if (portalLink) {
+            portalLink.href = memberGUID ? `index.html?member=${memberGUID}` : `index.html`;
+        }
+
+        // 2. Fetch the JSON and build the folders
+        fetch('templates.json')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('accordion-container');
+                for (const category in data) {
+                    const section = document.createElement('details');
+                    section.className = 'accordion-section';
+                    
+                    let html = `<summary>${category} <span>▼</span></summary><div style="padding: 15px 20px;">`;
+                    
+                    data[category].forEach(item => {
+                        html += `<button class="record-card" onclick="openDocument('${item.url}', '${item.name}')">${item.name}</button>`;
+                    });
+                    
+                    html += `</div>`;
+                    section.innerHTML = html;
+                    container.appendChild(section);
+                }
+            })
+            .catch(error => {
+                document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
+            });
+
+        // 3. Document Switching Logic
+        function openDocument(url, title) {
+            document.getElementById('library-view').style.display = 'none';
+            document.getElementById('viewer-view').style.display = 'flex';
+            
+            document.getElementById('doc-title').innerText = title;
+            const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+            document.getElementById('pdf-viewer').src = mozillaUrl;
+        }
+
+        function closeDocument() {
+            document.getElementById('viewer-view').style.display = 'none';
+            document.getElementById('library-view').style.display = 'block';
+            document.getElementById('pdf-viewer').src = "";
+        }
+
+        // 4. Hamburger Menu Controls
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+    </script>
+</body>
+</html>
