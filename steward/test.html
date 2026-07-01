@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Seniority Master</title>
+    <title>Local 710 Intake Hub</title>
     <style>
+        /* CORE CONFIGURATION */
         :root {
             --bg-main: #121212;
             --bg-card: #1e1e1e;
@@ -17,17 +18,16 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 150px; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
         /* RESPONSIVE HEADER & NAVIGATION */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 100px;
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; flex-direction: column; justify-content: center;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            gap: 10px;
+            flex-wrap: wrap; gap: 15px;
         }
-        .nav-header-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -38,22 +38,17 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
-        /* BUCKET FILTER TABS */
-        .filter-tabs { display: flex; gap: 8px; width: 100%; overflow-x: auto; padding-bottom: 2px; }
-        .tab-btn {
-            background: #262626; border: 1px solid #444; color: var(--text-muted);
-            padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: bold;
-            cursor: pointer; transition: all 0.2s; text-transform: uppercase; white-space: nowrap;
-        }
-        .tab-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        /* SAVE STATUS INDICATOR */
+        .local-dates-box { flex: 1; text-align: right; min-width: 200px; display: flex; justify-content: flex-end; align-items: center; }
+        .save-status { font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
+        .save-status.saving { background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
 
-        .btn-add-master {
-            background-color: var(--accent-green); color: #111; font-weight: 900;
-            padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px;
-            cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+        @media (max-width: 650px) {
+            body { padding-top: 140px; } 
+            .local-dates-box { text-align: center; justify-content: center; min-width: 100%; padding-top: 10px; border-top: 1px dashed #333; }
         }
 
-        /* MAIN NAV DRAWER */
+        /* MAIN NAV DRAWER (LEFT SIDE) */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -73,596 +68,889 @@
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* SEARCH BANNER */
-        .search-banner {
-            background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
-            margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
-        }
-        .search-input {
-            flex: 1; min-width: 250px; height: 45px; background: #262626; border: 1px solid #444;
-            color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
-        }
-        .search-input:focus { border-color: var(--accent); }
-
-        /* DATA TABLE ARCHITECTURE */
-        .table-wrapper {
-            width: 100%; overflow-x: auto; background: var(--bg-card); 
-            border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        .data-table {
-            width: 100%; border-collapse: collapse; min-width: 1550px; text-align: left;
-        }
-        .data-table th {
-            background: #222; color: var(--accent); padding: 14px 16px; border-bottom: 2px solid var(--border);
-            position: sticky; top: 0; white-space: nowrap; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;
-        }
-        .data-table td {
-            padding: 12px 16px; border-bottom: 1px solid #2a2a2a; color: #ddd; white-space: nowrap; font-size: 13px;
-        }
-        .data-table tbody tr:hover { background: #262626; }
-        
-        .pill { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #555; }
-        .pill-yes { background: rgba(46, 204, 113, 0.1); color: var(--accent-green); border-color: var(--accent-green); }
-        .pill-no { background: rgba(255, 51, 51, 0.1); color: var(--danger); border-color: var(--danger); }
-        
-        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .badge-east { background: #1e3a5f; color: #3b82f6; }
-        .badge-west { background: #5c3a21; color: #f97316; }
-        .badge-none { background: #333; color: var(--text-muted); }
-
-        .monospace { font-family: monospace; font-size: 13px; color: #bbb; }
-        .btn-table-edit { background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; transition: background 0.1s; }
-        .btn-table-edit:hover { background: #3a3a3a; border-color: var(--accent); }
-
-        /* MODAL INTERACTIVE POPUP */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);
-            z-index: 5000; display: none; align-items: center; justify-content: center;
-            padding: 15px; overflow-y: auto;
-        }
-        .modal-overlay.open { display: flex; }
-
-        /* TWO-COLUMN INTAKE HUB CARD LAYOUT */
+        /* CARD ARCHITECTURE */
         .record-card {
-            background-color: var(--bg-card); border: 2px solid var(--border);
-            border-radius: 8px; padding: 20px; width: 100%; max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7); border-left: 6px solid var(--accent);
-            max-height: 90vh; overflow-y: auto;
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
         }
-        .record-card.mode-add { border-left-color: var(--accent-green); }
+        .record-card.ai-match { border-left-color: var(--accent-green); }
+        .record-card.ai-fail { border-left-color: var(--danger); border-color: rgba(255,51,51,0.3); }
         
         .card-split-grid {
             display: grid; 
-            grid-template-columns: 1fr 1fr; /* Locked 2-column mobile layout */
+            grid-template-columns: 1fr 1fr; /* Locks exactly 2 columns on ALL devices */
             gap: 15px; 
-            margin-top: 15px; 
+            margin-top: 10px; 
             align-items: flex-start;
         }
 
-        .input-wrapper { display: flex; flex-direction: column; gap: 4px; }
-        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
-        .required-star { color: var(--danger); margin-left: 2px; }
+        /* NEW HIGH-SPEED HEADER CSS */
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
+        .ctr-meta {
+            display: flex; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
+        }
+
+        /* INPUT WRAPPERS */
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
         
         input, select {
             width: 100%; height: 42px; background: #262626; border: 1px solid #444;
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
         input:focus, select:focus { border-color: var(--accent); }
-        
+        input.emp-input { font-size: 15px; font-weight: bold; }
+        input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
+
+        .sys-id-display-box { 
+            background: transparent; color: var(--text-muted); border: 1px dashed #444; 
+            padding: 0 12px; border-radius: 6px; font-size: 13px; font-family: monospace; 
+            font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
+        }
+
+        /* DATA WARNING ALERTS */
+        .alert-missing-date {
+            border: 2px solid #ff3333 !important; 
+            background-color: rgba(255, 51, 51, 0.15) !important;
+        }
+        .alert-wild-amount {
+            border: 2px solid #fd7e14 !important; 
+            background-color: rgba(253, 126, 20, 0.15) !important;
+            color: #fd7e14 !important;
+        }
+
+        /* BUTTONS */
         .btn-3d {
             width: 100%; height: 42px; border: none; border-radius: 6px;
             font-size: 13px; font-weight: bold; text-transform: uppercase;
             letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
-            margin-top: 10px;
         }
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
-        .btn-save { background-color: var(--accent-green); color: #111; }
-        .btn-cancel { background: #333; color: white; border: 1px solid #555; }
+        .btn-approve { background-color: var(--accent-green); color: #111; }
+        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
+
+        /* RIGHT SIDE AUDIT DRAWER */
+.side-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; 
+    width: 100%; max-width: 450px; /* <--- THIS FIXES THE BUG */
+    background: #161616; border-left: 2px solid var(--accent);
+    z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+}
+.side-drawer.open { transform: translateX(0); }
+.drawer-header {
+    padding: 20px; background: #222; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+.pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
+.drawer-handle {
+    position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+}
+
+        /* EMPTY QUEUE CENTERED LAYOUT */
+        .empty-queue-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh; /* Pushes it down to true center below the header */
+            text-align: center;
+            gap: 20px; /* Perfect spacing between the text and the button */
+        }
+        .empty-text-msg {
+            color: var(--text-muted);
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .btn-redirect {
+            background-color: var(--accent); /* Matches your yellow theme */
+            color: #000;
+            padding: 14px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.1s, background-color 0.2s;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-redirect:active {
+            transform: translateY(2px);
+        }
+        .btn-redirect:hover {
+            background-color: #ffdb4d;
+        }
+
+        /* --- NEW: TAGS LOADING OVERLAY --- */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; 
+        }
+
+        .loading-logo {
+            width: 80%;            
+            max-width: 500px;      
+            max-height: 80vh;      
+            object-fit: contain;   
+            margin-bottom: 20px;   
+        }
+
+        .parsing-text {
+            color: var(--text-muted);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: bold;
+            font-size: 16px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
     </style>
 </head>
 <body>
 
+    <!-- TAGS LOADING OVERLAY -->
+    <div id="loading-overlay">
+        <!-- Referencing exactly the file specified -->
+        <img src="tagsv3.png" alt="TAGS System" class="loading-logo">
+        <div class="parsing-text">↻ Parsing records...</div>
+    </div>
+
+    <div id="global-datalists" style="display: none;"></div>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Navigation Panel
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
-            </h3>
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                GROUP BY STEWARD
+                <input type="checkbox" id="toggle-group-steward" checked onchange="filterRecords()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
         </div>
         
         <div class="nav-section-title">Portals & Links</div>
-        <a id="lnk-floor-portal" href="#" class="nav-item">→ Intake Hub</a>
+        <a href="#" class="nav-item active">Intake Hub (Active)</a>
         <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
         <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
-        <a href="#" class="nav-item active">Seniority List (Active)</a>
-        <a id="lnk-portal-links" href="#" class="nav-item">→ Member Portal Links</a> 
+        <a id="lnk-Seniority-Master" href="#" class="nav-item">→ Seniority List</a>
+        <a id="lnk-portal-links" href="#" class="nav-item">→ Member Portal Links</a>      
+        
+        <div class="nav-section-title">Coverage Mode</div>
+        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
+        </div>
         
         <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
         <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
     </div>
 
-    <!-- TOP CONTROL NAVIGATION -->
     <div class="top-navbar">
-        <div class="nav-header-row">
-            <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-                <div>
-                    <div class="header-title">Local 710 Seniority Master</div>
-                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
-                </div>
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Local 710 Intake Hub</div>
+                <div id="steward-info" class="header-sub">Initializing live stream...</div>
             </div>
-            <button class="btn-add-master" onclick="openAddModal()">➕ Add New Member</button>
         </div>
-        <div class="filter-tabs">
-            <button class="tab-btn active" onclick="switchBucketView('ALL', this)">View All</button>
-            <button class="tab-btn" onclick="switchBucketView('EAST', this)">East Hub</button>
-            <button class="tab-btn" onclick="switchBucketView('WEST', this)">West Hub</button>
-            <button class="tab-btn" onclick="switchBucketView('NONE', this)">Unassigned</button>
+        <div class="local-dates-box">
+            <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
         </div>
     </div>
 
-    <div class="search-banner">
-        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, Emp ID, Phone, Center, or Job Class...">
-    </div>
-
+    <!-- MAIN DATA DISPLAY (Loading text removed, now handled by overlay) -->
     <div id="data-display">
-        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
-            ↻ Fetching Verified Seniority Roster...
-        </div>
-        <div class="table-wrapper" id="table-container" style="display: none;">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Emp ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Center</th>
-                        <th>Job Class</th>
-                        <th>FT/PT</th>
-                        <th>Hire Date</th>
-                        <th>PT Sen Date</th>
-                        <th>FT Sen Date</th>
-                        <th>Active</th>
-                        <th>Hub Bucket</th>
-                        <th>Phone</th>
-                        <th>Modified By</th>
-                        <th style="text-align: center; width: 90px; position: sticky; right: 0; background: #222; border-bottom: 2px solid var(--border);">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
     </div>
 
-    <!-- TWO-COLUMN CARDS MANAGEMENT OVERLAY MODAL -->
-    <div id="member-modal" class="modal-overlay" onclick="closeMemberModal()">
-        <div class="record-card" id="modal-card" onclick="event.stopPropagation()">
-            <h3 id="modal-header-title" style="color: white; font-size: 16px; font-weight: 900; text-transform: uppercase;">Manage Profile Context</h3>
-            
-            <div class="card-split-grid">
-                <div class="input-wrapper">
-                    <span class="input-label">First Name<span class="required-star">*</span></span>
-                    <input type="text" id="modal-first" placeholder="John">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Last Name<span class="required-star">*</span></span>
-                    <input type="text" id="modal-last" placeholder="Doe">
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">Employee ID<span class="required-star">*</span></span>
-                    <input type="text" id="modal-id" placeholder="7-Digit ID" maxlength="7" style="font-family: monospace; text-align: center;">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Hub Operational Bucket</span>
-                    <select id="modal-bucket">
-                        <option value="NONE">Unassigned</option>
-                        <option value="EAST">East Hub</option>
-                        <option value="WEST">West Hub</option>
-                    </select>
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">Center</span>
-                    <input type="text" id="modal-center" placeholder="e.g., Fort Wayne">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Job Class</span>
-                    <input type="text" id="modal-jobclass" placeholder="e.g., Package Driver">
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">FT / PT</span>
-                    <select id="modal-ftpt">
-                        <option value="---">---</option>
-                        <option value="FT">FT</option>
-                        <option value="PT">PT</option>
-                    </select>
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Active Status</span>
-                    <select id="modal-active">
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                    </select>
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">Hire Date</span>
-                    <input type="date" id="modal-hiredate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Phone Number</span>
-                    <input type="text" id="modal-phone" placeholder="10-Digit Phone" maxlength="14">
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">PT Seniority Date</span>
-                    <input type="date" id="modal-ptdate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">FT Seniority Date</span>
-                    <input type="date" id="modal-ftdate">
-                </div>
-
-                <div class="input-wrapper" style="margin-top: 10px;">
-                    <button class="btn-3d btn-cancel" onclick="closeMemberModal()">Cancel</button>
-                </div>
-                <div class="input-wrapper" style="margin-top: 10px;">
-                    <button class="btn-3d btn-save" onclick="commitModalTransaction()">Confirm & Save</button>
-                </div>
-            </div>
+    <div id="side-drawer" class="side-drawer">
+        <div id="drawerHandle" class="drawer-handle"></div>
+        <div class="drawer-header">
+            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Deep Dive Evidence</h3>
+            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
+        <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const stewardGUID = urlParams.get('steward');
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
-        
-        let masterSeniority = [];
-        let masterStewardRoster = [];
-        let currentStewardName = '';
-        let currentBucketFilter = 'ALL';
-        let currentTransactionMode = 'NEW';
-        let currentActiveSysId = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const stewardGUID = urlParams.get('steward');
+    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-        // Wire up cross-app navigation
-        document.getElementById('lnk-floor-portal').href = `index.html?steward=${stewardGUID}`;
-        document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
-        document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
-        document.getElementById('lnk-portal-links').href = `portal-links.html?steward=${stewardGUID}`;
+    // Wire up links
+    document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
+    document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
+    document.getElementById('lnk-Seniority-Master').href = `seniority.html?steward=${stewardGUID}`;
+    document.getElementById('lnk-portal-links').href = `portal-links.html?steward=${stewardGUID}`;
 
-        const formatToUsDate = (isoString) => {
-            if (!isoString || isoString === 'N/A') return '------';
-            const parts = isoString.split('T')[0].split('-');
-            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-            return isoString;
-        };
+    // --- GLOBAL LAYOUT VARIABLES ---
+    let fullDataCache = [];
+    let masterSeniorityArray = []; 
+    let masterStewardRoster = [];
+    let violTypeOptionsHtml = '';
+    let subViolOptionsHtml = '';
+    let currentStewardName = 'Steward';
+    let currentStewardId = '';
+    let lastHiddenCardId = null;
+    let undoTimeoutTimer = null;
 
-        const formatPhone = (phoneStr) => {
-            if (!phoneStr) return '------';
-            const cleaned = ('' + phoneStr).replace(/\D/g, '');
-            const match = cleaned.match(/^(\d{1})?(\d{3})(\d{3})(\d{4})$/);
-            if (match) {
-                const intlCode = (match[1] ? `+${match[1]} ` : '');
-                return [intlCode, '(', match[2], ') ', match[3], '-', match[4]].join('');
-            }
-            return phoneStr;
-        };
+    // Date Formatter Helper
+    const formatToUsDate = (isoString) => {
+        if (!isoString || isoString === 'N/A') return 'N/A';
+        const parts = isoString.split('T')[0].split('-');
+        if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+        return isoString;
+    };
 
-        function openNavMenu() {
-            document.getElementById('main-nav-menu').classList.add('open');
-            document.getElementById('nav-overlay').classList.add('open');
+    // Nav Drawer Controllers
+    function openNavMenu() {
+        document.getElementById('main-nav-menu').classList.add('open');
+        document.getElementById('nav-overlay').classList.add('open');
+    }
+    function closeNavMenu() {
+        document.getElementById('main-nav-menu').classList.remove('open');
+        document.getElementById('nav-overlay').classList.remove('open');
+    }
+
+    // --- REAL-TIME HEADER TRACKER & COVERAGE ---
+    function updateHeader(checkedBoxes) {
+        let viewName = 'Multiple';
+        if (checkedBoxes && checkedBoxes.length === 1) {
+            const checkbox = document.querySelector(`.steward-filter-chk[value="${checkedBoxes[0]}"]`);
+            if (checkbox) viewName = checkbox.getAttribute('data-name');
+        } else if (checkedBoxes && checkedBoxes.length === 0) {
+            viewName = 'None';
         }
-        function closeNavMenu() {
-            document.getElementById('main-nav-menu').classList.remove('open');
-            document.getElementById('nav-overlay').classList.remove('open');
-        }
         
-        function loadSeniorityData() {
-            if (!stewardGUID) {
-                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
+        const viewCount = fullDataCache.filter(item => {
+            if (item.isVerifiedLocally) return false;
+            const st = (item.StewardOfRecord || '').trim();
+            return checkedBoxes ? checkedBoxes.includes(st) : false;
+        }).length;
+        
+        document.getElementById('steward-info').innerText = `Coverage: ${viewName} | ${viewCount} Pending Intake`;
+    }
+
+    function loadPending() {
+        if (!stewardGUID) {
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('data-display').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+                    Security Halt: No routing verification token provided.
+                </div>`;
+            return;
+        }
+
+        fetch(flowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+        })
+        .then(response => response.json())
+        .then(dataBundle => {
+            // HIDE THE FULL SCREEN LOGO OVERLAY ON SUCCESS
+            document.getElementById('loading-overlay').style.display = 'none';
+            
+            fullDataCache = dataBundle.pendingGrievances || [];
+            const dropdownOptions = dataBundle.dropdownOptions || [];
+            masterSeniorityArray = dataBundle.seniorityList || [];
+            masterStewardRoster = dataBundle.stewardRoster || [];
+            
+            const myProfile = masterStewardRoster.find(s => {
+                const targetGuid = (s.GUID || s.Title || '').toString().toLowerCase().trim();
+                return targetGuid === stewardGUID.toLowerCase().trim();
+            }) || {};
+            
+            currentStewardName = myProfile.StewardName || myProfile.DisplayName || 'Steward';
+            currentStewardId = myProfile.StewardID || ''; 
+
+            if (fullDataCache.length === 0) {
+                document.getElementById('steward-info').innerText = `Coverage: ${currentStewardName} | 0 Pending Intake`;
+                document.getElementById('data-display').innerHTML = `
+                    <div class="empty-queue-wrapper">
+                        <div class="empty-text-msg">
+                            <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                            Intake queue is clear. No pending records found for this view.
+                        </div>
+                        
+                        <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
+                            → Head to Processing Hub
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_seniority" })
-            })
-            .then(res => res.json())
-            .then(bundle => {
-                // Map incoming cloud parameters, accounting for choice formatting variations
-                                masterSeniority = (bundle.seniorityList || []).map(item => {
-                    // Safety check for FT/PT Choice Column object
-                    let ftptRaw = item['FT/PT'] || item['FT_x002f_PT'] || item.OData_FT_x002f_PT || item.FTPT || '---';
-                    if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
+            let seniorityOptionsHtml = '';
+            masterSeniorityArray.forEach(person => {
+                const fName = person.FirstName || person['First Name'] || '';
+                const lName = person.LastName || person['Last Name'] || '';
+                const fullRosterName = `${fName} ${lName}`.trim();
+                if (fullRosterName) {
+                    seniorityOptionsHtml += `<option value="${fullRosterName}"></option>`;
+                }
+            });
 
-                    // 🔥 NEW: Safety check for HubBucket Choice Column object 🔥
-                    let bucketRaw = item.HubBucket || item.Bucket || 'NONE';
-                    if (typeof bucketRaw === 'object' && bucketRaw && bucketRaw.Value) {
-                        bucketRaw = bucketRaw.Value;
-                    } else if (typeof bucketRaw === 'object') {
-                        bucketRaw = 'NONE';
-                    }
+            const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
+            const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
 
-                    return {
-                        sysId: item.ID || item.Title || '',
-                        empId: item.Title || item.EmployeeID || '',
-                        firstName: item.FirstName || '',
-                        lastName: item.LastName || '',
-                        center: item.Center || '---',
-                        jobClass: item.JobClass || '---',
-                        ftpt: ftptRaw,
-                        hireDate: item.HireDate ? item.HireDate.split('T')[0] : '',
-                        ptSeniorityDate: item.PTSeniorityDate ? item.PTSeniorityDate.split('T')[0] : '',
-                        ftSeniorityDate: item.FTSeniorityDate ? item.FTSeniorityDate.split('T')[0] : '',
-                        active: (item.Active || 'Yes').toString(),
-                        phoneNumber: item.PhoneNumber || '',
-                        modifiedBy: item.ModifiedBy || '---',
-                        bucket: bucketRaw.toString().toUpperCase().trim()
-                    };
+            violTypeOptionsHtml = '';
+            violationTypeRows.forEach(opt => {
+                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
+                if(val) violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
+            });
+
+            subViolOptionsHtml = '';
+            subViolationRows.forEach(opt => {
+                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
+                if(val) subViolOptionsHtml += `<option value="${val}">${val}</option>`;
+            });
+
+            let dataListsContainer = document.getElementById('global-datalists');
+            dataListsContainer.innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
+
+            // Populate checkboxes
+            const coverageContainer = document.getElementById('coverage-checkboxes');
+            coverageContainer.innerHTML = '';
+            const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
+
+            sortedRoster.forEach(st => {
+                if (st.StewardName && st.StewardID) {
+                    const isMe = st.StewardID === currentStewardId;
+                    coverageContainer.innerHTML += `
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
+                            <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="filterRecords()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                            ${st.StewardName} ${isMe ? '(Me)' : ''}
+                        </label>
+                    `;
+                }
+            });
+
+            filterRecords();
+        }).catch(err => {
+            // HIDE THE OVERLAY ON ERROR AS WELL
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('data-display').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+                    Interface parsing failure. Check format mappings.
+                </div>`;
+            console.error(err);
+        });
+    }
+
+    function filterRecords() {
+        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+        
+        const filtered = fullDataCache.filter(item => {
+            if (item.isVerifiedLocally) return false; 
+            const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').trim();
+            return checkedBoxes.includes(recordSteward);
+        });
+        
+        updateHeader(checkedBoxes); 
+        renderCards(filtered);
+    }
+
+    function renderCards(recordsList) {
+        const displayContainer = document.getElementById('data-display');
+        displayContainer.style.paddingBottom = '120px';
+
+        if (recordsList.length === 0) {
+            displayContainer.innerHTML = `
+                <div class="empty-queue-wrapper">
+                    <div class="empty-text-msg">
+                        <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                        Intake queue is clear. No pending records found for this view.
+                    </div>
+                    
+                    <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
+                        → Head to Processing Hub
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        const isGrouped = document.getElementById('toggle-group-steward').checked;
+        const groupedRecords = {};
+        
+        if (isGrouped) {
+            recordsList.forEach(item => {
+                const stID = (item.StewardOfRecord || item['StewardOfRecord'] || 'Unassigned').trim();
+                let stName = stID;
+                const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
+                if (checkbox) stName = checkbox.getAttribute('data-name');
+                if (!groupedRecords[stName]) groupedRecords[stName] = [];
+                groupedRecords[stName].push(item);
+            });
+        } else {
+            groupedRecords['All Selected Files'] = [...recordsList];
+        }
+
+        let htmlContent = '';
+        const sortedGroupNames = Object.keys(groupedRecords).sort();
+
+        for (const groupName of sortedGroupNames) {
+            const items = groupedRecords[groupName];
+
+            htmlContent += `
+                <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
+                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} PENDING</span>
+                </div>
+            `;
+
+            items.forEach((item) => {
+                const sysId = item['Title'] || '';
+                let empId = (item['EmployeeID'] || '').toString().trim();
+                const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
+                let cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
+                
+                let displayName = isAiMatched 
+                    ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
+                    : (item['RawOCRName'] || 'Unknown Driver').trim();
+
+                const violType = item['ViolationType'] || '';
+                const subType = item['ViolationSubType'] || '';
+                const amt = item['ViolationAmount'] || '0.00';
+                const originalAmt = parseFloat(amt).toFixed(2);
+                
+                const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
+                const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
+                
+                const vDateDisplay = formatToUsDate(violDate);
+
+                let idAlertHtml = '';
+                let nameAlertHtml = '';
+                let idInputStyleOverride = '';
+                let nameInputStyleOverride = '';
+
+                const rosterMatch = masterSeniorityArray.find(person => {
+                    const fName = person.FirstName || person['First Name'] || '';
+                    const lName = person.LastName || person['Last Name'] || '';
+                    return `${fName} ${lName}`.trim().toLowerCase() === displayName.toLowerCase();
                 });
 
+                if (!isAiMatched) {
+                    if (displayName !== 'Unknown Driver') displayName = displayName + ' *'; 
+                    nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ VERIFY MEMBER</span>';
+                    nameInputStyleOverride = 'border-color: #ffcc00;';
 
-                masterStewardRoster = bundle.stewardRoster || [];
-
-                const myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
-                
-                if (!myProfileData) {
-                    document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
-                    return; 
+                    if (rosterMatch) {
+                        const officialRosterId = (rosterMatch.Title || '').toString().trim();
+                        if (empId !== officialRosterId) {
+                            empId = ''; 
+                            idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
+                            idInputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
+                            cardClass = 'ai-fail'; 
+                        }
+                    } else if (displayName !== 'Unknown Driver *') {
+                        idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ MISSING ID</span>';
+                        idInputStyleOverride = 'border-color: #ffcc00;';
+                    }
                 }
 
-                currentStewardName = myProfileData.StewardName || myProfileData.DisplayName || 'Authorized Viewer';
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('table-container').style.display = 'block';
-                
-                applyFilters();
-            }).catch(err => {
-                document.getElementById('loading').innerText = "Interface parsing failure on handshake.";
-                console.error(err);
-            });
-        }
+                let itemStewardName = (item.StewardOfRecord || '').trim();
+                const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
+                if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
+                const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
 
-        function switchBucketView(bucketType, element) {
-            currentBucketFilter = bucketType;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-            applyFilters();
-        }
+                htmlContent += `
+                    <div class="record-card ${cardClass}" id="card-${sysId}" style="transition: all 0.2s ease;">
+                        
+                        <div class="card-top-row">
+                            <h4 class="ctr-name">${displayName.replace(' *', '')}</h4>
+                            <div class="ctr-meta">
+                                <span>${vDateDisplay}</span>
+                                <span>${violType} ${subType ? '— ' + subType : ''}</span>
+                            </div>
+                            <div class="ctr-amt">$${originalAmt}</div>
+                        </div>
 
-        function applyFilters() {
-            const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
+                        <div style="display: flex; gap: 15px; margin-bottom: 14px;" onclick="event.stopPropagation()">
+                            <div class="input-wrapper" style="flex: 1;">
+                                <span class="input-label emp-label">Member Name</span>
+                                <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
+                                ${nameAlertHtml}
+                            </div>
+                            <div class="input-wrapper" style="width: 110px; flex-shrink: 0;">
+                                <span class="input-label emp-label">Emp ID</span>
+                                <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
+                                ${idAlertHtml}
+                            </div>
+                        </div>
 
-            let filteredArray = masterSeniority.filter(item => {
-                // 1. Bucket Row Filtering
-                if (currentBucketFilter !== 'ALL' && item.bucket !== currentBucketFilter) {
-                    return false;
-                }
+                        ${stewardBadgeHtml ? `<div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">${stewardBadgeHtml}</div>` : ''}
 
-                // 2. Text Content Row Filtering
-                if (searchText !== '') {
-                    const searchTarget = `
-                        ${item.empId || ''} 
-                        ${item.firstName || ''} 
-                        ${item.lastName || ''} 
-                        ${item.center || ''} 
-                        ${item.jobClass || ''}
-                        ${item.phoneNumber || ''}
-                    `.toLowerCase();
-                    
-                    if (!searchTarget.includes(searchText)) return false;
-                }
-                return true;
-            });
+                        <div class="card-split-grid" onclick="event.stopPropagation()">
+                            <div class="input-wrapper">
+                                <span class="input-label">File Date</span>
+                                <input type="date" class="file-date" value="${fileDate}">
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Violation Date</span>
+                                <input type="date" class="violation-date" value="${violDate}">
+                            </div>
+                            
+                            <div class="input-wrapper">
+                                <span class="input-label">Violation Type</span>
+                                <select class="violtype-select">
+                                    <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                    ${violTypeOptionsHtml || `
+                                        <option value="Discharge">Discharge</option>
+                                        <option value="Suspension">Suspension</option>
+                                        <option value="Pay Claim">Pay Claim</option>
+                                        <option value="Protest">Protest</option>
+                                        <option value="Other">Other</option>
+                                    `}
+                                </select>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Sub Violation</span>
+                                <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
+                                    <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                    ${subViolOptionsHtml}
+                                    <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                                </select>
+                                <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
+                            </div>
 
-            // Order Alphabetically by Names
-            filteredArray.sort((a, b) => {
-                const lnA = (a.lastName || '').toLowerCase();
-                const lnB = (b.lastName || '').toLowerCase();
-                if (lnA < lnB) return -1;
-                if (lnA > lnB) return 1;
-                const fnA = (a.firstName || '').toLowerCase();
-                const fnB = (b.firstName || '').toLowerCase();
-                if (fnA < fnB) return -1;
-                if (fnA > fnB) return 1;
-                return 0;
-            });
+                            <div class="input-wrapper">
+                                <span class="input-label">Claim Amt ($)</span>
+                                <input type="number" step="0.01" class="amt-input" value="${amt}">
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">Sys ID</span>
+                                <div class="sys-id-display-box">${sysId}</div>
+                            </div>
 
-            document.getElementById('steward-info').innerText = `${currentStewardName} | Verified Roster (${filteredArray.length} Profiles)`;
-            renderTable(filteredArray);
-        }
-
-        function renderTable(dataArray) {
-            const tbody = document.getElementById('table-body');
-            
-            if (dataArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria or bucket view selection.</td></tr>`;
-                return;
-            }
-
-            let rowsHtml = '';
-            dataArray.forEach(p => {
-                const isActiveStr = p.active.toLowerCase();
-                const isActive = isActiveStr === 'yes' || isActiveStr === 'true' || isActiveStr === '1';
-                const activePill = isActive ? `<span class="pill pill-yes">Yes</span>` : `<span class="pill pill-no">No</span>`;
-                
-                let bucketBadge = `<span class="badge badge-none">Unassigned</span>`;
-                if (p.bucket === 'EAST') bucketBadge = `<span class="badge badge-east">East Hub</span>`;
-                if (p.bucket === 'WEST') bucketBadge = `<span class="badge badge-west">West Hub</span>`;
-
-                let modifiedByText = '---';
-                if (p.modifiedBy && typeof p.modifiedBy === 'object') {
-                    modifiedByText = p.modifiedBy.DisplayName || p.modifiedBy.Value || '---';
-                } else if (p.modifiedBy) {
-                    modifiedByText = p.modifiedBy;
-                }
-
-                rowsHtml += `
-                    <tr>
-                        <td class="monospace" style="color: var(--accent); font-weight: bold;">${p.empId}</td>
-                        <td style="font-weight: bold; color: white;">${p.firstName}</td>
-                        <td style="font-weight: bold; color: white;">${p.lastName}</td>
-                        <td>${p.center}</td>
-                        <td>${p.jobClass}</td>
-                        <td>${p.ftpt}</td>
-                        <td>${formatToUsDate(p.hireDate)}</td>
-                        <td>${formatToUsDate(p.ptSeniorityDate)}</td>
-                        <td>${formatToUsDate(p.ftSeniorityDate)}</td>
-                        <td>${activePill}</td>
-                        <td>${bucketBadge}</td>
-                        <td>${formatPhone(p.phoneNumber)}</td>
-                        <td style="color: var(--text-muted); font-size: 11px;">${modifiedByText}</td>
-                        <td style="text-align: center; position: sticky; right: 0; background: #1e1e1e; border-bottom: 1px solid #2a2a2a; box-shadow: -4px 0 8px rgba(0,0,0,0.2);">
-                            <button class="btn-table-edit" onclick="openEditModal('${p.sysId}')">✏️ Edit</button>
-                        </td>
-                    </tr>
+                            <div class="input-wrapper">
+                                <span class="input-label">&nbsp;</span>
+                                <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">Review PDF File</button>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-label">&nbsp;</span>
+                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
+                            </div>
+                            
+                        </div>
+                    </div>
                 `;
             });
-
-            tbody.innerHTML = rowsHtml;
         }
+        displayContainer.innerHTML = htmlContent;
+    }
 
-        // --- MODAL CONTROLLERS ---
-        function openAddModal() {
-            currentTransactionMode = 'NEW';
-            currentActiveSysId = null;
+    function handleRosterSelection(recordId, inputElem) {
+        const typedName = inputElem.value.trim();
+        const card = document.getElementById(`card-${recordId}`);
+        if (!card) return;
+
+        const idInput = card.querySelector('.id-input');
+        const nameInput = card.querySelector('.emp-input');
+
+        const match = masterSeniorityArray.find(person => {
+            const fName = person.FirstName || person['First Name'] || '';
+            const lName = person.LastName || person['Last Name'] || '';
+            return `${fName} ${lName}`.trim().toLowerCase() === typedName.toLowerCase();
+        });
+        
+        if (match) {
+            idInput.value = match.Title || match['Title'] || '';
+            idInput.style.cssText = ''; 
+            nameInput.style.cssText = '';
             
-            document.getElementById('modal-card').className = "record-card mode-add";
-            document.getElementById('modal-header-title').innerText = "🆕 Provision New Member Profile";
+            const idAlert = card.querySelector('.id-error-banner');
+            if (idAlert) idAlert.remove();
             
-            document.getElementById('modal-first').value = '';
-            document.getElementById('modal-last').value = '';
-            
-            const idInput = document.getElementById('modal-id');
+            const nameAlert = card.querySelector('.name-error-banner');
+            if (nameAlert) nameAlert.remove();
+        } else {
             idInput.value = '';
-            idInput.readOnly = false;
-            idInput.style.cssText = '';
+        }
+    }
 
-            document.getElementById('modal-bucket').value = 'NONE';
-            document.getElementById('modal-center').value = '';
-            document.getElementById('modal-jobclass').value = '';
-            document.getElementById('modal-ftpt').value = '---';
-            document.getElementById('modal-active').value = 'Yes';
-            document.getElementById('modal-hiredate').value = '';
-            document.getElementById('modal-phone').value = '';
-            document.getElementById('modal-ptdate').value = '';
-            document.getElementById('modal-ftdate').value = '';
-            
-            document.getElementById('member-modal').classList.add('open');
+    function handleSubViolChange(recordId, selectElem) {
+        const card = document.getElementById(`card-${recordId}`);
+        if (!card) return;
+        const customInput = card.querySelector('.subviol-custom-input');
+        
+        if (selectElem.value === 'CUSTOM_OTHER') {
+            customInput.style.display = 'block';
+            customInput.value = '';
+            customInput.focus();
+        } else {
+            customInput.style.display = 'none';
+        }
+    }
+
+    function executeRowCommit(recordId) {
+        const card = document.getElementById(`card-${recordId}`);
+        let fullInputName = card.querySelector('.emp-input').value.trim();
+        const updatedEmpId = card.querySelector('.id-input').value.trim();
+        const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
+        const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
+        const updatedViolType = card.querySelector('.violtype-select').value;
+        const updatedAmount = card.querySelector('.amt-input').value;
+
+        if (!updatedEmpId) {
+            alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
+            return;
         }
 
-        function openEditModal(sysId) {
-            currentTransactionMode = 'EDIT';
-            currentActiveSysId = sysId;
-            
-            const member = masterSeniority.find(m => m.sysId === sysId);
-            if (!member) return;
-
-            document.getElementById('modal-card').className = "record-card";
-            document.getElementById('modal-header-title').innerText = `✏️ Edit Profile: ${member.lastName}`;
-            
-            document.getElementById('modal-first').value = member.firstName;
-            document.getElementById('modal-last').value = member.lastName;
-            
-            const idInput = document.getElementById('modal-id');
-            idInput.value = member.empId;
-            idInput.readOnly = true;
-            idInput.style.cssText = "color: var(--text-muted); background: #1a1a1a; pointer-events: none;";
-
-            document.getElementById('modal-bucket').value = member.bucket;
-            document.getElementById('modal-center').value = member.center === '---' ? '' : member.center;
-            document.getElementById('modal-jobclass').value = member.jobClass === '---' ? '' : member.jobClass;
-            document.getElementById('modal-ftpt').value = member.ftpt;
-            
-            const normalizedActive = (member.active.toLowerCase() === 'no' || member.active.toLowerCase() === 'false') ? 'No' : 'Yes';
-            document.getElementById('modal-active').value = normalizedActive;
-            
-            document.getElementById('modal-hiredate').value = member.hireDate;
-            document.getElementById('modal-phone').value = member.phoneNumber;
-            document.getElementById('modal-ptdate').value = member.ptSeniorityDate;
-            document.getElementById('modal-ftdate').value = member.ftSeniorityDate;
-            
-            document.getElementById('member-modal').classList.add('open');
+        if (fullInputName.endsWith('*')) {
+            fullInputName = fullInputName.slice(0, -1).trim();
         }
 
-        function closeMemberModal() {
-            document.getElementById('member-modal').classList.remove('open');
+        let updatedViolSubType = card.querySelector('.subviol-select').value;
+        if (updatedViolSubType === 'CUSTOM_OTHER') {
+            updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
         }
 
-        function commitModalTransaction() {
-            const first = document.getElementById('modal-first').value.trim();
-            const last = document.getElementById('modal-last').value.trim();
-            const id = document.getElementById('modal-id').value.trim();
-            const bucket = document.getElementById('modal-bucket').value;
-            const center = document.getElementById('modal-center').value.trim();
-            const jobClass = document.getElementById('modal-jobclass').value.trim();
-            const ftpt = document.getElementById('modal-ftpt').value;
-            const active = document.getElementById('modal-active').value;
-            const hireDate = document.getElementById('modal-hiredate').value;
-            const phone = document.getElementById('modal-phone').value.replace(/\D/g, '');
-            const ptDate = document.getElementById('modal-ptdate').value;
-            const ftDate = document.getElementById('modal-ftdate').value;
+        const nameParts = fullInputName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
 
-            // HARD TRIPLE-FILTER REQUIREMENT CHECK
-            if (!id || !first || !last) {
-                alert("❌ Entry Blocked: Employee ID, First Name, and Last Name are absolute requirements.");
-                return;
-            }
+        const ind = document.getElementById('save-indicator');
+        ind.innerText = "↻ Committing changes...";
+        ind.className = "save-status saving";
 
-            const timeStamp = new Date().toLocaleString('en-US');
-            const auditSignature = `${currentStewardName} - ${timeStamp}`;
-
-            const payload = {
+        fetch(flowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
                 "stewardGuid": stewardGUID,
-                "action": currentTransactionMode === 'NEW' ? "add_member" : "update_member",
-                "EmployeeID": id,
-                "FirstName": first,
-                "LastName": last,
-                "HubBucket": bucket,
-                "Center": center,
-                "JobClass": jobClass,
-                "FTPT": ftpt,
-                "Active": active,
-                "HireDate": hireDate,
-                "PhoneNumber": phone,
-                "PTSeniorityDate": ptDate,
-                "FTSeniorityDate": ftDate,
-                "AuditSignature": auditSignature
-            };
-
-            if (currentTransactionMode === 'EDIT') {
-                payload.titleId = currentActiveSysId;
-            } else {
-                // Check local collisions for New Entry additions
-                const collision = masterSeniority.find(m => m.empId === id);
-                if (collision) {
-                    alert(`❌ Collision Error: Employee ID ${id} is already mapped to ${collision.firstName} ${collision.lastName}.`);
-                    return;
-                }
-            }
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                "action": "verify",
+                "titleId": recordId,
+                "FirstName": firstName,
+                "LastName": lastName,
+                "EmployeeID": updatedEmpId,
+                "FileDate": updatedFileDate,
+                "ViolationDate": updatedViolDate,
+                "ViolationType": updatedViolType,
+                "ViolationSubType": updatedViolSubType,
+                "ViolationAmount": updatedAmount
             })
-            .then(res => {
-                if (res.ok) {
-                    closeMemberModal();
-                    alert(`✓ Roster transaction successfully executed.`);
-                    loadSeniorityData(); // Reload live cloud data context
-                } else {
-                    alert("Cloud submission error. Verify JSON validation properties in Power Automate.");
-                }
-            });
+        })
+        .then(res => {
+            if (res.ok) {
+                const rec = fullDataCache.find(r => r.Title === recordId);
+                if (rec) rec.isVerifiedLocally = true;
+                
+                const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+                updateHeader(checkedBoxes);
+
+                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                
+                setTimeout(() => { 
+                    card.style.display = 'none'; 
+                }, 300);
+
+                ind.innerText = "✓ Action Complete";
+                ind.className = "save-status";
+
+                triggerUndoToast(recordId);
+            } else {
+                alert("Cloud sync failed. Check connection.");
+                ind.innerText = "⚠️ Sync Error";
+                ind.className = "save-status dirty";
+            }
+        });
+    }
+
+    function triggerUndoToast(recordId) {
+        clearTimeout(undoTimeoutTimer);
+        lastHiddenCardId = recordId;
+
+        let toast = document.getElementById('undo-toast-banner');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'undo-toast-banner';
+            toast.style.cssText = "position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--accent); padding: 12px 24px; border-radius: 8px; display: flex; align-items: center; gap: 20px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.6); font-size: 14px; font-weight: bold;";
+            document.body.appendChild(toast);
         }
 
-        loadSeniorityData();
+        toast.innerHTML = `
+            <span style="color: white; letter-spacing: 0.3px;">Record Verified</span>
+            <button onclick="executeUndoAction()" style="background: transparent; border: none; color: var(--accent); font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 14px; padding: 4px 8px; transition: color 0.2s;">↩ Undo</button>
+        `;
+        toast.style.display = 'flex';
+
+        undoTimeoutTimer = setTimeout(() => {
+            toast.style.display = 'none';
+            lastHiddenCardId = null;
+        }, 5000);
+    }
+
+    function executeUndoAction() {
+        if (!lastHiddenCardId) return;
+
+        const rec = fullDataCache.find(r => r.Title === lastHiddenCardId);
+        if (rec) rec.isVerifiedLocally = false;
+        
+        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+        updateHeader(checkedBoxes);
+
+        const card = document.getElementById(`card-${lastHiddenCardId}`);
+        if (card) {
+            card.style.display = 'flex';
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        const toast = document.getElementById('undo-toast-banner');
+        if (toast) toast.style.display = 'none';
+        
+        clearTimeout(undoTimeoutTimer);
+        lastHiddenCardId = null;
+    }
+
+    function openDrawer(recordId) {
+        const record = fullDataCache.find(r => r.Title === recordId);
+        document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
+        const drawerContent = document.getElementById('drawer-main-content');
+        if (!record) {
+            drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record context dropped.</p>`;
+            return;
+        }
+        let safeLink = record.PublicLink || '';
+        let downloadBtnHtml = '';
+        if (safeLink.includes("drive.google.com")) {
+            const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+            if (fileIdMatch && fileIdMatch[1]) {
+                const fileId = fileIdMatch[1];
+                safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+                downloadBtnHtml = `
+                    <div style="text-align: center; margin-top: 12px;">
+                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: var(--accent); padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid var(--accent);">
+                            📥 Download PDF Copy </a>
+                    </div>
+                `;
+            }
+        }
+        drawerContent.innerHTML = `
+            <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
+                <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Raw Extracted Name:</b> ${record.RawOCRName || 'N/A'}</p>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
+                <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
+                <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
+            </div>
+            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Steward Internal Notes</label>
+            <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" placeholder="Type notes here..."></textarea>
+            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
+            ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
+        `;
+        document.getElementById('side-drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+        document.getElementById('side-drawer').classList.remove('open');
+    }
+
+    const drawer = document.getElementById('side-drawer');
+    const handle = document.getElementById('drawerHandle');
+    handle.addEventListener('mousedown', initResize);
+    handle.addEventListener('touchstart', initResize, { passive: true });
+
+    function initResize(e) {
+        document.addEventListener('mousemove', resizeDrawer);
+        document.addEventListener('mouseup', stopResize);
+        document.addEventListener('touchmove', resizeDrawer, { passive: false });
+        document.addEventListener('touchend', stopResize);
+    }
+
+    function resizeDrawer(e) {
+        let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const newWidth = window.innerWidth - clientX;
+        if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
+            drawer.style.width = newWidth + 'px';
+        }
+    }
+
+    function stopResize() {
+        document.removeEventListener('mousemove', resizeDrawer);
+        document.removeEventListener('touchmove', resizeDrawer);
+    }
+
+    // --- REAL-TIME WARNING ALERTS ---
+    function validateIntakeAlerts(inputElement, fieldType) {
+        let value = inputElement.value.trim();
+
+        if (fieldType === 'date') {
+            if (!value) {
+                inputElement.classList.add('alert-missing-date');
+            } else {
+                inputElement.classList.remove('alert-missing-date');
+            }
+        } else if (fieldType === 'amount') {
+            let amount = parseFloat(value);
+            if (isNaN(amount) || amount < 10 || amount > 1000) {
+                inputElement.classList.add('alert-wild-amount');
+            } else {
+                inputElement.classList.remove('alert-wild-amount');
+            }
+        }
+    }
+
+    // Listen as you type to remove the red/orange when fixed
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('file-date') || e.target.classList.contains('violation-date')) {
+            validateIntakeAlerts(e.target, 'date');
+        }
+        if (e.target.classList.contains('amt-input')) {
+            validateIntakeAlerts(e.target, 'amount');
+        }
+    });
+
+    // --- OVERRIDE RENDERCARDS TO TRIGGER ON LOAD ---
+    // We are hijacking the end of your renderCards function to force a scan
+    const originalRenderCards = renderCards;
+    renderCards = function(recordsList) {
+        originalRenderCards(recordsList); // Run your normal render
+
+        // Scan all inputs immediately after they hit the screen
+        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
+        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
+    };
+    
+    loadPending();
+
     </script>
 </body>
 </html>
