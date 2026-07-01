@@ -523,31 +523,7 @@
 
         for (const groupName of sortedGroupNames) {
             const items = groupedRecords[groupName];
-                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
-            items.sort((a, b) => {
-                // 1. Extract Last Names (with fallback to OCR if unmatched)
-                let lastA = (a.LastName || '').toLowerCase();
-                let lastB = (b.LastName || '').toLowerCase();
-                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop().toLowerCase();
-                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop().toLowerCase();
-
-                if (lastA < lastB) return -1;
-                if (lastA > lastB) return 1;
-
-                // 2. Extract First Names
-                let firstA = (a.FirstName || '').toLowerCase();
-                let firstB = (b.FirstName || '').toLowerCase();
-                
-                if (firstA < firstB) return -1;
-                if (firstA > firstB) return 1;
-
-                // 3. Extract Violation Dates (Oldest to Newest)
-                let dateA = a.ViolationDate ? new Date(a.ViolationDate) : new Date(0);
-                let dateB = b.ViolationDate ? new Date(b.ViolationDate) : new Date(0);
-                
-                return dateA - dateB;
-            });
-
+       
 
             htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
