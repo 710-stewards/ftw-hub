@@ -120,6 +120,18 @@
             font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
         }
 
+                /* DATA WARNING ALERTS */
+        .alert-missing-date {
+            border: 2px solid #ff3333 !important; 
+            background-color: rgba(255, 51, 51, 0.15) !important;
+        }
+        .alert-wild-amount {
+            border: 2px solid #fd7e14 !important; 
+            background-color: rgba(253, 126, 20, 0.15) !important;
+            color: #fd7e14 !important;
+        }
+
+
         /* BUTTONS */
         .btn-3d {
             width: 100%; height: 42px; border: none; border-radius: 6px;
@@ -557,12 +569,13 @@
                         <div class="card-split-grid" onclick="event.stopPropagation()">
                             <div class="input-wrapper">
                                 <span class="input-label">File Date</span>
-                                <input type="date" value="${fileDate}">
+                                <input type="date" class="file-date" value="${fileDate}">
                             </div>
                             <div class="input-wrapper">
                                 <span class="input-label">Violation Date</span>
-                                <input type="date" value="${violDate}">
+                                <input type="date" class="violation-date" value="${violDate}">
                             </div>
+
                             
                             <div class="input-wrapper">
                                 <span class="input-label">Violation Type</span>
@@ -849,6 +862,48 @@
         document.removeEventListener('mousemove', resizeDrawer);
         document.removeEventListener('touchmove', resizeDrawer);
     }
+
+        // --- REAL-TIME WARNING ALERTS ---
+    function validateIntakeAlerts(inputElement, fieldType) {
+        let value = inputElement.value.trim();
+
+        if (fieldType === 'date') {
+            if (!value) {
+                inputElement.classList.add('alert-missing-date');
+            } else {
+                inputElement.classList.remove('alert-missing-date');
+            }
+        } else if (fieldType === 'amount') {
+            let amount = parseFloat(value);
+            if (isNaN(amount) || amount < 10 || amount > 1000) {
+                inputElement.classList.add('alert-wild-amount');
+            } else {
+                inputElement.classList.remove('alert-wild-amount');
+            }
+        }
+    }
+
+    // Listen as you type to remove the red/orange when fixed
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('file-date') || e.target.classList.contains('violation-date')) {
+            validateIntakeAlerts(e.target, 'date');
+        }
+        if (e.target.classList.contains('amt-input')) {
+            validateIntakeAlerts(e.target, 'amount');
+        }
+    });
+
+    // --- OVERRIDE RENDERCARDS TO TRIGGER ON LOAD ---
+    // We are hijacking the end of your renderCards function to force a scan
+    const originalRenderCards = renderCards;
+    renderCards = function(recordsList) {
+        originalRenderCards(recordsList); // Run your normal render
+
+        // Scan all inputs immediately after they hit the screen
+        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
+        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
+    };
+    
 
     loadPending();
 
