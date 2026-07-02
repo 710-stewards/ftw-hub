@@ -71,6 +71,12 @@
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
+        </div> <div style="margin-bottom: 20px; position: relative;">
+        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="width: 100%; height: 50px; padding: 10px 16px 10px 40px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
+    </div>
+
+    <div class="stats-banner">
+
         /* OVERHEAD KPI STATS BAR */
         .stats-banner {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -469,10 +475,31 @@
 
         function applyCoverageFilter() {
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+            const searchTerm = (document.getElementById('global-search-input').value || '').toLowerCase().trim();
             
             verifiedCacheArray = masterGrievanceCache.filter(item => {
+                // 1. Check Steward Coverage First
                 const st = (item.StewardOfRecord || '').trim();
-                return checkedBoxes.includes(st);
+                const matchesSteward = checkedBoxes.includes(st);
+                
+                if (!matchesSteward) return false;
+                if (!searchTerm) return true; // If search box is empty, let it through
+
+                // 2. Build a giant hidden string of all the case data to search against
+                const searchableData = `
+                    ${item.FirstName || ''} ${item.LastName || ''}
+                    ${item.RawOCRName || ''}
+                    ${item.EmployeeID || ''}
+                    ${item.Title || ''}
+                    ${item.ViolationType || ''}
+                    ${item.ViolationSubType || ''}
+                    ${item.NotesA || ''}
+                    ${item.NotesB || ''}
+                    ${(item.Disposition && item.Disposition.Value) ? item.Disposition.Value : (item.Disposition || '')}
+                `.toLowerCase();
+
+                // 3. Keep the card if the search term exists anywhere in that giant string
+                return searchableData.includes(searchTerm);
             });
 
             calculateMetrics();
