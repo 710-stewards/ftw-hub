@@ -1,0 +1,9 @@
+[
+  { "type": "header", "title": "Portals & Links" },
+  { "type": "link", "name": "Intake Hub", "filename": "index.html" },
+  { "type": "link", "name": "Processing Hub", "filename": "hub.html" },
+  { "type": "link", "name": "Archive Vault", "filename": "archive.html" },
+  { "type": "link", "name": "Seniority List", "filename": "seniority.html" },
+  { "type": "link", "name": "Member Portal Links", "filename": "portal-links.html" },
+  { "type": "link", "name": "Steward Library", "filename": "library.html" }
+]
