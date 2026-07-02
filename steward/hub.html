@@ -178,6 +178,26 @@
         .modal-btn-row { display: flex; gap: 12px; }
         .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    
+    /* --- PRINT SPREADSHEET MODE --- */
+        @media print {
+            /* Force white paper, hide the app UI */
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .top-navbar, .main-nav-drawer, .nav-overlay, .stats-banner, #data-display, #side-drawer, .modal-overlay, #search-print-row {
+                display: none !important;
+            }
+            
+            /* Show only the hidden spreadsheet */
+            #print-section { display: block !important; width: 100%; }
+            
+            /* Spreadsheet Styling */
+            .print-table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 12px; margin-top: 15px; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: left; }
+            .print-table th { background-color: #ddd !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-header { text-align: center; font-size: 20px; font-weight: bold; color: black; }
+            .print-meta { text-align: center; font-size: 12px; color: #333; margin-bottom: 10px; }
+        }
+    
     </style>
 </head>
 <body>
@@ -240,8 +260,12 @@
         </div>
     </div>
 
-<div style="margin-bottom: 20px; position: relative;">
-        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="width: 100%; height: 50px; padding: 10px 16px 10px 40px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
+<div id="search-print-row" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="flex: 1; height: 50px; padding: 10px 16px 10px 40px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
+        
+        <button onclick="generatePrintLayout()" style="height: 50px; padding: 0 20px; border-radius: 8px; background: var(--accent); color: #111; font-weight: bold; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;">
+            🖨️ Print List
+        </button>
     </div>
     
     <div class="stats-banner">
@@ -315,6 +339,8 @@
         </div>
     </div>
 
+    <div id="print-section" style="display: none;"></div>
+    
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
@@ -1039,6 +1065,89 @@
             document.removeEventListener('touchmove', resizeDrawer);
         }
 
+    function generatePrintLayout() {
+            if (verifiedCacheArray.length === 0) {
+                alert("Nothing to print! The list is currently empty.");
+                return;
+            }
+
+            // Check if user is hiding settled cases
+            const hideSettled = document.getElementById('toggle-hide-settled').checked;
+            
+            // Filter and sort the data for the printer
+            let printData = [...verifiedCacheArray].filter(item => {
+                if (hideSettled) {
+                    const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                    if (currentDisp) return false; 
+                }
+                return true;
+            }).sort((a, b) => {
+                let lastA = (a.LastName || '').trim(); let lastB = (b.LastName || '').trim();
+                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
+                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
+                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
+                if (lastCompare !== 0) return lastCompare;
+                
+                let firstA = (a.FirstName || '').trim(); let firstB = (b.FirstName || '').trim();
+                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
+                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
+                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
+                if (firstCompare !== 0) return firstCompare;
+
+                let dateA = a.ViolationDate || '9999-12-31'; let dateB = b.ViolationDate || '9999-12-31';
+                return dateA.localeCompare(dateB);
+            });
+
+            if (printData.length === 0) {
+                alert("All selected cases are hidden. Adjust your filters and try again.");
+                return;
+            }
+
+            // Build the HTML Table
+            let html = `
+                <div class="print-header">Local 710 Processing Hub - Active Board</div>
+                <div class="print-meta">Generated on: ${new Date().toLocaleString('en-US')} | Coverage: ${currentStewardName}</div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Member Name</th>
+                            <th style="width: 10%;">Emp ID</th>
+                            <th style="width: 12%;">Viol. Date</th>
+                            <th style="width: 25%;">Violation Type</th>
+                            <th style="width: 18%;">Steward</th>
+                            <th style="width: 15%;">Liability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            printData.forEach(item => {
+                const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown';
+                const empId = item.EmployeeID || 'N/A';
+                const vDate = item.ViolationDate ? formatToUsDate(item.ViolationDate.split('T')[0]) : 'N/A';
+                const violType = item.ViolationSubType ? `${item.ViolationType} - ${item.ViolationSubType}` : (item.ViolationType || 'Not Set');
+                const steward = item.StewardOfRecord || 'Unassigned';
+                const amt = parseFloat(item.ViolationAmount || 0).toFixed(2);
+                
+                html += `
+                    <tr>
+                        <td><strong>${empName}</strong></td>
+                        <td>${empId}</td>
+                        <td>${vDate}</td>
+                        <td>${violType}</td>
+                        <td>${steward}</td>
+                        <td>$${amt}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            
+            // Drop it into the invisible container and trigger the print screen
+            document.getElementById('print-section').innerHTML = html;
+            window.print();
+        }
+        
         loadHubData();
     </script>
 </body>
