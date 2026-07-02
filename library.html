@@ -163,7 +163,7 @@
                 document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
             });
 
-        function openDocument(url, title) {
+                function openDocument(url, title) {
             document.getElementById('library-view').style.display = 'none';
             document.getElementById('viewer-view').style.display = 'flex';
             
@@ -175,13 +175,22 @@
             // Now we send the FULL address to Mozilla so it knows where to look
             const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
             document.getElementById('pdf-viewer').src = mozillaUrl;
+
+            // NEW: Trick the browser into thinking we opened a new page
+            history.pushState({ viewerOpen: true }, "", "#doc-viewer");
         }
 
-        function closeDocument() {
+                function closeDocument() {
             document.getElementById('viewer-view').style.display = 'none';
             document.getElementById('library-view').style.display = 'block';
             document.getElementById('pdf-viewer').src = "";
+
+            // NEW: Clean up the history if they use the UI '← Back' button
+            if (window.location.hash === '#doc-viewer') {
+                history.back();
+            }
         }
+
 
         // 4. Hamburger Menu Controls
         function openNavMenu() {
@@ -193,6 +202,21 @@
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
+
+                // NEW: Intercept the Android/Hardware Back Button
+        window.addEventListener('popstate', function(event) {
+            const viewerView = document.getElementById('viewer-view');
+            const libraryView = document.getElementById('library-view');
+            
+            // If they hit back while the viewer is open, switch back to the library!
+            if (viewerView.style.display === 'flex') {
+                viewerView.style.display = 'none';
+                libraryView.style.display = 'block';
+                document.getElementById('pdf-viewer').src = "";
+            }
+        });
+
+        
     </script>
 </body>
 </html>
