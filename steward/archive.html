@@ -117,11 +117,11 @@
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
-        /* RIGHT SIDE AUDIT DRAWER */
+                /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 450px;
+            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; /* Stretches across the entire screen */
             background: #161616; border-left: 2px solid var(--accent);
-            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
         .side-drawer.open { transform: translateX(0); }
@@ -130,10 +130,13 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
-        .drawer-handle {
-            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+        .pdf-frame { 
+            width: 100%; 
+            height: calc(100vh - 220px); /* Dynamically fills the screen height */
+            min-height: 800px; /* Forces enough vertical space for an 8.5x11 document */
+            border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
         }
+
     </style>
 </head>
 <body>
@@ -539,10 +542,21 @@
                 ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
 
-            document.getElementById('side-drawer').classList.add('open');
+                        document.getElementById('side-drawer').classList.add('open');
+
+            // NEW: Trick the browser into thinking we opened a new page
+            history.pushState({ drawerOpen: true }, "", "#file-viewer");
         }
 
-        function closeDrawer() { document.getElementById('side-drawer').classList.remove('open'); }
+
+                function closeDrawer() { 
+            document.getElementById('side-drawer').classList.remove('open'); 
+            
+            // NEW: Clean up the history if they use the UI 'X' button
+            if (window.location.hash === '#file-viewer') {
+                history.back();
+            }
+        }
 
         const drawer = document.getElementById('side-drawer');
         const handle = document.getElementById('drawerHandle');
@@ -565,6 +579,16 @@
             document.removeEventListener('touchmove', resizeDrawer);
         }
 
+                // NEW: Intercept the Android/Hardware Back Button
+        window.addEventListener('popstate', function(event) {
+            const drawer = document.getElementById('side-drawer');
+            // If they hit back while the drawer is open, just close the drawer!
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
+            }
+        });
+
+        
         loadArchiveData();
     </script>
 </body>
