@@ -71,6 +71,25 @@
             background: #262626; color: white; border-radius: 4px; cursor: pointer;
         }
 
+        /* NEW: Steward Card Styles */
+        .steward-card {
+            background-color: #262626; border: 1px solid #444;
+            border-radius: 8px; padding: 15px; margin-bottom: 15px;
+            border-left: 5px solid var(--accent);
+        }
+        .steward-card:last-child { margin-bottom: 0; }
+        .steward-name { font-size: 18px; font-weight: bold; color: white; margin-bottom: 4px; }
+        .steward-title { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }
+        .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .btn-action {
+            flex: 1; text-align: center; text-decoration: none;
+            padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold;
+            text-transform: uppercase; cursor: pointer; border: none;
+        }
+        .btn-call { background-color: var(--accent); color: #000; }
+        .btn-text { background-color: #333; color: white; border: 1px solid #555; }
+        .btn-save { background-color: #2ecc71; color: #000; width: 100%; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none;}
+
         /* Mozilla Viewer Styles (Viewer View) */
         #viewer-view { display: none; flex-direction: column; height: 100%; flex: 1; }
         .viewer-controls {
@@ -86,7 +105,6 @@
 </head>
 <body>
 
-    <!-- Nav Drawer -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="padding: 20px 20px 10px;">
@@ -101,7 +119,6 @@
         <a href="#" class="nav-item active">Document Library (Active)</a>
     </div>
 
-    <!-- Top Bar -->
     <div class="top-navbar">
         <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
         <div>
@@ -110,14 +127,12 @@
         </div>
     </div>
 
-    <!-- VIEW 1: The Accordion Folders -->
     <div id="library-view">
-        <div id="accordion-container">
-            <!-- JavaScript loads JSON here -->
-        </div>
+        <div id="stewards-container"></div>
+        
+        <div id="accordion-container"></div>
     </div>
 
-    <!-- VIEW 2: The Mozilla PDF Viewer -->
     <div id="viewer-view">
         <div class="viewer-controls">
             <button class="back-btn" onclick="closeDocument()">← Back</button>
@@ -129,17 +144,49 @@
     <script>
         // 1. Navigation Routing (Maintains the secure 'id' GUID)
         const urlParams = new URLSearchParams(window.location.search);
-        
-        // Grab the ID using the exact label the Portal uses
         const memberGUID = urlParams.get('id'); 
 
         const portalLink = document.getElementById('lnk-member-portal');
         if (portalLink) {
-            // Pass it back as 'id' so the Portal recognizes it
             portalLink.href = memberGUID ? `index.html?id=${memberGUID}` : `index.html`;
         }
 
-        // 2. Fetch the JSON and build the folders
+        // 2. Fetch the Stewards JSON and build the top folder
+        fetch('stewards.json')
+            .then(response => response.json())
+            .then(stewards => {
+                const container = document.getElementById('stewards-container');
+                const section = document.createElement('details');
+                section.className = 'accordion-section';
+                
+                let html = `<summary>Local 710 Stewards <span>▼</span></summary><div style="padding: 15px 20px;">`;
+                
+                stewards.forEach(steward => {
+                    const cleanPhone = steward.phone.replace(/\D/g, ''); 
+                    html += `
+                        <div class="steward-card">
+                            <div class="steward-name">${steward.name}</div>
+                            <div class="steward-title">${steward.title}</div>
+                            <div class="action-row">
+                                <a href="tel:${cleanPhone}" class="btn-action btn-call">📞 Call</a>
+                                <a href="sms:${cleanPhone}" class="btn-action btn-text">💬 Text</a>
+                            </div>
+                            <button class="btn-save" onclick="downloadVCard('${steward.name}', '${cleanPhone}')">
+                                👤 Save to Contacts
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+                section.innerHTML = html;
+                container.appendChild(section);
+            })
+            .catch(error => {
+                console.log("Could not load stewards:", error);
+            });
+
+        // 3. Fetch the Templates JSON and build the rest of the folders
         fetch('templates.json')
             .then(response => response.json())
             .then(data => {
@@ -163,36 +210,45 @@
                 document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
             });
 
-                function openDocument(url, title) {
+        // The vCard Generator
+        function downloadVCard(name, phone) {
+            const vcardData = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nORG:Local 710 Steward\nTEL;TYPE=WORK,VOICE:${phone}\nEND:VCARD`;
+            const blob = new Blob([vcardData], { type: "text/vcard" });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${name.replace(/\s+/g, '_')}_Local710.vcf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Viewer Logic
+        function openDocument(url, title) {
             document.getElementById('library-view').style.display = 'none';
             document.getElementById('viewer-view').style.display = 'flex';
-            
             document.getElementById('doc-title').innerText = title;
             
-            // This line magically converts your short link into the full GitHub web address
             const absoluteUrl = new URL(url, window.location.href).href;
-            
-            // Now we send the FULL address to Mozilla so it knows where to look
             const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
             document.getElementById('pdf-viewer').src = mozillaUrl;
 
-            // NEW: Trick the browser into thinking we opened a new page
             history.pushState({ viewerOpen: true }, "", "#doc-viewer");
         }
 
-                function closeDocument() {
+        function closeDocument() {
             document.getElementById('viewer-view').style.display = 'none';
             document.getElementById('library-view').style.display = 'block';
             document.getElementById('pdf-viewer').src = "";
 
-            // NEW: Clean up the history if they use the UI '← Back' button
             if (window.location.hash === '#doc-viewer') {
                 history.back();
             }
         }
 
-
-        // 4. Hamburger Menu Controls
+        // Hamburger Menu Controls
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
@@ -203,20 +259,17 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-                // NEW: Intercept the Android/Hardware Back Button
+        // Hardware Back Button Intercept
         window.addEventListener('popstate', function(event) {
             const viewerView = document.getElementById('viewer-view');
             const libraryView = document.getElementById('library-view');
             
-            // If they hit back while the viewer is open, switch back to the library!
             if (viewerView.style.display === 'flex') {
                 viewerView.style.display = 'none';
                 libraryView.style.display = 'block';
                 document.getElementById('pdf-viewer').src = "";
             }
         });
-
-        
     </script>
 </body>
 </html>
