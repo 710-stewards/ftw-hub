@@ -71,12 +71,7 @@
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        </div> <div style="margin-bottom: 20px; position: relative;">
-        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="width: 100%; height: 50px; padding: 10px 16px 10px 40px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
-    </div>
-
-    <div class="stats-banner">
-
+       
         /* OVERHEAD KPI STATS BAR */
         .stats-banner {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -241,6 +236,10 @@
         </div>
     </div>
 
+<div style="margin-bottom: 20px; position: relative;">
+        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="width: 100%; height: 50px; padding: 10px 16px 10px 40px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
+    </div>
+    
     <div class="stats-banner">
         <div class="stat-box">
             <div id="metric-open-cases" class="stat-val">0</div>
