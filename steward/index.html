@@ -901,11 +901,20 @@
             <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
             ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
         `;
-        document.getElementById('side-drawer').classList.add('open');
+                document.getElementById('side-drawer').classList.add('open');
+        
+        // NEW: Trick the browser into thinking we opened a new page
+        history.pushState({ drawerOpen: true }, "", "#file-viewer");
     }
 
-    function closeDrawer() {
+
+        function closeDrawer() {
         document.getElementById('side-drawer').classList.remove('open');
+        
+        // NEW: Clean up the history if they use the UI 'X' button
+        if (window.location.hash === '#file-viewer') {
+            history.back();
+        }
     }
 
     const drawer = document.getElementById('side-drawer');
@@ -963,6 +972,16 @@
         }
     });
 
+        // NEW: Intercept the Android/Hardware Back Button
+    window.addEventListener('popstate', function(event) {
+        const drawer = document.getElementById('side-drawer');
+        // If they hit back while the drawer is open, just close the drawer!
+        if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+        }
+    });
+
+        
     // --- OVERRIDE RENDERCARDS TO TRIGGER ON LOAD ---
     // We are hijacking the end of your renderCards function to force a scan
     const originalRenderCards = renderCards;
