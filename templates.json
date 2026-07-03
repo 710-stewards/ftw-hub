@@ -7,9 +7,9 @@
     { "name": "Over Dispatch", "url": "pdf/overdispatch.pdf" }
   ],
   "Contracts": [
-    { "name": "Contract (2023-2028)", "url": "pdf/contract-2023.pdf" },
-    { "name": "Contract (2018-2023)", "url": "pdf/contract-2018.pdf" },
-    { "name": "Contract (2013-2018)", "url": "pdf/contract-2013.pdf" }
+    { "name": "Current CBA: 2023-2028", "url": "pdf/contract-2023.pdf" },
+    { "name": "2018-2023 (Archive)", "url": "pdf/contract-2018.pdf" },
+    { "name": "2013-2018 (Archive)", "url": "pdf/contract-2013.pdf" }
   ],
   "UPS Methods": [
     { "name": "340 Methods", "url": "pdf/340methods.pdf" }
