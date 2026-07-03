@@ -322,8 +322,7 @@ navigator.serviceWorker.register('./sw.js');
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <script>
-    <script>
+        <script>
     const urlParams = new URLSearchParams(window.location.search);
     let stewardGUID = urlParams.get('steward');
 
@@ -336,7 +335,9 @@ navigator.serviceWorker.register('./sw.js');
         stewardGUID = localStorage.getItem('saved_steward_token');
     }
 
-    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api...
+    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+
+
     function buildDynamicNav() {
             // 1. Figure out exactly what page the user is currently looking at
             // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
