@@ -1,8 +1,8 @@
 {
   "name": "Local 710 Steward Portal",
   "short_name": "Steward Portal",
-  "start_url": "/steward/index.html",
-  "scope": "/steward/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
