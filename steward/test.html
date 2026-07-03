@@ -261,12 +261,8 @@
             </label>
         </div>
         
-        <div class="nav-section-title">Portals & Links</div>
-        <a href="#" class="nav-item active">Intake Hub (Active)</a>
-        <a id="lnk-processing-hub" href="#" class="nav-item">→ Processing Hub</a>
-        <a id="lnk-archive" href="#" class="nav-item">→ Archive Vault</a>
-        <a id="lnk-Seniority-Master" href="#" class="nav-item">→ Seniority List</a>
-        <a id="lnk-portal-links" href="#" class="nav-item">→ Member Portal Links</a>      
+        <div id="dynamic-nav-container">
+            </div>      
         
         <div class="nav-section-title">Coverage Mode</div>
         <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
@@ -308,11 +304,44 @@
     const stewardGUID = urlParams.get('steward');
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-    // Wire up links
-    document.getElementById('lnk-processing-hub').href = `hub.html?steward=${stewardGUID}`;
-    document.getElementById('lnk-archive').href = `archive.html?steward=${stewardGUID}`;
-    document.getElementById('lnk-Seniority-Master').href = `seniority.html?steward=${stewardGUID}`;
-    document.getElementById('lnk-portal-links').href = `portal-links.html?steward=${stewardGUID}`;
+    function buildDynamicNav() {
+            // 1. Figure out exactly what page the user is currently looking at
+            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
+            let currentPage = window.location.pathname.split('/').pop();
+            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+
+            // 2. Fetch the central menu file
+            fetch('steward-nav.json')
+                .then(res => res.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('dynamic-nav-container');
+                    let navHtml = '';
+
+                    // 3. Loop through the JSON and build the menu
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
+                        } 
+                        else if (item.type === 'link') {
+                            // THE MAGIC: Check if the JSON link matches the page we are on
+                            if (item.filename === currentPage) {
+                                // It matches! Lock it down and make it gold.
+                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                            } else {
+                                // It doesn't match. Make it a normal link and append the secure token!
+                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
+                            }
+                        }
+                    });
+
+                    // Drop the finished HTML into the drawer
+                    navContainer.innerHTML = navHtml;
+                })
+                .catch(err => console.error("Menu failed to load:", err));
+        }
+
+        // Fire the function to build the menu
+        buildDynamicNav();
 
     // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
