@@ -1,9 +1,9 @@
 {
   "Grievance Templates": [
-    { "name": "9.5 - Pay Claim", "url": "https://drive.google.com/..." },
-    { "name": "9.5 - First Note", "url": "https://drive.google.com/..." },
-    { "name": "Discharge", "url": "https://drive.google.com/..." },
-    { "name": "Suspension", "url": "https://drive.google.com/..." }
+    { "name": "9.5 - Pay Claim", "url": "pdf/95.pdf" },
+    { "name": "9.5 - First Note", "url": "pdf/first-note.pdf" },
+    { "name": "Discharge", "url": "pdf/discharge.pdf" },
+    { "name": "Suspension", "url": "pdf/suspension.pdf" }
   ],
   "Contracts": [
     { "name": "Contract (2023-2028)", "url": "pdf/contract-2023.pdf" },
