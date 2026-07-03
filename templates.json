@@ -3,7 +3,7 @@
     { "name": "9.5 - Pay Claim", "url": "pdf/95.pdf" },
     { "name": "9.5 - First Note", "url": "pdf/first-note.pdf" },
     { "name": "Discharge", "url": "pdf/discharge.pdf" },
-    { "name": "Suspension", "url": "pdf/suspension.pdf" }
+    { "name": "Suspension", "url": "pdf/suspension.pdf" },
     { "name": "Overdispatch", "url": "overdispatch" }
   ],
   "Contracts": [
