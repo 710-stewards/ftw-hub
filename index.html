@@ -298,11 +298,21 @@
 
         function loadDriverData() {
             if (!memberGuid) {
-                // If no GUID, hide the main overlay and show an error
+                // If no GUID, show the iPhone one-time manual sync screen
                 document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('data-display').innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
-                        Security Halt: No secure routing token provided.
+                    <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
+                        <h3 style="color: #ff3333; margin-bottom: 5px; text-align: center;">Security Halt</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; text-align: center;">No secure routing token found in memory.</p>
+                        
+                        <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                            <h4 style="color: var(--accent); margin-bottom: 10px; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">iPhone / iOS Setup Required</h4>
+                            <p style="color: #ccc; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">Apple devices block apps from reading your Safari history. To securely link this app to your profile, please copy your personal link from your text/email and paste it below.</p>
+                            
+                            <input type="text" id="manual-token-input" placeholder="Paste your secure link here..." style="width: 100%; height: 45px; padding: 0 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #555; background: #262626; color: white; outline: none; font-size: 14px;">
+                            
+                            <button onclick="saveManualToken()" style="width: 100%; height: 42px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; text-transform: uppercase; background-color: var(--accent-green); color: #111; cursor: pointer; box-shadow: 0 4px 0 #000; transition: transform 0.1s;">Sync My Device</button>
+                        </div>
                     </div>`;
                 return;
             }
@@ -627,6 +637,24 @@
             }
         });
 
+        // --- iOS MANUAL SYNC FUNCTION ---
+        window.saveManualToken = function() {
+            const inputVal = document.getElementById('manual-token-input').value.trim();
+            if (!inputVal) return;
+            
+            let extractedToken = inputVal;
+            
+            // If they copy-pasted the entire URL instead of just the ID, extract just the ID automatically
+            if (inputVal.includes('id=')) {
+                extractedToken = inputVal.split('id=')[1].split('&')[0];
+            }
+            
+            // Save it directly into the iPhone's isolated app memory
+            localStorage.setItem('saved_member_token', extractedToken);
+            
+            // Instantly reload the app so it boots up normally
+            window.location.reload();
+        };
         
         // Initialize Fetch
         loadDriverData();
