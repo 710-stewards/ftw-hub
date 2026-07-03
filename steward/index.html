@@ -323,10 +323,20 @@ navigator.serviceWorker.register('./sw.js');
     </div>
 
     <script>
+    <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const stewardGUID = urlParams.get('steward');
-    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+    let stewardGUID = urlParams.get('steward');
 
+    // The Token Memory Logic
+    if (stewardGUID) {
+        // If the URL has the ID, save it to the phone permanently
+        localStorage.setItem('saved_steward_token', stewardGUID);
+    } else {
+        // If the URL is blank (opened via Home Screen app), grab the saved ID
+        stewardGUID = localStorage.getItem('saved_steward_token');
+    }
+
+    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api...
     function buildDynamicNav() {
             // 1. Figure out exactly what page the user is currently looking at
             // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
