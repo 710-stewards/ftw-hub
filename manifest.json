@@ -1,6 +1,6 @@
 {
-  "name": "Grievance Portal",
-  "short_name": "App",
+  "name": "Local 710 Member Portal",
+  "short_name": "My Grievance",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
