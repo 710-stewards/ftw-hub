@@ -254,7 +254,16 @@
         window.grievanceCache = [];
         
         const urlParams = new URLSearchParams(window.location.search);
-        const memberGuid = urlParams.get('id');
+        let memberGuid = urlParams.get('id');
+        
+        // The Token Memory Logic
+        if (memberGuid) {
+            // If the URL has the ID, save it to the phone permanently
+            localStorage.setItem('saved_member_token', memberGuid);
+        } else {
+            // If the URL is blank (opened via Home Screen app), grab the saved ID
+            memberGuid = localStorage.getItem('saved_member_token');
+        }
         
         // Link up the dynamic contract page using the secure GUID
         document.getElementById('lnk-library').href = `library.html?id=${memberGuid}`;
