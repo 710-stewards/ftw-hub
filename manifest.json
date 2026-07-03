@@ -1,5 +1,5 @@
 {
-  "name": "My Custom App",
+  "name": "Grievance Portal",
   "short_name": "App",
   "start_url": "./index.html",
   "display": "standalone",
