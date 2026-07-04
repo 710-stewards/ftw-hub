@@ -187,7 +187,8 @@
             });
 
         // 3. Fetch the Templates JSON and build the rest of the folders
-        fetch('templates.json')
+        fetch('templates.json', { cache: 'no-store' })
+
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById('accordion-container');
