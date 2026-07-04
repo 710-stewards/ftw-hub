@@ -146,12 +146,12 @@
                         <th>Phone</th>
                         <th>Center</th>
                         <th>Job Class</th>
+                        <th>Work Group</th>
                         <th>FT/PT</th>
                         <th>Hire Date</th>
                         <th>PT Sen Date</th>
                         <th>FT Sen Date</th>
                         <th>Active</th>
-                        <th>Hub Bucket</th>
                         <th>Modified By</th>
                     </tr>
                 </thead>
@@ -193,6 +193,10 @@
                     <input type="text" id="edit-job" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
                 <div class="input-wrapper">
+                    <span class="input-label">Work Group</span>
+                    <input type="text" id="edit-workgroup" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
                     <span class="input-label">FT/PT</span>
                     <select id="edit-ftpt" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                         <option value="F">Full-Time (F)</option>
@@ -200,15 +204,23 @@
                     </select>
                 </div>
                 <div class="input-wrapper">
+                    <span class="input-label">Hire Date</span>
+                    <input type="date" id="edit-hire" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">PT Sen Date</span>
+                    <input type="date" id="edit-ptdate" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">FT Sen Date</span>
+                    <input type="date" id="edit-ftdate" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
                     <span class="input-label">Active</span>
                     <select id="edit-active" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                         <option value="YES">YES</option>
                         <option value="NO">NO</option>
                     </select>
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Hub Bucket</span>
-                    <input type="text" id="edit-hubbucket" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
             </div>
 
@@ -368,7 +380,7 @@
             const tbody = document.getElementById('table-body');
             
             if (dataArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
                 return;
             }
 
@@ -379,11 +391,13 @@
                 const lName = p.LastName || '';
                 const center = p.Center || '---';
                 const jobClass = p.JobClass || '---';
-                const hubBucket = p.HubBucket || p['Hub Bucket'] || '---';
                 
-                // CATCHING SHAREPOINT'S INTERNAL SLASH RENAMING
+                // Safely extract Work Group (Hub Bucket) from SharePoint object
+                let workGroupRaw = p.HubBucket || p['Hub Bucket'] || '---';
+                if (typeof workGroupRaw === 'object' && workGroupRaw.Value) workGroupRaw = workGroupRaw.Value;
+                const workGroup = workGroupRaw;
+                
                 let ftptRaw = p['FT/PT'] || p['FT_x002f_PT'] || p.OData_FT_x002f_PT || p.FTPT || '---';
-                // If it's a choice column dropdown, pull the value directly
                 if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
                 const ftpt = ftptRaw;
                 
@@ -397,7 +411,6 @@
                 
                 const phone = formatPhone(p.PhoneNumber);
                 
-                // EXACT match to your custom ModifiedBy column ONLY. No system fallbacks.
                 let modifiedBy = '---';
                 if (p.ModifiedBy && typeof p.ModifiedBy === 'object') {
                     modifiedBy = p.ModifiedBy.DisplayName || p.ModifiedBy.Value || '---';
@@ -418,7 +431,7 @@
                         <td>${ptDate}</td>
                         <td>${ftDate}</td>
                         <td>${activePill}</td>
-                        <td>${hubBucket}</td>
+                        <td>${workGroup}</td>
                         <td style="color: var(--text-muted);">${modifiedBy}</td>
                         <td style="text-align: center;">
                             <button onclick="openMemberModal('${empId}')" style="background: transparent; border: none; font-size: 18px; cursor: pointer; transition: transform 0.1s;">
@@ -432,11 +445,10 @@
             tbody.innerHTML = rowsHtml;
         }
 
-    function openMemberModal(recordId = null) {
+        function openMemberModal(recordId = null) {
             const modal = document.getElementById('member-modal-overlay');
             const title = document.getElementById('modal-form-title');
             
-            // Edit Mode
             if (recordId) {
                 title.innerText = "Edit Member Profile";
                 document.getElementById('edit-sys-id').value = recordId;
@@ -446,12 +458,15 @@
                     document.getElementById('edit-fname').value = record.FirstName || '';
                     document.getElementById('edit-lname').value = record.LastName || '';
                     document.getElementById('edit-empid').value = record.Title || '';
-                    document.getElementById('edit-hubbucket').value = record.HubBucket || record['Hub Bucket'] || '';
                     document.getElementById('edit-phone').value = record.PhoneNumber || '';
                     document.getElementById('edit-center').value = record.Center || '';
                     document.getElementById('edit-job').value = record.JobClass || '';
                     
-                    // Safely extract YYYY-MM-DD for the date inputs
+                    // Safely extract Work Group object for the modal
+                    let wgRaw = record.HubBucket || record['Hub Bucket'] || '';
+                    if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
+                    document.getElementById('edit-workgroup').value = wgRaw;
+                    
                     document.getElementById('edit-hire').value = record.HireDate ? record.HireDate.split('T')[0] : '';
                     document.getElementById('edit-ptdate').value = record.PTSeniorityDate ? record.PTSeniorityDate.split('T')[0] : '';
                     document.getElementById('edit-ftdate').value = record.FTSeniorityDate ? record.FTSeniorityDate.split('T')[0] : '';
@@ -464,13 +479,12 @@
                     document.getElementById('edit-active').value = (isActiveStr === 'no' || isActiveStr === 'false' || isActiveStr === '0') ? 'NO' : 'YES';
                 }
             } else {
-                // Add Mode
                 title.innerText = "Add New Member";
                 document.getElementById('edit-sys-id').value = "NEW";
                 document.getElementById('edit-fname').value = '';
                 document.getElementById('edit-lname').value = '';
                 document.getElementById('edit-empid').value = '';
-                document.getElementById('edit-hubbucket').value = '';
+                document.getElementById('edit-workgroup').value = '';
                 document.getElementById('edit-phone').value = '';
                 document.getElementById('edit-center').value = '';
                 document.getElementById('edit-job').value = '';
@@ -493,7 +507,6 @@
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
 
-            // Custom audit trail stamp
             const updateStamp = currentStewardName + " - " + new Date().toLocaleString();
 
             const payload = {
@@ -503,7 +516,7 @@
                 FirstName: document.getElementById('edit-fname').value,
                 LastName: document.getElementById('edit-lname').value,
                 EmployeeID: document.getElementById('edit-empid').value,
-                HubBucket: document.getElementById('edit-hubbucket').value,
+                HubBucket: document.getElementById('edit-workgroup').value, // Matches your cloud flow!
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
@@ -530,7 +543,6 @@
                         saveBtn.style.background = 'var(--accent)';
                         saveBtn.style.pointerEvents = 'auto';
                         
-                        // Force a fresh pull to show the new data
                         document.getElementById('table-container').style.display = 'none';
                         document.getElementById('loading').style.display = 'block';
                         loadSeniorityData(); 
