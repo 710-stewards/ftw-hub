@@ -224,7 +224,8 @@
                 </div>
                 <div class="input-wrapper">
                     <span class="input-label">Work Group</span>
-                    <input type="text" id="edit-workgroup" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                    <select id="edit-workgroup" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                        </select>
                 </div>
                 <div class="input-wrapper">
                     <span class="input-label">FT/PT</span>
@@ -364,6 +365,24 @@
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('table-container').style.display = 'block';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Verified Roster Access`;
+
+                // --- NEW: DYNAMIC WORK GROUP DROPDOWN BUILDER ---
+                // Start with your core buckets so they always exist
+                const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
+                masterSeniority.forEach(p => {
+                    let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
+                    if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
+                    if (wgRaw && wgRaw.trim() !== '' && wgRaw !== '---') {
+                        wgSet.add(wgRaw.toUpperCase()); 
+                    }
+                });
+                
+                let wgHtml = '<option value="" hidden>Select Work Group...</option>';
+                Array.from(wgSet).sort().forEach(group => {
+                    wgHtml += `<option value="${group}">${group}</option>`;
+                });
+                document.getElementById('edit-workgroup').innerHTML = wgHtml;
+                // ------------------------------------------------
 
                 applyFilters();
             }).catch(err => {
@@ -521,7 +540,7 @@
                     // Safely extract Work Group object for the modal
                     let wgRaw = record.HubBucket || record['Hub Bucket'] || '';
                     if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
-                    document.getElementById('edit-workgroup').value = wgRaw;
+                    document.getElementById('edit-workgroup').value = wgRaw ? wgRaw.toUpperCase() : 'UNASSIGNED';
                     
                     document.getElementById('edit-hire').value = record.HireDate ? record.HireDate.split('T')[0] : '';
                     document.getElementById('edit-ptdate').value = record.PTSeniorityDate ? record.PTSeniorityDate.split('T')[0] : '';
@@ -540,7 +559,7 @@
                 document.getElementById('edit-fname').value = '';
                 document.getElementById('edit-lname').value = '';
                 document.getElementById('edit-empid').value = '';
-                document.getElementById('edit-workgroup').value = '';
+                document.getElementById('edit-workgroup').value = 'Select Work Group...';
                 document.getElementById('edit-phone').value = '';
                 document.getElementById('edit-center').value = '';
                 document.getElementById('edit-job').value = '';
