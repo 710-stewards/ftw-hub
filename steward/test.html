@@ -151,6 +151,7 @@
                         <th>PT Sen Date</th>
                         <th>FT Sen Date</th>
                         <th>Active</th>
+                        <th>Hub Bucket</th>
                         <th>Modified By</th>
                     </tr>
                 </thead>
@@ -204,6 +205,10 @@
                         <option value="YES">YES</option>
                         <option value="NO">NO</option>
                     </select>
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Hub Bucket</span>
+                    <input type="text" id="edit-hubbucket" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
             </div>
 
@@ -374,6 +379,7 @@
                 const lName = p.LastName || '';
                 const center = p.Center || '---';
                 const jobClass = p.JobClass || '---';
+                const hubBucket = p.HubBucket || p['Hub Bucket'] || '---';
                 
                 // CATCHING SHAREPOINT'S INTERNAL SLASH RENAMING
                 let ftptRaw = p['FT/PT'] || p['FT_x002f_PT'] || p.OData_FT_x002f_PT || p.FTPT || '---';
@@ -412,6 +418,7 @@
                         <td>${ptDate}</td>
                         <td>${ftDate}</td>
                         <td>${activePill}</td>
+                        <td>${hubBucket}</td>
                         <td style="color: var(--text-muted);">${modifiedBy}</td>
                         <td style="text-align: center;">
                             <button onclick="openMemberModal('${empId}')" style="background: transparent; border: none; font-size: 18px; cursor: pointer; transition: transform 0.1s;">
@@ -425,7 +432,7 @@
             tbody.innerHTML = rowsHtml;
         }
 
-        function openMemberModal(recordId = null) {
+    function openMemberModal(recordId = null) {
             const modal = document.getElementById('member-modal-overlay');
             const title = document.getElementById('modal-form-title');
             
@@ -439,9 +446,15 @@
                     document.getElementById('edit-fname').value = record.FirstName || '';
                     document.getElementById('edit-lname').value = record.LastName || '';
                     document.getElementById('edit-empid').value = record.Title || '';
+                    document.getElementById('edit-hubbucket').value = record.HubBucket || record['Hub Bucket'] || '';
                     document.getElementById('edit-phone').value = record.PhoneNumber || '';
                     document.getElementById('edit-center').value = record.Center || '';
                     document.getElementById('edit-job').value = record.JobClass || '';
+                    
+                    // Safely extract YYYY-MM-DD for the date inputs
+                    document.getElementById('edit-hire').value = record.HireDate ? record.HireDate.split('T')[0] : '';
+                    document.getElementById('edit-ptdate').value = record.PTSeniorityDate ? record.PTSeniorityDate.split('T')[0] : '';
+                    document.getElementById('edit-ftdate').value = record.FTSeniorityDate ? record.FTSeniorityDate.split('T')[0] : '';
                     
                     let ftptRaw = record['FT/PT'] || record['FT_x002f_PT'] || record.OData_FT_x002f_PT || record.FTPT || 'F';
                     if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
@@ -457,9 +470,13 @@
                 document.getElementById('edit-fname').value = '';
                 document.getElementById('edit-lname').value = '';
                 document.getElementById('edit-empid').value = '';
+                document.getElementById('edit-hubbucket').value = '';
                 document.getElementById('edit-phone').value = '';
                 document.getElementById('edit-center').value = '';
                 document.getElementById('edit-job').value = '';
+                document.getElementById('edit-hire').value = '';
+                document.getElementById('edit-ptdate').value = '';
+                document.getElementById('edit-ftdate').value = '';
                 document.getElementById('edit-ftpt').value = 'F';
                 document.getElementById('edit-active').value = 'YES';
             }
@@ -486,9 +503,13 @@
                 FirstName: document.getElementById('edit-fname').value,
                 LastName: document.getElementById('edit-lname').value,
                 EmployeeID: document.getElementById('edit-empid').value,
+                HubBucket: document.getElementById('edit-hubbucket').value,
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
+                HireDate: document.getElementById('edit-hire').value,
+                PTSeniorityDate: document.getElementById('edit-ptdate').value,
+                FTSeniorityDate: document.getElementById('edit-ftdate').value,
                 FTPT: document.getElementById('edit-ftpt').value,
                 Active: document.getElementById('edit-active').value,
                 ModifiedByStamp: updateStamp
@@ -509,7 +530,7 @@
                         saveBtn.style.background = 'var(--accent)';
                         saveBtn.style.pointerEvents = 'auto';
                         
-                        // Force a fresh pull to show the new data!
+                        // Force a fresh pull to show the new data
                         document.getElementById('table-container').style.display = 'none';
                         document.getElementById('loading').style.display = 'block';
                         loadSeniorityData(); 
