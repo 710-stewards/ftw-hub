@@ -199,15 +199,15 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="input-wrapper">
-                    <span class="input-label">First Name</span>
+                    <span class="input-label">First Name <span style="color: var(--danger);">*</span></span>
                     <input type="text" id="edit-fname" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
                 <div class="input-wrapper">
-                    <span class="input-label">Last Name</span>
+                    <span class="input-label">Last Name <span style="color: var(--danger);">*</span></span>
                     <input type="text" id="edit-lname" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
                 <div class="input-wrapper">
-                    <span class="input-label">Emp ID</span>
+                    <span class="input-label">Emp ID <span style="color: var(--danger);">*</span></span>
                     <input type="text" id="edit-empid" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
                 </div>
                 <div class="input-wrapper">
@@ -578,6 +578,17 @@
         }
 
         function saveMemberData() {
+            // --- NEW: STRICT VALIDATION CHECK ---
+            const checkFname = document.getElementById('edit-fname').value.trim();
+            const checkLname = document.getElementById('edit-lname').value.trim();
+            const checkEmpId = document.getElementById('edit-empid').value.trim();
+
+            if (!checkFname || !checkLname || !checkEmpId) {
+                alert("Action Blocked: First Name, Last Name, and Emp ID are mandatory fields.");
+                return; // Completely halts the save process
+            }
+            // ------------------------------------
+
             const saveBtn = document.getElementById('btn-save-member');
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
@@ -588,10 +599,10 @@
                 stewardGuid: stewardGUID,
                 action: "save_member",
                 recordId: document.getElementById('edit-sys-id').value,
-                FirstName: document.getElementById('edit-fname').value,
-                LastName: document.getElementById('edit-lname').value,
-                EmployeeID: document.getElementById('edit-empid').value,
-                HubBucket: document.getElementById('edit-workgroup').value, // Matches your cloud flow!
+                FirstName: checkFname,
+                LastName: checkLname,
+                EmployeeID: checkEmpId,
+                HubBucket: document.getElementById('edit-workgroup').value,
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
