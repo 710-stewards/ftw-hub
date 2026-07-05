@@ -57,6 +57,24 @@
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
+        /* FILTER BUBBLES */
+        .filter-bubbles-container {
+            display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; 
+            padding-bottom: 5px; scrollbar-width: none;
+        }
+        .filter-bubbles-container::-webkit-scrollbar { display: none; }
+        
+        .filter-bubble {
+            background: #222; border: 1px solid #444; color: #bbb; padding: 8px 18px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
+            white-space: nowrap; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .filter-bubble:hover { background: #333; color: white; }
+        .filter-bubble.active { 
+            background: var(--accent); color: #111; 
+            border-color: var(--accent); box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); 
+        }
+        
         /* SEARCH BANNER */
         .search-banner {
             background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
@@ -67,6 +85,10 @@
             color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
         }
         .search-input:focus { border-color: var(--accent); }
+
+        /* MODAL INPUT STYLES */
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
 
         /* DATA TABLE ARCHITECTURE */
         .table-wrapper {
@@ -120,8 +142,23 @@
         </div>
     </div>
 
-    <div class="search-banner">
-        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, Emp ID, Phone, Center, or Job Class...">
+    <div style="margin-bottom: 20px;">
+        <div class="filter-bubbles-container">
+            <button class="filter-bubble active" onclick="setHubFilter('ALL', this)">ALL</button>
+            <button class="filter-bubble" onclick="setHubFilter('EAST', this)">EAST</button>
+            <button class="filter-bubble" onclick="setHubFilter('WEST', this)">WEST</button>
+            <button class="filter-bubble" onclick="setHubFilter('PART-TIME', this)">PART-TIME</button>
+            <button class="filter-bubble" onclick="setHubFilter('FT-COMBO', this)">FT-COMBO</button>
+            <button class="filter-bubble" onclick="setHubFilter('UNASSIGNED', this)">UNASSIGNED</button>
+        </div>
+
+        <div class="search-banner" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 0;">
+            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, Emp ID, Phone, Center, or Job Class..." style="flex: 1; min-width: 250px;">
+            
+            <button onclick="openMemberModal()" style="height: 45px; padding: 0 20px; border-radius: 6px; background: var(--accent-green); color: #111; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                ➕ Add New Member
+            </button>
+        </div>
     </div>
 
     <div id="data-display">
@@ -135,15 +172,17 @@
                         <th>Emp ID</th>
                         <th>First Name</th>
                         <th>Last Name</th>
+                        <th>Phone</th>
                         <th>Center</th>
                         <th>Job Class</th>
+                        <th>Work Group</th>
                         <th>FT/PT</th>
                         <th>Hire Date</th>
                         <th>PT Sen Date</th>
                         <th>FT Sen Date</th>
                         <th>Active</th>
-                        <th>Phone</th>
                         <th>Modified By</th>
+                        <th>EDIT</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -152,14 +191,95 @@
         </div>
     </div>
 
+    <div id="member-modal-overlay" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); z-index: 4000; align-items: center; justify-content: center;">
+        <div class="custom-modal" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); text-align: left;">
+            <h3 id="modal-form-title" style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 10px;">Add / Edit Member</h3>
+            
+            <input type="hidden" id="edit-sys-id" value="">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-wrapper">
+                    <span class="input-label">First Name <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="edit-fname" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Last Name <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="edit-lname" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Emp ID <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="edit-empid" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Phone</span>
+                    <input type="text" id="edit-phone" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Center</span>
+                    <input type="text" id="edit-center" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Job Class</span>
+                    <input type="text" id="edit-job" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Work Group</span>
+                    <select id="edit-workgroup" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                        </select>
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">FT/PT</span>
+                    <select id="edit-ftpt" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                        <option value="F">Full-Time (F)</option>
+                        <option value="P">Part-Time (P)</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Hire Date</span>
+                    <input type="date" id="edit-hire" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">PT Sen Date</span>
+                    <input type="date" id="edit-ptdate" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">FT Sen Date</span>
+                    <input type="date" id="edit-ftdate" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Active</span>
+                    <select id="edit-active" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
+                        <option value="YES">YES</option>
+                        <option value="NO">NO</option>
+                    </select>
+                </div>
+            </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button id="btn-delete-member" onclick="deleteMember()" style="width: 55px; height: 42px; background: #333; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; font-weight: bold; cursor: pointer; display: none;" title="Delete Member">🗑️</button>
+                <button onclick="closeMemberModal()" style="flex: 1; height: 42px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                <button id="btn-save-member" onclick="saveMemberData()" style="flex: 1; height: 42px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Profile</button>
+            </div>
+
+        </div>
+    </div>
+
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
+        
+        // The ORIGINAL flow for loading data (Reader)
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
+        
+        // The NEW flow for saving data (Writer)
+        // ** PASTE YOUR FULL URL HERE WITH THE &sig= AT THE END! **
+        const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
+
         
         let masterSeniority = [];
         let masterStewardRoster = [];
         let currentStewardName = '';
+        let currentHubFilter = 'ALL';
 
         function buildDynamicNav() {
             // 1. Figure out exactly what page the user is currently looking at
@@ -255,6 +375,24 @@
                 document.getElementById('table-container').style.display = 'block';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Verified Roster Access`;
 
+                // --- NEW: DYNAMIC WORK GROUP DROPDOWN BUILDER ---
+                // Start with your core buckets so they always exist
+                const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
+                masterSeniority.forEach(p => {
+                    let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
+                    if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
+                    if (wgRaw && wgRaw.trim() !== '' && wgRaw !== '---') {
+                        wgSet.add(wgRaw.toUpperCase()); 
+                    }
+                });
+                
+                let wgHtml = '<option value="" hidden>Select Work Group...</option>';
+                Array.from(wgSet).sort().forEach(group => {
+                    wgHtml += `<option value="${group}">${group}</option>`;
+                });
+                document.getElementById('edit-workgroup').innerHTML = wgHtml;
+                // ------------------------------------------------
+
                 applyFilters();
             }).catch(err => {
                 document.getElementById('loading').innerText = "Interface parsing failure on handshake.";
@@ -262,10 +400,34 @@
             });
         }
 
+        function setHubFilter(bucketName, btnElem) {
+            currentHubFilter = bucketName;
+            
+            // Strip the active class from all bubbles
+            document.querySelectorAll('.filter-bubble').forEach(btn => btn.classList.remove('active'));
+            
+            // Add the gold active class to the one you just tapped
+            btnElem.classList.add('active');
+            
+            // Immediately run the filters to update the table
+            applyFilters();
+        }
+        
         function applyFilters() {
             const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
 
             let filteredArray = masterSeniority.filter(item => {
+                
+                // --- 1. WORK GROUP (BUBBLE) FILTER ---
+                let workGroupRaw = item.HubBucket || item['Hub Bucket'] || 'UNASSIGNED';
+                if (typeof workGroupRaw === 'object' && workGroupRaw.Value) workGroupRaw = workGroupRaw.Value;
+                const workGroup = (workGroupRaw === '---' || !workGroupRaw) ? 'UNASSIGNED' : workGroupRaw.toUpperCase();
+
+                if (currentHubFilter !== 'ALL') {
+                    if (workGroup !== currentHubFilter) return false;
+                }
+
+                // --- 2. SEARCH BAR FILTER ---
                 if (searchText !== '') {
                     const searchTarget = `
                         ${item.Title || ''} 
@@ -278,6 +440,7 @@
                     
                     if (!searchTarget.includes(searchText)) return false;
                 }
+                
                 return true;
             });
 
@@ -301,7 +464,7 @@
             const tbody = document.getElementById('table-body');
             
             if (dataArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="14" style="text-align: center; padding: 30px; color: var(--text-muted); font-weight: bold;">No members match your search criteria.</td></tr>`;
                 return;
             }
 
@@ -313,9 +476,12 @@
                 const center = p.Center || '---';
                 const jobClass = p.JobClass || '---';
                 
-                // CATCHING SHAREPOINT'S INTERNAL SLASH RENAMING
+                // Safely extract Work Group (Hub Bucket) from SharePoint object
+                let workGroupRaw = p.HubBucket || p['Hub Bucket'] || '---';
+                if (typeof workGroupRaw === 'object' && workGroupRaw.Value) workGroupRaw = workGroupRaw.Value;
+                const workGroup = workGroupRaw;
+                
                 let ftptRaw = p['FT/PT'] || p['FT_x002f_PT'] || p.OData_FT_x002f_PT || p.FTPT || '---';
-                // If it's a choice column dropdown, pull the value directly
                 if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
                 const ftpt = ftptRaw;
                 
@@ -329,7 +495,6 @@
                 
                 const phone = formatPhone(p.PhoneNumber);
                 
-                // EXACT match to your custom ModifiedBy column ONLY. No system fallbacks.
                 let modifiedBy = '---';
                 if (p.ModifiedBy && typeof p.ModifiedBy === 'object') {
                     modifiedBy = p.ModifiedBy.DisplayName || p.ModifiedBy.Value || '---';
@@ -342,21 +507,214 @@
                         <td class="monospace" style="color: var(--accent); font-weight: bold;">${empId}</td>
                         <td style="font-weight: bold; color: white;">${fName}</td>
                         <td style="font-weight: bold; color: white;">${lName}</td>
+                        <td>${phone}</td>
                         <td>${center}</td>
                         <td>${jobClass}</td>
+                        <td>${workGroup}</td>
                         <td>${ftpt}</td>
                         <td>${hireDate}</td>
                         <td>${ptDate}</td>
                         <td>${ftDate}</td>
                         <td>${activePill}</td>
-                        <td>${phone}</td>
                         <td style="color: var(--text-muted);">${modifiedBy}</td>
+                        <td style="text-align: center;">
+                            <button onclick="openMemberModal('${empId}')" style="background: transparent; border: none; font-size: 18px; cursor: pointer; transition: transform 0.1s;">
+                                ✏️
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
 
             tbody.innerHTML = rowsHtml;
         }
+
+        function openMemberModal(recordId = null) {
+            const modal = document.getElementById('member-modal-overlay');
+            const title = document.getElementById('modal-form-title');
+            
+            if (recordId) {
+                title.innerText = "Edit Member Profile";
+                document.getElementById('edit-sys-id').value = recordId;
+                
+                const record = masterSeniority.find(r => r.Title === recordId);
+                if (record) {
+                    document.getElementById('edit-fname').value = record.FirstName || '';
+                    document.getElementById('edit-lname').value = record.LastName || '';
+                    document.getElementById('edit-empid').value = record.Title || '';
+                    document.getElementById('edit-phone').value = record.PhoneNumber || '';
+                    document.getElementById('edit-center').value = record.Center || '';
+                    document.getElementById('edit-job').value = record.JobClass || '';
+                    
+                    // Safely extract Work Group object for the modal
+                    let wgRaw = record.HubBucket || record['Hub Bucket'] || '';
+                    if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
+                    document.getElementById('edit-workgroup').value = wgRaw ? wgRaw.toUpperCase() : 'UNASSIGNED';
+                    
+                    document.getElementById('edit-hire').value = record.HireDate ? record.HireDate.split('T')[0] : '';
+                    document.getElementById('edit-ptdate').value = record.PTSeniorityDate ? record.PTSeniorityDate.split('T')[0] : '';
+                    document.getElementById('edit-ftdate').value = record.FTSeniorityDate ? record.FTSeniorityDate.split('T')[0] : '';
+                    
+                    let ftptRaw = record['FT/PT'] || record['FT_x002f_PT'] || record.OData_FT_x002f_PT || record.FTPT || 'F';
+                    if (typeof ftptRaw === 'object' && ftptRaw.Value) ftptRaw = ftptRaw.Value;
+                    document.getElementById('edit-ftpt').value = (ftptRaw === 'P' || ftptRaw === 'Part-Time') ? 'P' : 'F';
+                    
+                    const isActiveStr = (record.Active || '').toString().toLowerCase();
+                    document.getElementById('edit-active').value = (isActiveStr === 'no' || isActiveStr === 'false' || isActiveStr === '0') ? 'NO' : 'YES';
+                }
+            } else {
+                title.innerText = "Add New Member";
+                document.getElementById('edit-sys-id').value = "NEW";
+                document.getElementById('edit-fname').value = '';
+                document.getElementById('edit-lname').value = '';
+                document.getElementById('edit-empid').value = '';
+                document.getElementById('edit-workgroup').value = '';
+                document.getElementById('edit-phone').value = '';
+                document.getElementById('edit-center').value = '';
+                document.getElementById('edit-job').value = '';
+                document.getElementById('edit-hire').value = '';
+                document.getElementById('edit-ptdate').value = '';
+                document.getElementById('edit-ftdate').value = '';
+                document.getElementById('edit-ftpt').value = 'F';
+                document.getElementById('edit-active').value = 'YES';
+            }
+            
+            // Shows the trash can if editing, hides it if adding a new member
+            document.getElementById('btn-delete-member').style.display = recordId ? 'block' : 'none';
+
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeMemberModal() {
+            document.getElementById('member-modal-overlay').style.display = 'none';
+        }
+        function saveMemberData() {
+            // Strict Validation Check
+            const checkFname = document.getElementById('edit-fname').value.trim();
+            const checkLname = document.getElementById('edit-lname').value.trim();
+            const checkEmpId = document.getElementById('edit-empid').value.trim();
+
+            if (!checkFname || !checkLname || !checkEmpId) {
+                alert("Action Blocked: First Name, Last Name, and Emp ID are mandatory fields.");
+                return; 
+            }
+
+            const saveBtn = document.getElementById('btn-save-member');
+            saveBtn.innerText = '⏳ Saving...';
+            saveBtn.style.pointerEvents = 'none';
+
+            // Custom audit trail stamp locked to local ET
+            const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
+            const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
+            const payload = {
+                stewardGuid: stewardGUID,
+                action: "save_member",
+                recordId: document.getElementById('edit-sys-id').value,
+                FirstName: checkFname,
+                LastName: checkLname,
+                EmployeeID: checkEmpId,
+                HubBucket: document.getElementById('edit-workgroup').value,
+                PhoneNumber: document.getElementById('edit-phone').value,
+                Center: document.getElementById('edit-center').value,
+                JobClass: document.getElementById('edit-job').value,
+                
+                // ADD || null TO THESE THREE LINES:
+                HireDate: document.getElementById('edit-hire').value || null,
+                PTSeniorityDate: document.getElementById('edit-ptdate').value || null,
+                FTSeniorityDate: document.getElementById('edit-ftdate').value || null,
+                
+                FTPT: document.getElementById('edit-ftpt').value,
+                Active: document.getElementById('edit-active').value,
+                ModifiedByStamp: updateStamp
+            };
+
+
+            // Notice we are sending this to saveFlowUrl now!
+            fetch(saveFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (res.ok) {
+                    saveBtn.innerText = '✅ Saved!';
+                    saveBtn.style.background = 'var(--accent-green)';
+                    setTimeout(() => {
+                        closeMemberModal();
+                        saveBtn.innerText = '💾 Save Profile';
+                        saveBtn.style.background = 'var(--accent)';
+                        saveBtn.style.pointerEvents = 'auto';
+                        
+                        document.getElementById('table-container').style.display = 'none';
+                        document.getElementById('loading').style.display = 'block';
+                        
+                        // This still uses the original flowUrl to pull fresh data!
+                        loadSeniorityData(); 
+                    }, 1500);
+                } else {
+                    alert('Cloud sync failed!');
+                    saveBtn.innerText = '⚠️ Error';
+                    saveBtn.style.pointerEvents = 'auto';
+                }
+            })
+            .catch(err => {
+                alert('Connection error.');
+                saveBtn.style.pointerEvents = 'auto';
+            });
+        }
+
+
+                function deleteMember() {
+            const recordId = document.getElementById('edit-sys-id').value;
+            if (recordId === "NEW") return; // Failsafe
+
+            // Hard confirmation check
+            if (!confirm("🚨 WARNING: Are you sure you want to permanently delete this member? This action cannot be undone.")) {
+                return;
+            }
+
+            const deleteBtn = document.getElementById('btn-delete-member');
+            deleteBtn.innerText = '⏳';
+            deleteBtn.style.pointerEvents = 'none';
+
+            const payload = {
+                stewardGuid: stewardGUID,
+                action: "delete_member", // New action trigger!
+                recordId: recordId
+            };
+
+            fetch(saveFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (res.ok) {
+                    closeMemberModal();
+                    document.getElementById('table-container').style.display = 'none';
+                    document.getElementById('loading').style.display = 'block';
+                    loadSeniorityData(); // Pull fresh data
+                    
+                    // Reset the button icon
+                    setTimeout(() => {
+                        deleteBtn.innerText = '🗑️';
+                        deleteBtn.style.pointerEvents = 'auto';
+                    }, 1500);
+                } else {
+                    alert('Cloud delete failed!');
+                    deleteBtn.innerText = '🗑️';
+                    deleteBtn.style.pointerEvents = 'auto';
+                }
+            })
+            .catch(err => {
+                alert('Connection error.');
+                deleteBtn.innerText = '🗑️';
+                deleteBtn.style.pointerEvents = 'auto';
+            });
+        }
+
+
 
         loadSeniorityData();
     </script>
