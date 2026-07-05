@@ -255,10 +255,12 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button id="btn-delete-member" onclick="deleteMember()" style="width: 55px; height: 42px; background: #333; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; font-weight: bold; cursor: pointer; display: none;" title="Delete Member">🗑️</button>
                 <button onclick="closeMemberModal()" style="flex: 1; height: 42px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
                 <button id="btn-save-member" onclick="saveMemberData()" style="flex: 1; height: 42px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Profile</button>
             </div>
+
         </div>
     </div>
 
@@ -577,6 +579,10 @@
                 document.getElementById('edit-active').value = 'YES';
             }
             
+            // Shows the trash can if editing, hides it if adding a new member
+            document.getElementById('btn-delete-member').style.display = recordId ? 'block' : 'none';
+
+            
             modal.style.display = 'flex';
         }
 
@@ -654,6 +660,57 @@
                 saveBtn.style.pointerEvents = 'auto';
             });
         }
+
+
+                function deleteMember() {
+            const recordId = document.getElementById('edit-sys-id').value;
+            if (recordId === "NEW") return; // Failsafe
+
+            // Hard confirmation check
+            if (!confirm("🚨 WARNING: Are you sure you want to permanently delete this member? This action cannot be undone.")) {
+                return;
+            }
+
+            const deleteBtn = document.getElementById('btn-delete-member');
+            deleteBtn.innerText = '⏳';
+            deleteBtn.style.pointerEvents = 'none';
+
+            const payload = {
+                stewardGuid: stewardGUID,
+                action: "delete_member", // New action trigger!
+                recordId: recordId
+            };
+
+            fetch(saveFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (res.ok) {
+                    closeMemberModal();
+                    document.getElementById('table-container').style.display = 'none';
+                    document.getElementById('loading').style.display = 'block';
+                    loadSeniorityData(); // Pull fresh data
+                    
+                    // Reset the button icon
+                    setTimeout(() => {
+                        deleteBtn.innerText = '🗑️';
+                        deleteBtn.style.pointerEvents = 'auto';
+                    }, 1500);
+                } else {
+                    alert('Cloud delete failed!');
+                    deleteBtn.innerText = '🗑️';
+                    deleteBtn.style.pointerEvents = 'auto';
+                }
+            })
+            .catch(err => {
+                alert('Connection error.');
+                deleteBtn.innerText = '🗑️';
+                deleteBtn.style.pointerEvents = 'auto';
+            });
+        }
+
 
 
         loadSeniorityData();
