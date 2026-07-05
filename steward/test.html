@@ -1,27 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
+    </script> 
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Intake Hub</title>
+    <style>
+        /* CORE CONFIGURATION */
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --danger: #ff3333;
+            --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
+        /* RESPONSIVE HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
 
-<meta name="apple-mobile-web-app-capable" content="yes">
+        /* SAVE STATUS INDICATOR */
+        .local-dates-box { flex: 1; text-align: right; min-width: 200px; display: flex; justify-content: flex-end; align-items: center; }
+        .save-status { font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
+        .save-status.saving { background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
 
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+        @media (max-width: 650px) {
+            body { padding-top: 140px; } 
+            .local-dates-box { text-align: center; justify-content: center; min-width: 100%; padding-top: 10px; border-top: 1px dashed #333; }
+        }
 
+        /* MAIN NAV DRAWER */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
+        /* CARD ARCHITECTURE */
+        .record-card {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
+        }
+        .record-card.ai-match { border-left-color: var(--accent-green); }
+        .record-card.ai-fail { border-left-color: var(--danger); border-color: rgba(255,51,51,0.3); }
+        
+        .card-split-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin-top: 10px; 
+            align-items: flex-start;
+        }
 
-<script>
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
+        .ctr-meta {
+            display: flex; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
+        }
 
-if ('serviceWorker' in navigator) {
+        /* INPUT WRAPPERS */
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+        
+        input, select {
+            width: 100%; height: 42px; background: #262626; border: 1px solid #444;
+            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent); }
+        input.emp-input { font-size: 15px; font-weight: bold; }
+        input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
 
-navigator.serviceWorker.register('./sw.js');
+        .sys-id-display-box { 
+            background: transparent; color: var(--text-muted); border: 1px dashed #444; 
+            padding: 0 12px; border-radius: 6px; font-size: 13px; font-family: monospace; 
+            font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
+        }
 
-}
+        /* DATA WARNING ALERTS */
+        .alert-missing-date { border: 2px solid #ff3333 !important; background-color: rgba(255, 51, 51, 0.15) !important; }
+        .alert-wild-amount { border: 2px solid #fd7e14 !important; background-color: rgba(253, 126, 20, 0.15) !important; color: #fd7e14 !important; }
 
-<div id="new-member-modal-overlay" class="nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 4000;">
-        <div class="record-card" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); margin: 0 auto; margin-top: 10vh;">
+        /* BUTTONS */
+        .btn-3d {
+            width: 100%; height: 42px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
+        }
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+        .btn-approve { background-color: var(--accent-green); color: #111; }
+        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
+
+        /* RIGHT SIDE AUDIT DRAWER */
+        .side-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; 
+            width: 100%; max-width: 450px;
+            background: #161616; border-left: 2px solid var(--accent);
+            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+        }
+        .side-drawer.open { transform: translateX(0); }
+        .drawer-header {
+            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
+        .drawer-handle {
+            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+        }
+
+        /* EMPTY QUEUE CENTERED LAYOUT */
+        .empty-queue-wrapper {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 60vh; text-align: center; gap: 20px; 
+        }
+        .empty-text-msg { color: var(--text-muted); font-size: 16px; font-weight: bold; }
+        .btn-redirect {
+            background-color: var(--accent); color: #000; padding: 14px 28px;
+            border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.1s, background-color 0.2s;
+            border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-redirect:active { transform: translateY(2px); }
+        .btn-redirect:hover { background-color: #ffdb4d; }
+
+        /* TAGS LOADING OVERLAY */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .loading-logo { width: 80%; max-width: 500px; max-height: 80vh; object-fit: contain; margin-bottom: 20px; }
+        .parsing-text {
+            color: var(--text-muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <img src="steward.png" alt="TAGS System" class="loading-logo">
+        <div class="parsing-text">↻ Parsing records...</div>
+    </div>
+
+    <div id="global-datalists" style="display: none;"></div>
+
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                GROUP BY STEWARD
+                <input type="checkbox" id="toggle-group-steward" checked onchange="filterRecords()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+        
+        <div id="dynamic-nav-container"></div>      
+        
+        <div class="nav-section-title">Coverage Mode</div>
+        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
+        </div>
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+    </div>
+
+    <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Local 710 Intake Hub</div>
+                <div id="steward-info" class="header-sub">Initializing live stream...</div>
+            </div>
+        </div>
+        <div class="local-dates-box">
+            <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
+        </div>
+    </div>
+
+    <div id="data-display"></div>
+
+    <div id="new-member-modal-overlay" class="nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 4000;">
+        <div class="record-card" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); margin: 0 auto; margin-top: 10vh; max-height: 85vh; overflow-y: auto;">
             <h3 style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 10px;">⚠️ Unrecognized ID: Add to Master Roster</h3>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -87,299 +309,6 @@ navigator.serviceWorker.register('./sw.js');
             </div>
         </div>
     </div>
-    
-</script> 
-
-
-    
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Intake Hub</title>
-    <style>
-        /* CORE CONFIGURATION */
-        :root {
-            --bg-main: #121212;
-            --bg-card: #1e1e1e;
-            --accent: #ffcc00;
-            --accent-green: #2ecc71;
-            --danger: #ff3333;
-            --border: #333;
-            --text-main: #ffffff;
-            --text-muted: #888;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
-
-        /* RESPONSIVE HEADER & NAVIGATION */
-        .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
-            background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
-        }
-        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
-        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
-        
-        .hamburger-btn {
-            background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; transition: transform 0.2s;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-        }
-        .hamburger-btn:active { transform: scale(0.9); }
-
-        /* SAVE STATUS INDICATOR */
-        .local-dates-box { flex: 1; text-align: right; min-width: 200px; display: flex; justify-content: flex-end; align-items: center; }
-        .save-status { font-size: 13px; font-weight: bold; padding: 6px 12px; border-radius: 20px; background: #333; color: var(--text-muted); transition: background 0.3s, color 0.3s; }
-        .save-status.saving { background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
-
-        @media (max-width: 650px) {
-            body { padding-top: 140px; } 
-            .local-dates-box { text-align: center; justify-content: center; min-width: 100%; padding-top: 10px; border-top: 1px dashed #333; }
-        }
-
-        /* MAIN NAV DRAWER (LEFT SIDE) */
-        .main-nav-drawer {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: #161616; border-right: 2px solid var(--accent);
-            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
-        }
-        .main-nav-drawer.open { transform: translateX(0); }
-        .nav-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
-        }
-        .nav-overlay.open { display: block; }
-        
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
-
-        /* CARD ARCHITECTURE */
-        .record-card {
-            background-color: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
-        }
-        .record-card.ai-match { border-left-color: var(--accent-green); }
-        .record-card.ai-fail { border-left-color: var(--danger); border-color: rgba(255,51,51,0.3); }
-        
-        .card-split-grid {
-            display: grid; 
-            grid-template-columns: 1fr 1fr; /* Locks exactly 2 columns on ALL devices */
-            gap: 15px; 
-            margin-top: 10px; 
-            align-items: flex-start;
-        }
-
-        /* NEW HIGH-SPEED HEADER CSS */
-        .card-top-row {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
-        }
-        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
-        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
-        .ctr-meta {
-            display: flex; color: var(--accent); font-size: 14px;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
-        }
-        @media (min-width: 650px) {
-            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
-        }
-
-        /* INPUT WRAPPERS */
-        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
-        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
-        
-        input, select {
-            width: 100%; height: 42px; background: #262626; border: 1px solid #444;
-            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
-        }
-        input:focus, select:focus { border-color: var(--accent); }
-        input.emp-input { font-size: 15px; font-weight: bold; }
-        input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
-
-        .sys-id-display-box { 
-            background: transparent; color: var(--text-muted); border: 1px dashed #444; 
-            padding: 0 12px; border-radius: 6px; font-size: 13px; font-family: monospace; 
-            font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
-        }
-
-        /* DATA WARNING ALERTS */
-        .alert-missing-date {
-            border: 2px solid #ff3333 !important; 
-            background-color: rgba(255, 51, 51, 0.15) !important;
-        }
-        .alert-wild-amount {
-            border: 2px solid #fd7e14 !important; 
-            background-color: rgba(253, 126, 20, 0.15) !important;
-            color: #fd7e14 !important;
-        }
-
-        /* BUTTONS */
-        .btn-3d {
-            width: 100%; height: 42px; border: none; border-radius: 6px;
-            font-size: 13px; font-weight: bold; text-transform: uppercase;
-            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
-        }
-        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
-        .btn-approve { background-color: var(--accent-green); color: #111; }
-        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
-
-        /* RIGHT SIDE AUDIT DRAWER */
-.side-drawer {
-    position: fixed; top: 0; right: 0; bottom: 0; 
-    width: 100%; max-width: 450px; /* <--- THIS FIXES THE BUG */
-    background: #161616; border-left: 2px solid var(--accent);
-    z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
-}
-.side-drawer.open { transform: translateX(0); }
-.drawer-header {
-    padding: 20px; background: #222; border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-}
-.drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-.pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
-.drawer-handle {
-    position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
-}
-
-        /* EMPTY QUEUE CENTERED LAYOUT */
-        .empty-queue-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 60vh; /* Pushes it down to true center below the header */
-            text-align: center;
-            gap: 20px; /* Perfect spacing between the text and the button */
-        }
-        .empty-text-msg {
-            color: var(--text-muted);
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .btn-redirect {
-            background-color: var(--accent); /* Matches your yellow theme */
-            color: #000;
-            padding: 14px 28px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.1s, background-color 0.2s;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-redirect:active {
-            transform: translateY(2px);
-        }
-        .btn-redirect:hover {
-            background-color: #ffdb4d;
-        }
-
-        /* --- NEW: TAGS LOADING OVERLAY --- */
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-main);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999; 
-        }
-
-        .loading-logo {
-            width: 80%;            
-            max-width: 500px;      
-            max-height: 80vh;      
-            object-fit: contain;   
-            margin-bottom: 20px;   
-        }
-
-        .parsing-text {
-            color: var(--text-muted);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-weight: bold;
-            font-size: 16px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-        
-    </style>
-</head>
-<body>
-
-    <!-- TAGS LOADING OVERLAY -->
-    <div id="loading-overlay">
-        <!-- Referencing exactly the file specified -->
-        <img src="steward.png" alt="TAGS System" class="loading-logo">
-        <div class="parsing-text">↻ Parsing records...</div>
-    </div>
-
-    <div id="global-datalists" style="display: none;"></div>
-
-    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
-    <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
-            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
-            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-        </div>
-        
-        <div style="padding: 10px 20px 15px;">
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
-                GROUP BY STEWARD
-                <input type="checkbox" id="toggle-group-steward" checked onchange="filterRecords()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
-            </label>
-        </div>
-        
-        <div id="dynamic-nav-container">
-            </div>      
-        
-        <div class="nav-section-title">Coverage Mode</div>
-        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
-            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
-        </div>
-        
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
-    </div>
-
-    <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Local 710 Intake Hub</div>
-                <div id="steward-info" class="header-sub">Initializing live stream...</div>
-            </div>
-        </div>
-        <div class="local-dates-box">
-            <div id="save-indicator" class="save-status">✓ Connected to Cloud</div>
-        </div>
-    </div>
-
-    <!-- MAIN DATA DISPLAY (Loading text removed, now handled by overlay) -->
-    <div id="data-display">
-    </div>
 
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
@@ -390,64 +319,49 @@ navigator.serviceWorker.register('./sw.js');
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-        <script>
+    <script>
     const urlParams = new URLSearchParams(window.location.search);
     let stewardGUID = urlParams.get('steward');
 
-    // The Token Memory Logic
     if (stewardGUID) {
-        // If the URL has the ID, save it to the phone permanently
         localStorage.setItem('saved_steward_token', stewardGUID);
     } else {
-        // If the URL is blank (opened via Home Screen app), grab the saved ID
         stewardGUID = localStorage.getItem('saved_steward_token');
     }
 
+    // READER FLOW
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
-    // --- NEW: THE WRITER FLOW FOR ADDING MEMBERS ---
+    // WRITER FLOW
     const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
 
     function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
-            let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+        let currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
-            fetch('steward-nav.json')
-                .then(res => res.json())
-                .then(menuItems => {
-                    const navContainer = document.getElementById('dynamic-nav-container');
-                    let navHtml = '';
-
-                    // 3. Loop through the JSON and build the menu
-                    menuItems.forEach(item => {
-                        if (item.type === 'header') {
-                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
-                        } 
-                        else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
-                            if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
-                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
-                            } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
-                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
-                            }
+        fetch('steward-nav.json')
+            .then(res => res.json())
+            .then(menuItems => {
+                const navContainer = document.getElementById('dynamic-nav-container');
+                let navHtml = '';
+                menuItems.forEach(item => {
+                    if (item.type === 'header') {
+                        navHtml += `<div class="nav-section-title">${item.title}</div>`;
+                    } 
+                    else if (item.type === 'link') {
+                        if (item.filename === currentPage) {
+                            navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                        } else {
+                            navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                         }
-                    });
+                    }
+                });
+                navContainer.innerHTML = navHtml;
+            })
+            .catch(err => console.error("Menu failed to load:", err));
+    }
+    buildDynamicNav();
 
-                    // Drop the finished HTML into the drawer
-                    navContainer.innerHTML = navHtml;
-                })
-                .catch(err => console.error("Menu failed to load:", err));
-        }
-
-        // Fire the function to build the menu
-        buildDynamicNav();
-
-    // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
     let masterSeniorityArray = []; 
     let masterStewardRoster = [];
@@ -458,7 +372,6 @@ navigator.serviceWorker.register('./sw.js');
     let lastHiddenCardId = null;
     let undoTimeoutTimer = null;
 
-    // Date Formatter Helper
     const formatToUsDate = (isoString) => {
         if (!isoString || isoString === 'N/A') return 'N/A';
         const parts = isoString.split('T')[0].split('-');
@@ -466,7 +379,6 @@ navigator.serviceWorker.register('./sw.js');
         return isoString;
     };
 
-    // Nav Drawer Controllers
     function openNavMenu() {
         document.getElementById('main-nav-menu').classList.add('open');
         document.getElementById('nav-overlay').classList.add('open');
@@ -476,7 +388,6 @@ navigator.serviceWorker.register('./sw.js');
         document.getElementById('nav-overlay').classList.remove('open');
     }
 
-    // --- REAL-TIME HEADER TRACKER & COVERAGE ---
     function updateHeader(checkedBoxes) {
         let viewName = 'Multiple';
         if (checkedBoxes && checkedBoxes.length === 1) {
@@ -497,7 +408,6 @@ navigator.serviceWorker.register('./sw.js');
 
     function loadPending() {
         if (!stewardGUID) {
-            // If no GUID, show the iPhone one-time manual sync screen
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('data-display').innerHTML = `
                 <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
@@ -523,7 +433,6 @@ navigator.serviceWorker.register('./sw.js');
         })
         .then(response => response.json())
         .then(dataBundle => {
-            // HIDE THE FULL SCREEN LOGO OVERLAY ON SUCCESS
             document.getElementById('loading-overlay').style.display = 'none';
             
             fullDataCache = dataBundle.pendingGrievances || [];
@@ -547,7 +456,6 @@ navigator.serviceWorker.register('./sw.js');
                             <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
                             Intake queue is clear. No pending records found for this view.
                         </div>
-                        
                         <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
                             → Head to Processing Hub
                         </button>
@@ -581,10 +489,8 @@ navigator.serviceWorker.register('./sw.js');
                 if(val) subViolOptionsHtml += `<option value="${val}">${val}</option>`;
             });
 
-            let dataListsContainer = document.getElementById('global-datalists');
-            dataListsContainer.innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
+            document.getElementById('global-datalists').innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
 
-            // Populate checkboxes
             const coverageContainer = document.getElementById('coverage-checkboxes');
             coverageContainer.innerHTML = '';
             const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
@@ -603,7 +509,6 @@ navigator.serviceWorker.register('./sw.js');
 
             filterRecords();
         }).catch(err => {
-            // HIDE THE OVERLAY ON ERROR AS WELL
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('data-display').innerHTML = `
                 <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
@@ -637,7 +542,6 @@ navigator.serviceWorker.register('./sw.js');
                         <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
                         Intake queue is clear. No pending records found for this view.
                     </div>
-                    
                     <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
                         → Head to Processing Hub
                     </button>
@@ -667,9 +571,7 @@ navigator.serviceWorker.register('./sw.js');
 
         for (const groupName of sortedGroupNames) {
             const items = groupedRecords[groupName];
-                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
             items.sort((a, b) => {
-                // 1. Extract Last Names (with fallback to OCR if unmatched)
                 let lastA = (a.LastName || '').toLowerCase();
                 let lastB = (b.LastName || '').toLowerCase();
                 if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop().toLowerCase();
@@ -678,20 +580,17 @@ navigator.serviceWorker.register('./sw.js');
                 if (lastA < lastB) return -1;
                 if (lastA > lastB) return 1;
 
-                // 2. Extract First Names
                 let firstA = (a.FirstName || '').toLowerCase();
                 let firstB = (b.FirstName || '').toLowerCase();
                 
                 if (firstA < firstB) return -1;
                 if (firstA > firstB) return 1;
 
-                // 3. Extract Violation Dates (Oldest to Newest)
                 let dateA = a.ViolationDate ? new Date(a.ViolationDate) : new Date(0);
                 let dateB = b.ViolationDate ? new Date(b.ViolationDate) : new Date(0);
                 
                 return dateA - dateB;
             });
-
 
             htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -839,6 +738,10 @@ navigator.serviceWorker.register('./sw.js');
             });
         }
         displayContainer.innerHTML = htmlContent;
+
+        // Force validation scan immediately after HTML injection
+        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
+        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
     }
 
     function handleRosterSelection(recordId, inputElem) {
@@ -884,6 +787,7 @@ navigator.serviceWorker.register('./sw.js');
         }
     }
 
+    // --- NEW: SELF-DIAGNOSING APPROVAL ENGINE ---
     function executeRowCommit(recordId) {
         try {
             const card = document.getElementById(`card-${recordId}`);
@@ -899,17 +803,16 @@ navigator.serviceWorker.register('./sw.js');
                 return;
             }
 
-            // --- THE ID INTERCEPTOR (WITH CRASH DETECTOR) ---
+            // ID INTERCEPTOR
             const isKnownId = masterSeniorityArray.some(p => (p.Title || '').toString().trim() === updatedEmpId);
             if (!isKnownId) {
                 if (typeof openNewMemberModal !== "function") {
-                    alert("⚠️ CODE MISSING: The browser cannot find the 'openNewMemberModal' function. Make sure you pasted the 3 new functions at the very bottom of the script.");
+                    alert("⚠️ CRITICAL ERROR: The browser cannot find the Modal function. The JavaScript was incorrectly copied.");
                     return;
                 }
                 openNewMemberModal(fullInputName, updatedEmpId);
-                return; // Stops the approval dead in its tracks!
+                return; 
             }
-            // ------------------------------------------------
 
             if (fullInputName.endsWith('*')) {
                 fullInputName = fullInputName.slice(0, -1).trim();
@@ -974,7 +877,7 @@ navigator.serviceWorker.register('./sw.js');
                 }
             });
         } catch (error) {
-            alert("⚠️ JAVASCRIPT CRASH: " + error.message + "\n\nThis usually means your HTML modal block was pasted in the wrong spot, so the script can't find the input boxes!");
+            alert("⚠️ JAVASCRIPT CRASH: " + error.message);
         }
     }
 
@@ -1063,17 +966,12 @@ navigator.serviceWorker.register('./sw.js');
             <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
             ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
         `;
-                document.getElementById('side-drawer').classList.add('open');
-        
-        // NEW: Trick the browser into thinking we opened a new page
+        document.getElementById('side-drawer').classList.add('open');
         history.pushState({ drawerOpen: true }, "", "#file-viewer");
     }
 
-
-        function closeDrawer() {
+    function closeDrawer() {
         document.getElementById('side-drawer').classList.remove('open');
-        
-        // NEW: Clean up the history if they use the UI 'X' button
         if (window.location.hash === '#file-viewer') {
             history.back();
         }
@@ -1104,10 +1002,8 @@ navigator.serviceWorker.register('./sw.js');
         document.removeEventListener('touchmove', resizeDrawer);
     }
 
-    // --- REAL-TIME WARNING ALERTS ---
     function validateIntakeAlerts(inputElement, fieldType) {
         let value = inputElement.value.trim();
-
         if (fieldType === 'date') {
             if (!value) {
                 inputElement.classList.add('alert-missing-date');
@@ -1124,7 +1020,6 @@ navigator.serviceWorker.register('./sw.js');
         }
     }
 
-    // Listen as you type to remove the red/orange when fixed
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('file-date') || e.target.classList.contains('violation-date')) {
             validateIntakeAlerts(e.target, 'date');
@@ -1134,56 +1029,33 @@ navigator.serviceWorker.register('./sw.js');
         }
     });
 
-        // NEW: Intercept the Android/Hardware Back Button
     window.addEventListener('popstate', function(event) {
         const drawer = document.getElementById('side-drawer');
-        // If they hit back while the drawer is open, just close the drawer!
         if (drawer.classList.contains('open')) {
             drawer.classList.remove('open');
         }
     });
 
-        
-    // --- OVERRIDE RENDERCARDS TO TRIGGER ON LOAD ---
-    // We are hijacking the end of your renderCards function to force a scan
-    const originalRenderCards = renderCards;
-    renderCards = function(recordsList) {
-        originalRenderCards(recordsList); // Run your normal render
-
-        // Scan all inputs immediately after they hit the screen
-        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
-        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
-    };
-
-    // --- iOS MANUAL SYNC FUNCTION ---
     window.saveManualToken = function() {
         const inputVal = document.getElementById('manual-token-input').value.trim();
         if (!inputVal) return;
-        
         let extractedToken = inputVal;
-        
-        // If they pasted the entire URL instead of just the ID, extract just the Steward ID automatically
         if (inputVal.includes('steward=')) {
             extractedToken = inputVal.split('steward=')[1].split('&')[0];
         }
-        
-        // Save it directly into the iPhone's isolated app memory using the STEWARD token key
         localStorage.setItem('saved_steward_token', extractedToken);
-        
-        // Instantly reload the app so it boots up normally
         window.location.reload();
     };
 
-    // --- ADD MEMBER FROM HUB LOGIC ---
+    // --- MODAL ENGINE (Self-Diagnosing) ---
     function openNewMemberModal(fullName, empId) {
         const modal = document.getElementById('new-member-modal-overlay');
         
         if (!modal) {
-            alert("⚠️ HTML MISSING: The browser cannot find the Modal HTML. Make sure you pasted the HTML block right above the <script> tag.");
+            alert("⚠️ HTML MISSING: The browser cannot find the Modal HTML. This is a copy/paste error.");
             return;
         }
         
-        // Auto-split the name for the form
         let fName = '';
         let lName = '';
         if (fullName) {
@@ -1196,16 +1068,14 @@ navigator.serviceWorker.register('./sw.js');
         document.getElementById('add-lname').value = lName;
         document.getElementById('add-empid').value = empId;
         
-        // Build Work Group dropdown dynamically
         const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
         masterSeniorityArray.forEach(p => {
             let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
             if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
-            if (wgRaw && wgRaw.trim() !== '' && wgRaw !== '---') {
+            if (wgRaw && typeof wgRaw === 'string' && wgRaw.trim() !== '' && wgRaw !== '---') {
                 wgSet.add(wgRaw.toUpperCase()); 
             }
         });
-        
         let wgHtml = '<option value="" hidden>Select Work Group...</option>';
         Array.from(wgSet).sort().forEach(group => {
             wgHtml += `<option value="${group}">${group}</option>`;
@@ -1269,7 +1139,6 @@ navigator.serviceWorker.register('./sw.js');
                 saveBtn.innerText = '✅ Saved!';
                 saveBtn.style.background = 'var(--accent-green)';
                 
-                // Inject them into the local array immediately so the approval click passes
                 masterSeniorityArray.push({
                     Title: checkEmpId,
                     FirstName: checkFname,
