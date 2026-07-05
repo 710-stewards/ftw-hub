@@ -607,7 +607,6 @@
             // Custom audit trail stamp locked to local ET
             const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
             const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
-
             const payload = {
                 stewardGuid: stewardGUID,
                 action: "save_member",
@@ -619,13 +618,17 @@
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
-                HireDate: document.getElementById('edit-hire').value,
-                PTSeniorityDate: document.getElementById('edit-ptdate').value,
-                FTSeniorityDate: document.getElementById('edit-ftdate').value,
+                
+                // ADD || null TO THESE THREE LINES:
+                HireDate: document.getElementById('edit-hire').value || null,
+                PTSeniorityDate: document.getElementById('edit-ptdate').value || null,
+                FTSeniorityDate: document.getElementById('edit-ftdate').value || null,
+                
                 FTPT: document.getElementById('edit-ftpt').value,
                 Active: document.getElementById('edit-active').value,
                 ModifiedByStamp: updateStamp
             };
+
 
             // Notice we are sending this to saveFlowUrl now!
             fetch(saveFlowUrl, {
