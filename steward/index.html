@@ -1,28 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <link rel="manifest" href="manifest.json">
-
-
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-
-
-<script>
-
-if ('serviceWorker' in navigator) {
-
-navigator.serviceWorker.register('./sw.js');
-
-}
-
-</script> 
-
-
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
+    </script> 
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,7 +57,7 @@ navigator.serviceWorker.register('./sw.js');
             .local-dates-box { text-align: center; justify-content: center; min-width: 100%; padding-top: 10px; border-top: 1px dashed #333; }
         }
 
-        /* MAIN NAV DRAWER (LEFT SIDE) */
+        /* MAIN NAV DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -102,13 +88,12 @@ navigator.serviceWorker.register('./sw.js');
         
         .card-split-grid {
             display: grid; 
-            grid-template-columns: 1fr 1fr; /* Locks exactly 2 columns on ALL devices */
+            grid-template-columns: 1fr 1fr; 
             gap: 15px; 
             margin-top: 10px; 
             align-items: flex-start;
         }
 
-        /* NEW HIGH-SPEED HEADER CSS */
         .card-top-row {
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
@@ -143,15 +128,8 @@ navigator.serviceWorker.register('./sw.js');
         }
 
         /* DATA WARNING ALERTS */
-        .alert-missing-date {
-            border: 2px solid #ff3333 !important; 
-            background-color: rgba(255, 51, 51, 0.15) !important;
-        }
-        .alert-wild-amount {
-            border: 2px solid #fd7e14 !important; 
-            background-color: rgba(253, 126, 20, 0.15) !important;
-            color: #fd7e14 !important;
-        }
+        .alert-missing-date { border: 2px solid #ff3333 !important; background-color: rgba(255, 51, 51, 0.15) !important; }
+        .alert-wild-amount { border: 2px solid #fd7e14 !important; background-color: rgba(253, 126, 20, 0.15) !important; color: #fd7e14 !important; }
 
         /* BUTTONS */
         .btn-3d {
@@ -164,106 +142,60 @@ navigator.serviceWorker.register('./sw.js');
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
         /* RIGHT SIDE AUDIT DRAWER */
-.side-drawer {
-    position: fixed; top: 0; right: 0; bottom: 0; 
-    width: 100%; max-width: 450px; /* <--- THIS FIXES THE BUG */
-    background: #161616; border-left: 2px solid var(--accent);
-    z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
-}
-.side-drawer.open { transform: translateX(0); }
-.drawer-header {
-    padding: 20px; background: #222; border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-}
-.drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-.pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
-.drawer-handle {
-    position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
-}
+        .side-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; 
+            width: 100%; max-width: 450px;
+            background: #161616; border-left: 2px solid var(--accent);
+            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+        }
+        .side-drawer.open { transform: translateX(0); }
+        .drawer-header {
+            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
+        .drawer-handle {
+            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+        }
 
         /* EMPTY QUEUE CENTERED LAYOUT */
         .empty-queue-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 60vh; /* Pushes it down to true center below the header */
-            text-align: center;
-            gap: 20px; /* Perfect spacing between the text and the button */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 60vh; text-align: center; gap: 20px; 
         }
-        .empty-text-msg {
-            color: var(--text-muted);
-            font-size: 16px;
-            font-weight: bold;
-        }
+        .empty-text-msg { color: var(--text-muted); font-size: 16px; font-weight: bold; }
         .btn-redirect {
-            background-color: var(--accent); /* Matches your yellow theme */
-            color: #000;
-            padding: 14px 28px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: transform 0.1s, background-color 0.2s;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            background-color: var(--accent); color: #000; padding: 14px 28px;
+            border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.1s, background-color 0.2s;
+            border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
         }
-        .btn-redirect:active {
-            transform: translateY(2px);
-        }
-        .btn-redirect:hover {
-            background-color: #ffdb4d;
-        }
+        .btn-redirect:active { transform: translateY(2px); }
+        .btn-redirect:hover { background-color: #ffdb4d; }
 
-        /* --- NEW: TAGS LOADING OVERLAY --- */
+        /* TAGS LOADING OVERLAY */
         #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-main);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
         }
-
-        .loading-logo {
-            width: 80%;            
-            max-width: 500px;      
-            max-height: 80vh;      
-            object-fit: contain;   
-            margin-bottom: 20px;   
-        }
-
+        .loading-logo { width: 80%; max-width: 500px; max-height: 80vh; object-fit: contain; margin-bottom: 20px; }
         .parsing-text {
-            color: var(--text-muted);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-weight: bold;
-            font-size: 16px;
-            animation: pulse 1.5s infinite;
+            color: var(--text-muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite;
         }
-
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.4; }
             100% { opacity: 1; }
         }
-        
     </style>
 </head>
 <body>
 
-    <!-- TAGS LOADING OVERLAY -->
     <div id="loading-overlay">
-        <!-- Referencing exactly the file specified -->
         <img src="steward.png" alt="TAGS System" class="loading-logo">
         <div class="parsing-text">↻ Parsing records...</div>
     </div>
@@ -284,8 +216,7 @@ navigator.serviceWorker.register('./sw.js');
             </label>
         </div>
         
-        <div id="dynamic-nav-container">
-            </div>      
+        <div id="dynamic-nav-container"></div>      
         
         <div class="nav-section-title">Coverage Mode</div>
         <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
@@ -309,8 +240,74 @@ navigator.serviceWorker.register('./sw.js');
         </div>
     </div>
 
-    <!-- MAIN DATA DISPLAY (Loading text removed, now handled by overlay) -->
-    <div id="data-display">
+    <div id="data-display"></div>
+
+    <div id="new-member-modal-overlay" class="nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 4000;">
+        <div class="record-card" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); margin: 0 auto; margin-top: 10vh; max-height: 85vh; overflow-y: auto;">
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 10px;">⚠️ Unrecognized ID: Add to Master Roster</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="input-wrapper">
+                    <span class="input-label">First Name <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="add-fname">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Last Name <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="add-lname">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Emp ID <span style="color: var(--danger);">*</span></span>
+                    <input type="text" id="add-empid" style="font-weight: bold; color: var(--accent);">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Phone</span>
+                    <input type="text" id="add-phone">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Center</span>
+                    <input type="text" id="add-center">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Job Class</span>
+                    <input type="text" id="add-job">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Work Group</span>
+                    <select id="add-workgroup"></select>
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">FT/PT</span>
+                    <select id="add-ftpt">
+                        <option value="F">Full-Time (F)</option>
+                        <option value="P">Part-Time (P)</option>
+                    </select>
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Hire Date</span>
+                    <input type="date" id="add-hire">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">PT Sen Date</span>
+                    <input type="date" id="add-ptdate">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">FT Sen Date</span>
+                    <input type="date" id="add-ftdate">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Active</span>
+                    <select id="add-active">
+                        <option value="YES">YES</option>
+                        <option value="NO">NO</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button onclick="closeNewMemberModal()" style="flex: 1; height: 42px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                <button id="btn-save-new-member" onclick="saveNewMemberFromHub()" style="flex: 2; height: 42px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save to Master Roster</button>
+            </div>
+        </div>
     </div>
 
     <div id="side-drawer" class="side-drawer">
@@ -322,62 +319,49 @@ navigator.serviceWorker.register('./sw.js');
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-        <script>
+    <script>
     const urlParams = new URLSearchParams(window.location.search);
     let stewardGUID = urlParams.get('steward');
 
-    // The Token Memory Logic
     if (stewardGUID) {
-        // If the URL has the ID, save it to the phone permanently
         localStorage.setItem('saved_steward_token', stewardGUID);
     } else {
-        // If the URL is blank (opened via Home Screen app), grab the saved ID
         stewardGUID = localStorage.getItem('saved_steward_token');
     }
 
+    // READER FLOW
     const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
 
+    // WRITER FLOW
+    const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
 
     function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
-            let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+        let currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
-            fetch('steward-nav.json')
-                .then(res => res.json())
-                .then(menuItems => {
-                    const navContainer = document.getElementById('dynamic-nav-container');
-                    let navHtml = '';
-
-                    // 3. Loop through the JSON and build the menu
-                    menuItems.forEach(item => {
-                        if (item.type === 'header') {
-                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
-                        } 
-                        else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
-                            if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
-                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
-                            } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
-                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
-                            }
+        fetch('steward-nav.json')
+            .then(res => res.json())
+            .then(menuItems => {
+                const navContainer = document.getElementById('dynamic-nav-container');
+                let navHtml = '';
+                menuItems.forEach(item => {
+                    if (item.type === 'header') {
+                        navHtml += `<div class="nav-section-title">${item.title}</div>`;
+                    } 
+                    else if (item.type === 'link') {
+                        if (item.filename === currentPage) {
+                            navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                        } else {
+                            navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                         }
-                    });
+                    }
+                });
+                navContainer.innerHTML = navHtml;
+            })
+            .catch(err => console.error("Menu failed to load:", err));
+    }
+    buildDynamicNav();
 
-                    // Drop the finished HTML into the drawer
-                    navContainer.innerHTML = navHtml;
-                })
-                .catch(err => console.error("Menu failed to load:", err));
-        }
-
-        // Fire the function to build the menu
-        buildDynamicNav();
-
-    // --- GLOBAL LAYOUT VARIABLES ---
     let fullDataCache = [];
     let masterSeniorityArray = []; 
     let masterStewardRoster = [];
@@ -388,7 +372,6 @@ navigator.serviceWorker.register('./sw.js');
     let lastHiddenCardId = null;
     let undoTimeoutTimer = null;
 
-    // Date Formatter Helper
     const formatToUsDate = (isoString) => {
         if (!isoString || isoString === 'N/A') return 'N/A';
         const parts = isoString.split('T')[0].split('-');
@@ -396,7 +379,6 @@ navigator.serviceWorker.register('./sw.js');
         return isoString;
     };
 
-    // Nav Drawer Controllers
     function openNavMenu() {
         document.getElementById('main-nav-menu').classList.add('open');
         document.getElementById('nav-overlay').classList.add('open');
@@ -406,7 +388,6 @@ navigator.serviceWorker.register('./sw.js');
         document.getElementById('nav-overlay').classList.remove('open');
     }
 
-    // --- REAL-TIME HEADER TRACKER & COVERAGE ---
     function updateHeader(checkedBoxes) {
         let viewName = 'Multiple';
         if (checkedBoxes && checkedBoxes.length === 1) {
@@ -427,7 +408,6 @@ navigator.serviceWorker.register('./sw.js');
 
     function loadPending() {
         if (!stewardGUID) {
-            // If no GUID, show the iPhone one-time manual sync screen
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('data-display').innerHTML = `
                 <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
@@ -453,7 +433,6 @@ navigator.serviceWorker.register('./sw.js');
         })
         .then(response => response.json())
         .then(dataBundle => {
-            // HIDE THE FULL SCREEN LOGO OVERLAY ON SUCCESS
             document.getElementById('loading-overlay').style.display = 'none';
             
             fullDataCache = dataBundle.pendingGrievances || [];
@@ -477,7 +456,6 @@ navigator.serviceWorker.register('./sw.js');
                             <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
                             Intake queue is clear. No pending records found for this view.
                         </div>
-                        
                         <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
                             → Head to Processing Hub
                         </button>
@@ -511,10 +489,8 @@ navigator.serviceWorker.register('./sw.js');
                 if(val) subViolOptionsHtml += `<option value="${val}">${val}</option>`;
             });
 
-            let dataListsContainer = document.getElementById('global-datalists');
-            dataListsContainer.innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
+            document.getElementById('global-datalists').innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
 
-            // Populate checkboxes
             const coverageContainer = document.getElementById('coverage-checkboxes');
             coverageContainer.innerHTML = '';
             const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
@@ -533,7 +509,6 @@ navigator.serviceWorker.register('./sw.js');
 
             filterRecords();
         }).catch(err => {
-            // HIDE THE OVERLAY ON ERROR AS WELL
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('data-display').innerHTML = `
                 <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
@@ -567,7 +542,6 @@ navigator.serviceWorker.register('./sw.js');
                         <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
                         Intake queue is clear. No pending records found for this view.
                     </div>
-                    
                     <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
                         → Head to Processing Hub
                     </button>
@@ -597,9 +571,7 @@ navigator.serviceWorker.register('./sw.js');
 
         for (const groupName of sortedGroupNames) {
             const items = groupedRecords[groupName];
-                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
             items.sort((a, b) => {
-                // 1. Extract Last Names (with fallback to OCR if unmatched)
                 let lastA = (a.LastName || '').toLowerCase();
                 let lastB = (b.LastName || '').toLowerCase();
                 if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop().toLowerCase();
@@ -608,20 +580,17 @@ navigator.serviceWorker.register('./sw.js');
                 if (lastA < lastB) return -1;
                 if (lastA > lastB) return 1;
 
-                // 2. Extract First Names
                 let firstA = (a.FirstName || '').toLowerCase();
                 let firstB = (b.FirstName || '').toLowerCase();
                 
                 if (firstA < firstB) return -1;
                 if (firstA > firstB) return 1;
 
-                // 3. Extract Violation Dates (Oldest to Newest)
                 let dateA = a.ViolationDate ? new Date(a.ViolationDate) : new Date(0);
                 let dateB = b.ViolationDate ? new Date(b.ViolationDate) : new Date(0);
                 
                 return dateA - dateB;
             });
-
 
             htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
@@ -769,6 +738,10 @@ navigator.serviceWorker.register('./sw.js');
             });
         }
         displayContainer.innerHTML = htmlContent;
+
+        // Force validation scan immediately after HTML injection
+        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
+        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
     }
 
     function handleRosterSelection(recordId, inputElem) {
@@ -814,80 +787,98 @@ navigator.serviceWorker.register('./sw.js');
         }
     }
 
+    // --- NEW: SELF-DIAGNOSING APPROVAL ENGINE ---
     function executeRowCommit(recordId) {
-        const card = document.getElementById(`card-${recordId}`);
-        let fullInputName = card.querySelector('.emp-input').value.trim();
-        const updatedEmpId = card.querySelector('.id-input').value.trim();
-        const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
-        const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
-        const updatedViolType = card.querySelector('.violtype-select').value;
-        const updatedAmount = card.querySelector('.amt-input').value;
+        try {
+            const card = document.getElementById(`card-${recordId}`);
+            let fullInputName = card.querySelector('.emp-input').value.trim();
+            const updatedEmpId = card.querySelector('.id-input').value.trim();
+            const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
+            const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
+            const updatedViolType = card.querySelector('.violtype-select').value;
+            const updatedAmount = card.querySelector('.amt-input').value;
 
-        if (!updatedEmpId) {
-            alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
-            return;
-        }
-
-        if (fullInputName.endsWith('*')) {
-            fullInputName = fullInputName.slice(0, -1).trim();
-        }
-
-        let updatedViolSubType = card.querySelector('.subviol-select').value;
-        if (updatedViolSubType === 'CUSTOM_OTHER') {
-            updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
-        }
-
-        const nameParts = fullInputName.split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
-
-        const ind = document.getElementById('save-indicator');
-        ind.innerText = "↻ Committing changes...";
-        ind.className = "save-status saving";
-
-        fetch(flowUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                "stewardGuid": stewardGUID,
-                "action": "verify",
-                "titleId": recordId,
-                "FirstName": firstName,
-                "LastName": lastName,
-                "EmployeeID": updatedEmpId,
-                "FileDate": updatedFileDate,
-                "ViolationDate": updatedViolDate,
-                "ViolationType": updatedViolType,
-                "ViolationSubType": updatedViolSubType,
-                "ViolationAmount": updatedAmount
-            })
-        })
-        .then(res => {
-            if (res.ok) {
-                const rec = fullDataCache.find(r => r.Title === recordId);
-                if (rec) rec.isVerifiedLocally = true;
-                
-                const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-                updateHeader(checkedBoxes);
-
-                card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                
-                setTimeout(() => { 
-                    card.style.display = 'none'; 
-                }, 300);
-
-                ind.innerText = "✓ Action Complete";
-                ind.className = "save-status";
-
-                triggerUndoToast(recordId);
-            } else {
-                alert("Cloud sync failed. Check connection.");
-                ind.innerText = "⚠️ Sync Error";
-                ind.className = "save-status dirty";
+            if (!updatedEmpId) {
+                alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
+                return;
             }
-        });
+
+            // ID INTERCEPTOR
+            const isKnownId = masterSeniorityArray.some(p => (p.Title || '').toString().trim() === updatedEmpId);
+            if (!isKnownId) {
+                if (typeof openNewMemberModal !== "function") {
+                    alert("⚠️ CRITICAL ERROR: The browser cannot find the Modal function. The JavaScript was incorrectly copied.");
+                    return;
+                }
+                openNewMemberModal(fullInputName, updatedEmpId);
+                return; 
+            }
+
+            if (fullInputName.endsWith('*')) {
+                fullInputName = fullInputName.slice(0, -1).trim();
+            }
+
+            let updatedViolSubType = card.querySelector('.subviol-select').value;
+            if (updatedViolSubType === 'CUSTOM_OTHER') {
+                updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
+            }
+
+            const nameParts = fullInputName.split(' ');
+            const firstName = nameParts[0] || '';
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            const ind = document.getElementById('save-indicator');
+            ind.innerText = "↻ Committing changes...";
+            ind.className = "save-status saving";
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "verify",
+                    "titleId": recordId,
+                    "FirstName": firstName,
+                    "LastName": lastName,
+                    "EmployeeID": updatedEmpId,
+                    "FileDate": updatedFileDate,
+                    "ViolationDate": updatedViolDate,
+                    "ViolationType": updatedViolType,
+                    "ViolationSubType": updatedViolSubType,
+                    "ViolationAmount": updatedAmount
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    const rec = fullDataCache.find(r => r.Title === recordId);
+                    if (rec) rec.isVerifiedLocally = true;
+                    
+                    const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+                    updateHeader(checkedBoxes);
+
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    
+                    setTimeout(() => { 
+                        card.style.display = 'none'; 
+                    }, 300);
+
+                    ind.innerText = "✓ Action Complete";
+                    ind.className = "save-status";
+
+                    if (typeof triggerUndoToast === "function") {
+                        triggerUndoToast(recordId);
+                    }
+                } else {
+                    alert("Cloud sync failed. Check connection.");
+                    ind.innerText = "⚠️ Sync Error";
+                    ind.className = "save-status dirty";
+                }
+            });
+        } catch (error) {
+            alert("⚠️ JAVASCRIPT CRASH: " + error.message);
+        }
     }
 
     function triggerUndoToast(recordId) {
@@ -975,17 +966,12 @@ navigator.serviceWorker.register('./sw.js');
             <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
             ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
         `;
-                document.getElementById('side-drawer').classList.add('open');
-        
-        // NEW: Trick the browser into thinking we opened a new page
+        document.getElementById('side-drawer').classList.add('open');
         history.pushState({ drawerOpen: true }, "", "#file-viewer");
     }
 
-
-        function closeDrawer() {
+    function closeDrawer() {
         document.getElementById('side-drawer').classList.remove('open');
-        
-        // NEW: Clean up the history if they use the UI 'X' button
         if (window.location.hash === '#file-viewer') {
             history.back();
         }
@@ -1016,10 +1002,8 @@ navigator.serviceWorker.register('./sw.js');
         document.removeEventListener('touchmove', resizeDrawer);
     }
 
-    // --- REAL-TIME WARNING ALERTS ---
     function validateIntakeAlerts(inputElement, fieldType) {
         let value = inputElement.value.trim();
-
         if (fieldType === 'date') {
             if (!value) {
                 inputElement.classList.add('alert-missing-date');
@@ -1036,7 +1020,6 @@ navigator.serviceWorker.register('./sw.js');
         }
     }
 
-    // Listen as you type to remove the red/orange when fixed
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('file-date') || e.target.classList.contains('violation-date')) {
             validateIntakeAlerts(e.target, 'date');
@@ -1046,45 +1029,142 @@ navigator.serviceWorker.register('./sw.js');
         }
     });
 
-        // NEW: Intercept the Android/Hardware Back Button
     window.addEventListener('popstate', function(event) {
         const drawer = document.getElementById('side-drawer');
-        // If they hit back while the drawer is open, just close the drawer!
         if (drawer.classList.contains('open')) {
             drawer.classList.remove('open');
         }
     });
 
-        
-    // --- OVERRIDE RENDERCARDS TO TRIGGER ON LOAD ---
-    // We are hijacking the end of your renderCards function to force a scan
-    const originalRenderCards = renderCards;
-    renderCards = function(recordsList) {
-        originalRenderCards(recordsList); // Run your normal render
-
-        // Scan all inputs immediately after they hit the screen
-        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
-        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
-    };
-
-    // --- iOS MANUAL SYNC FUNCTION ---
     window.saveManualToken = function() {
         const inputVal = document.getElementById('manual-token-input').value.trim();
         if (!inputVal) return;
-        
         let extractedToken = inputVal;
-        
-        // If they pasted the entire URL instead of just the ID, extract just the Steward ID automatically
         if (inputVal.includes('steward=')) {
             extractedToken = inputVal.split('steward=')[1].split('&')[0];
         }
-        
-        // Save it directly into the iPhone's isolated app memory using the STEWARD token key
         localStorage.setItem('saved_steward_token', extractedToken);
-        
-        // Instantly reload the app so it boots up normally
         window.location.reload();
     };
+
+    // --- MODAL ENGINE (Self-Diagnosing) ---
+    function openNewMemberModal(fullName, empId) {
+        const modal = document.getElementById('new-member-modal-overlay');
+        
+        if (!modal) {
+            alert("⚠️ HTML MISSING: The browser cannot find the Modal HTML. This is a copy/paste error.");
+            return;
+        }
+        
+        let fName = '';
+        let lName = '';
+        if (fullName) {
+            const nameParts = fullName.replace('*', '').trim().split(' ');
+            fName = nameParts[0] || '';
+            lName = nameParts.slice(1).join(' ') || '';
+        }
+        
+        document.getElementById('add-fname').value = fName;
+        document.getElementById('add-lname').value = lName;
+        document.getElementById('add-empid').value = empId;
+        
+        const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
+        masterSeniorityArray.forEach(p => {
+            let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
+            if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
+            if (wgRaw && typeof wgRaw === 'string' && wgRaw.trim() !== '' && wgRaw !== '---') {
+                wgSet.add(wgRaw.toUpperCase()); 
+            }
+        });
+        let wgHtml = '<option value="" hidden>Select Work Group...</option>';
+        Array.from(wgSet).sort().forEach(group => {
+            wgHtml += `<option value="${group}">${group}</option>`;
+        });
+        document.getElementById('add-workgroup').innerHTML = wgHtml;
+
+        modal.style.display = 'flex';
+    }
+
+    function closeNewMemberModal() {
+        document.getElementById('new-member-modal-overlay').style.display = 'none';
+    }
+
+    function saveNewMemberFromHub() {
+        const checkFname = document.getElementById('add-fname').value.trim();
+        const checkLname = document.getElementById('add-lname').value.trim();
+        const checkEmpId = document.getElementById('add-empid').value.trim();
+
+        if (!checkFname || !checkLname || !checkEmpId) {
+            alert("Action Blocked: First Name, Last Name, and Emp ID are mandatory.");
+            return; 
+        }
+
+        const saveBtn = document.getElementById('btn-save-new-member');
+        saveBtn.innerText = '⏳ Saving to Roster...';
+        saveBtn.style.pointerEvents = 'none';
+
+        const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
+        const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
+
+        const payload = {
+            stewardGuid: stewardGUID,
+            action: "save_member",
+            recordId: "NEW", 
+            FirstName: checkFname,
+            LastName: checkLname,
+            EmployeeID: checkEmpId,
+            HubBucket: document.getElementById('add-workgroup').value,
+            PhoneNumber: document.getElementById('add-phone').value,
+            Center: document.getElementById('add-center').value,
+            JobClass: document.getElementById('add-job').value,
+            HireDate: document.getElementById('add-hire').value || null,
+            PTSeniorityDate: document.getElementById('add-ptdate').value || null,
+            FTSeniorityDate: document.getElementById('add-ftdate').value || null,
+            FTPT: document.getElementById('add-ftpt').value,
+            Active: document.getElementById('add-active').value,
+            ModifiedByStamp: updateStamp
+        };
+
+        if (!payload.HireDate) delete payload.HireDate;
+        if (!payload.PTSeniorityDate) delete payload.PTSeniorityDate;
+        if (!payload.FTSeniorityDate) delete payload.FTSeniorityDate;
+
+        fetch(saveFlowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (res.ok) {
+                saveBtn.innerText = '✅ Saved!';
+                saveBtn.style.background = 'var(--accent-green)';
+                
+                masterSeniorityArray.push({
+                    Title: checkEmpId,
+                    FirstName: checkFname,
+                    LastName: checkLname,
+                    HubBucket: payload.HubBucket
+                });
+
+                setTimeout(() => {
+                    closeNewMemberModal();
+                    saveBtn.innerText = '💾 Save to Master Roster';
+                    saveBtn.style.background = 'var(--accent)';
+                    saveBtn.style.pointerEvents = 'auto';
+                    
+                    alert("Member successfully added! You can now hit Verify & Approve.");
+                }, 1000);
+            } else {
+                alert('Cloud sync failed!');
+                saveBtn.innerText = '⚠️ Error';
+                saveBtn.style.pointerEvents = 'auto';
+            }
+        })
+        .catch(err => {
+            alert('Connection error.');
+            saveBtn.style.pointerEvents = 'auto';
+        });
+    }
             
     loadPending();
 
