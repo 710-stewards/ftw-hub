@@ -265,7 +265,14 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
+        
+        // The ORIGINAL flow for loading data (Reader)
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
+        
+        // The NEW flow for saving data (Writer)
+        // ** PASTE YOUR FULL URL HERE WITH THE &sig= AT THE END! **
+        const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1";
+
         
         let masterSeniority = [];
         let masterStewardRoster = [];
@@ -576,24 +583,24 @@
         function closeMemberModal() {
             document.getElementById('member-modal-overlay').style.display = 'none';
         }
-
         function saveMemberData() {
-            // --- NEW: STRICT VALIDATION CHECK ---
+            // Strict Validation Check
             const checkFname = document.getElementById('edit-fname').value.trim();
             const checkLname = document.getElementById('edit-lname').value.trim();
             const checkEmpId = document.getElementById('edit-empid').value.trim();
 
             if (!checkFname || !checkLname || !checkEmpId) {
                 alert("Action Blocked: First Name, Last Name, and Emp ID are mandatory fields.");
-                return; // Completely halts the save process
+                return; 
             }
-            // ------------------------------------
 
             const saveBtn = document.getElementById('btn-save-member');
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
 
-            const updateStamp = currentStewardName + " - " + new Date().toLocaleString();
+            // Custom audit trail stamp locked to local ET
+            const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
+            const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
 
             const payload = {
                 stewardGuid: stewardGUID,
@@ -614,7 +621,8 @@
                 ModifiedByStamp: updateStamp
             };
 
-            fetch(flowUrl, {
+            // Notice we are sending this to saveFlowUrl now!
+            fetch(saveFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -631,6 +639,8 @@
                         
                         document.getElementById('table-container').style.display = 'none';
                         document.getElementById('loading').style.display = 'block';
+                        
+                        // This still uses the original flowUrl to pull fresh data!
                         loadSeniorityData(); 
                     }, 1500);
                 } else {
@@ -644,6 +654,7 @@
                 saveBtn.style.pointerEvents = 'auto';
             });
         }
+
 
         loadSeniorityData();
     </script>
