@@ -607,7 +607,7 @@
             // Custom audit trail stamp locked to local ET
             const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
             const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
-            const payload = {
+                        const payload = {
                 stewardGuid: stewardGUID,
                 action: "save_member",
                 recordId: document.getElementById('edit-sys-id').value,
@@ -618,16 +618,21 @@
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
-                
-                // ADD || null TO THESE THREE LINES:
-                HireDate: document.getElementById('edit-hire').value || null,
-                PTSeniorityDate: document.getElementById('edit-ptdate').value || null,
-                FTSeniorityDate: document.getElementById('edit-ftdate').value || null,
-                
+                HireDate: document.getElementById('edit-hire').value,
+                PTSeniorityDate: document.getElementById('edit-ptdate').value,
+                FTSeniorityDate: document.getElementById('edit-ftdate').value,
                 FTPT: document.getElementById('edit-ftpt').value,
                 Active: document.getElementById('edit-active').value,
                 ModifiedByStamp: updateStamp
             };
+
+            // --- THE BYPASS TRICK ---
+            // If the date boxes are empty, we completely delete them from the payload.
+            // The cloud bouncer won't look for them, and SharePoint will safely leave the row blank.
+            if (!payload.HireDate) delete payload.HireDate;
+            if (!payload.PTSeniorityDate) delete payload.PTSeniorityDate;
+            if (!payload.FTSeniorityDate) delete payload.FTSeniorityDate;
+            // ------------------------
 
 
             // Notice we are sending this to saveFlowUrl now!
