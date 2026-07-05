@@ -1176,17 +1176,19 @@
                 let dispHtml = '';
                 if (currentDisp) {
                     dispHtml = `<strong>Status:</strong> ${currentDisp}`;
-                    if (sDate) dispHtml += ` (Settled: ${sDate})`;
+                    if (sDate) dispHtml += ` (${sDate})`;
                     
-                    // Add the Final Paid Amount
-                    dispHtml += `<br><strong>Final Paid:</strong> $${settledAmt}<br><br>`;
+                    // Condenses to a single line: Status: Claim Allowed (06/22/2026) $341.00
+                    dispHtml += ` $${settledAmt}<br><br>`;
                 }
 
                 const notesAHtml = item.NotesA ? `<strong>Timeline:</strong><br>${item.NotesA}<br><br>` : '';
                 const notesBHtml = item.NotesB ? `<strong>Private Ledger:</strong><br>${item.NotesB}` : '';
                 
                 let combinedNotes = `${dispHtml}${notesAHtml}${notesBHtml}`.trim();
-                if (!combinedNotes) combinedNotes = '<i>No notes logged.</i>';
+                
+                // Strips off any empty line breaks at the very end of the cell so it stays compact
+                combinedNotes = combinedNotes.replace(/(<br>)+$/, '');
                 
                 html += `
                     <tr>
