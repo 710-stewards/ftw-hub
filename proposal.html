@@ -55,15 +55,8 @@
             padding: 12px; border-radius: 6px; font-size: 15px; outline: none; transition: border-color 0.2s;
         }
         input[type="text"]:focus, input[type="email"]:focus, textarea:focus { border-color: var(--accent); }
+        input:disabled { background: #1a1a1a; color: #888; border-color: #333; cursor: not-allowed; }
         textarea { resize: vertical; min-height: 100px; }
-
-        /* Radio & Checkboxes */
-        .radio-group { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 5px; }
-        .radio-label {
-            display: flex; align-items: center; gap: 8px; font-size: 14px; color: #e0e0e0;
-            background: #2a2a2a; padding: 10px 15px; border-radius: 6px; border: 1px solid #444; cursor: pointer;
-        }
-        .radio-label input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
 
         /* Submit Button */
         .btn-submit {
@@ -79,10 +72,21 @@
             display: none; background: #2ecc71; color: #000; padding: 20px; border-radius: 8px;
             text-align: center; font-weight: bold; margin-top: 20px;
         }
+
+        /* Anon Checkbox Styles */
+        .anon-wrapper {
+            display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;
+        }
+        .anon-label {
+            color: var(--accent); font-size: 11px; cursor: pointer; text-transform: uppercase;
+            font-weight: bold; display: flex; align-items: center; gap: 5px; margin-bottom: 0;
+        }
+        .anon-label input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; margin: 0; }
     </style>
 </head>
 <body>
 
+    <!-- Top Bar -->
     <div class="top-navbar">
         <a href="javascript:history.back()" class="back-btn">←</a>
         <div>
@@ -100,22 +104,23 @@
 
         <form id="proposal-form">
             
+            <!-- Member Info Section -->
             <div class="form-section">
                 <div class="section-title">1. Member Information</div>
                 
                 <div class="input-group">
-                    <label>Full Name</label>
-                    <input type="text" id="member-name" required placeholder="Jane Doe">
+                    <div class="anon-wrapper">
+                        <label style="margin-bottom: 0;">Full Name</label>
+                        <label class="anon-label">
+                            <input type="checkbox" id="anon-check" onchange="toggleAnonymous()"> Submit Anonymously
+                        </label>
+                    </div>
+                    <input type="text" id="member-name" required placeholder="Type your name here...">
                 </div>
                 
-                <div class="input-group">
+                <div class="input-group" style="margin-top: 20px;">
                     <label>Job Classification</label>
-                    <div class="radio-group">
-                        <label class="radio-label"><input type="radio" name="classification" value="Feeder Driver" required> Feeder</label>
-                        <label class="radio-label"><input type="radio" name="classification" value="Package Car Driver"> Package</label>
-                        <label class="radio-label"><input type="radio" name="classification" value="Inside / Hub"> Inside/Hub</label>
-                        <label class="radio-label"><input type="radio" name="classification" value="Other"> Other</label>
-                    </div>
+                    <input type="text" id="classification" required placeholder="e.g., Feeder, Package, Hub, etc.">
                 </div>
 
                 <div class="input-group" style="margin-top: 20px;">
@@ -124,10 +129,12 @@
                 </div>
             </div>
 
+            <!-- Proposals Section -->
             <div class="form-section">
                 <div class="section-title">2. Contract Proposals</div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">List the Article/Section number if known, followed by your proposed change or addition.</p>
 
+                <!-- Proposal 1 -->
                 <div class="input-group">
                     <label>Contract Article / Section (If Applicable)</label>
                     <input type="text" id="article-1" placeholder="e.g., Article 26, Section 1">
@@ -139,6 +146,7 @@
 
                 <hr style="border: 0; border-top: 1px dashed #444; margin: 25px 0;">
 
+                <!-- Proposal 2 -->
                 <div class="input-group">
                     <label>Contract Article / Section (Optional)</label>
                     <input type="text" id="article-2">
@@ -160,17 +168,44 @@
     </div>
 
     <script>
+        // --- 1. PRE-FILL LOGIC ---
+        // Looks for ?name=Gary in the URL and drops it into the box
+        const urlParams = new URLSearchParams(window.location.search);
+        const passedName = urlParams.get('name');
+        
+        if (passedName) {
+            document.getElementById('member-name').value = decodeURIComponent(passedName);
+        }
+
+        // --- 2. ANONYMOUS TOGGLE LOGIC ---
+        function toggleAnonymous() {
+            const nameInput = document.getElementById('member-name');
+            const anonCheck = document.getElementById('anon-check');
+            
+            if (anonCheck.checked) {
+                // Save what they typed in the background so we don't lose it
+                nameInput.dataset.savedName = nameInput.value;
+                nameInput.value = "Anonymous";
+                nameInput.disabled = true;
+            } else {
+                // Put their name back and unlock the box
+                nameInput.value = nameInput.dataset.savedName || passedName || "";
+                nameInput.disabled = false;
+            }
+        }
+
+        // --- 3. FORM SUBMISSION LOGIC ---
         document.getElementById('proposal-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Stop the page from reloading
+            e.preventDefault(); 
             
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.innerText = "Sending...";
             submitBtn.disabled = true;
 
-            // 1. Gather all the data from the form
             const formData = {
+                idToken: urlParams.get('id') || "No ID Passed",
                 name: document.getElementById('member-name').value,
-                classification: document.querySelector('input[name="classification"]:checked').value,
+                classification: document.getElementById('classification').value,
                 email: document.getElementById('member-email').value,
                 proposals: [
                     {
@@ -184,19 +219,16 @@
                 ]
             };
 
-            // 2. The Power Automate Handoff (This is where the magic will happen later)
-            // For now, we will simulate the delay of sending it to the server
             console.log("Payload ready to send:", formData);
             
+            // Simulating a delay for the UI
             setTimeout(() => {
-                // Hide the form and show the success message
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('success-msg').style.display = 'block';
             }, 1500);
 
-            /* WHEN YOU BUILD YOUR POWER AUTOMATE FLOW, YOU WILL REPLACE THE SETTIMEOUT ABOVE WITH THIS:
-            
+            /* WHEN READY FOR POWER AUTOMATE, REPLACE SETTIMEOUT WITH:
             fetch('YOUR_POWER_AUTOMATE_URL_HERE', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
