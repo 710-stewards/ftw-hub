@@ -1,0 +1,6 @@
+[
+  { "type": "header", "title": "Resources" },
+  { "type": "link", "name": "Member Portal", "filename": "index.html" },
+  { "type": "link", "name": "Document Library", "filename": "library.html" },
+  { "type": "link", "name": "Contract Proposals", "filename": "proposal.html" }
+]
