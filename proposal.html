@@ -25,10 +25,28 @@
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
-        .back-btn {
+        .hamburger-btn {
             background: none; border: none; color: var(--accent); 
-            font-size: 24px; cursor: pointer; margin-right: 15px; text-decoration: none; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
         }
+
+        /* Drawer Styles */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
 
         /* Form Container */
         .form-container { padding: 20px; max-width: 800px; margin: 0 auto; }
@@ -82,8 +100,25 @@
 </head>
 <body>
 
+    <!-- Nav Drawer -->
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="padding: 20px 20px 10px;">
+            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
+                Member Menu
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </h3>
+        </div>
+        
+        <!-- THE NEW EMPTY CONTAINER -->
+        <div id="nav-links-container">
+            <!-- JavaScript will inject links.json here -->
+        </div>
+    </div>
+
+    <!-- Top Bar -->
     <div class="top-navbar">
-        <a href="javascript:history.back()" class="back-btn">←</a>
+        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
         <div>
             <div class="header-title">Local 710 Proposals</div>
             <div class="header-sub">UPS Contract Negotiations</div>
@@ -99,6 +134,7 @@
 
         <form id="proposal-form">
             
+            <!-- Member Info Section -->
             <div class="form-section">
                 <div class="section-title">1. Member Information</div>
                 
@@ -119,6 +155,7 @@
                 </div>
             </div>
 
+            <!-- Proposals Section -->
             <div class="form-section">
                 <div class="section-title">2. Contract Proposal</div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">List the Article/Section number if known, followed by your proposed change or addition.</p>
@@ -141,6 +178,7 @@
             </div>
         </form>
 
+        <!-- History Section -->
         <div class="form-header" style="margin-top: 40px; background: #161616; border-left-color: #555;">
             <h2>My Previous Submissions</h2>
             <p>Proposals you securely submitted with your name will appear here.</p>
@@ -154,19 +192,67 @@
     </div>
 
     <script>
-        // --- 1. PRE-FILL LOGIC ---
+        // --- 1. UNIVERSAL MENU BUILDER ---
         const urlParams = new URLSearchParams(window.location.search);
         
-        // Grab the data passed from the main dashboard
+        // Grab the security variables from the current URL
+        const passedGuid = urlParams.get('id');
         const passedName = urlParams.get('name');
         const passedEmpId = urlParams.get('emp'); 
-        const passedGuid = urlParams.get('id');
-        
+
+        // Build the secure "tail" to attach to every link
+        let secureQueryString = "";
+        if (passedGuid) {
+            secureQueryString = `?id=${passedGuid}`;
+            if (passedName) secureQueryString += `&name=${encodeURIComponent(passedName)}`;
+            if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
+        }
+
+        // Fetch the links.json and build the menu
+        fetch('links.json')
+            .then(response => response.json())
+            .then(menuItems => {
+                const navContainer = document.getElementById('nav-links-container');
+                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                let menuHTML = '';
+
+                menuItems.forEach(item => {
+                    if (item.type === 'header') {
+                        menuHTML += `<div class="nav-section-title">${item.title}</div>`;
+                    } else if (item.type === 'link') {
+                        const isActive = (currentPage === item.filename) ? 'active' : '';
+                        const activeText = isActive ? ' (Active)' : '';
+                        const finalUrl = item.filename + secureQueryString;
+                        menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
+                    }
+                });
+
+                navContainer.innerHTML = menuHTML;
+            })
+            .catch(error => {
+                console.log("Error loading the navigation menu:", error);
+                document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu.</div>`;
+            });
+
+
+        // --- 2. MENU CONTROLS ---
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+
+        // --- 3. FORM PRE-FILL LOGIC ---
         if (passedName) {
             document.getElementById('member-name').value = decodeURIComponent(passedName);
         }
 
-        // --- 2. ANONYMOUS TOGGLE LOGIC ---
+        // --- 4. ANONYMOUS TOGGLE LOGIC ---
         function toggleAnonymous() {
             const nameInput = document.getElementById('member-name');
             const anonCheck = document.getElementById('anon-check');
@@ -181,7 +267,7 @@
             }
         }
 
-        // --- 3. FORM SUBMISSION LOGIC ---
+        // --- 5. FORM SUBMISSION LOGIC ---
         document.getElementById('proposal-form').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -191,9 +277,7 @@
 
             const isAnon = document.getElementById('anon-check').checked;
 
-            // Build the clean payload for Power Automate
             const formData = {
-                // If anon is checked, wipe the ID. Otherwise, send their permanent Employee ID.
                 employeeId: isAnon ? "ANON" : (passedEmpId || "UNKNOWN_EMP_ID"),
                 secureGuid: passedGuid || "UNKNOWN_GUID",
                 name: document.getElementById('member-name').value,
@@ -204,7 +288,6 @@
 
             console.log("Payload ready to send to SharePoint:", formData);
             
-            // Simulating a delay for the UI
             setTimeout(() => {
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
