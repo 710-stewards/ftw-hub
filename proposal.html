@@ -56,8 +56,6 @@
         }
         input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
         input:disabled { background: #1a1a1a; color: #888; border-color: #333; cursor: not-allowed; }
-        
-        /* Made the text area much taller */
         textarea { resize: vertical; min-height: 250px; }
 
         /* Submit Button */
@@ -76,19 +74,14 @@
         }
 
         /* Anon Checkbox Styles */
-        .anon-wrapper {
-            display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;
-        }
-        .anon-label {
-            color: var(--accent); font-size: 11px; cursor: pointer; text-transform: uppercase;
-            font-weight: bold; display: flex; align-items: center; gap: 5px; margin-bottom: 0;
-        }
-        .anon-label input { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; margin: 0; }
+        .anon-wrapper { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2px; }
+        .anon-label { color: var(--accent); font-size: 12px; cursor: pointer; text-transform: uppercase; font-weight: bold; display: flex; align-items: center; gap: 5px; margin-bottom: 0; }
+        .anon-label input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; margin: 0; }
+        .anon-disclaimer { font-size: 10px; color: #ff5555; font-style: italic; margin-bottom: 8px; text-align: right; display: block; }
     </style>
 </head>
 <body>
 
-    <!-- Top Bar -->
     <div class="top-navbar">
         <a href="javascript:history.back()" class="back-btn">←</a>
         <div>
@@ -106,7 +99,6 @@
 
         <form id="proposal-form">
             
-            <!-- Member Info Section -->
             <div class="form-section">
                 <div class="section-title">1. Member Information</div>
                 
@@ -117,6 +109,7 @@
                             <input type="checkbox" id="anon-check" onchange="toggleAnonymous()"> Submit Anonymously
                         </label>
                     </div>
+                    <span class="anon-disclaimer">Anonymous submissions will NOT appear in your personal history.</span>
                     <input type="text" id="member-name" required placeholder="Type your name here...">
                 </div>
                 
@@ -126,7 +119,6 @@
                 </div>
             </div>
 
-            <!-- Proposals Section -->
             <div class="form-section">
                 <div class="section-title">2. Contract Proposal</div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">List the Article/Section number if known, followed by your proposed change or addition.</p>
@@ -149,12 +141,26 @@
             </div>
         </form>
 
+        <div class="form-header" style="margin-top: 40px; background: #161616; border-left-color: #555;">
+            <h2>My Previous Submissions</h2>
+            <p>Proposals you securely submitted with your name will appear here.</p>
+        </div>
+        <div id="history-container">
+            <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; border: 1px dashed #333; border-radius: 6px;">
+                Connecting to secure database...
+            </div>
+        </div>
+
     </div>
 
     <script>
         // --- 1. PRE-FILL LOGIC ---
         const urlParams = new URLSearchParams(window.location.search);
+        
+        // Grab the data passed from the main dashboard
         const passedName = urlParams.get('name');
+        const passedEmpId = urlParams.get('emp'); 
+        const passedGuid = urlParams.get('id');
         
         if (passedName) {
             document.getElementById('member-name').value = decodeURIComponent(passedName);
@@ -183,17 +189,22 @@
             submitBtn.innerText = "Sending...";
             submitBtn.disabled = true;
 
-            // Simplified data payload for Power Automate
+            const isAnon = document.getElementById('anon-check').checked;
+
+            // Build the clean payload for Power Automate
             const formData = {
-                idToken: urlParams.get('id') || "No ID Passed",
+                // If anon is checked, wipe the ID. Otherwise, send their permanent Employee ID.
+                employeeId: isAnon ? "ANON" : (passedEmpId || "UNKNOWN_EMP_ID"),
+                secureGuid: passedGuid || "UNKNOWN_GUID",
                 name: document.getElementById('member-name').value,
                 classification: document.getElementById('classification').value,
                 article: document.getElementById('article').value,
                 proposalText: document.getElementById('proposal').value
             };
 
-            console.log("Payload ready to send:", formData);
+            console.log("Payload ready to send to SharePoint:", formData);
             
+            // Simulating a delay for the UI
             setTimeout(() => {
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
