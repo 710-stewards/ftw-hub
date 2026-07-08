@@ -209,7 +209,7 @@
         }
 
         // Fetch the links.json and build the menu
-        fetch('links.json')
+        fetch('member-nav.json')
             .then(response => response.json())
             .then(menuItems => {
                 const navContainer = document.getElementById('nav-links-container');
