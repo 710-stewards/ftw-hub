@@ -50,13 +50,15 @@
         /* Inputs */
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
-        input[type="text"], input[type="email"], textarea {
+        input[type="text"], textarea {
             width: 100%; background: #121212; border: 1px solid #444; color: white;
             padding: 12px; border-radius: 6px; font-size: 15px; outline: none; transition: border-color 0.2s;
         }
-        input[type="text"]:focus, input[type="email"]:focus, textarea:focus { border-color: var(--accent); }
+        input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
         input:disabled { background: #1a1a1a; color: #888; border-color: #333; cursor: not-allowed; }
-        textarea { resize: vertical; min-height: 100px; }
+        
+        /* Made the text area much taller */
+        textarea { resize: vertical; min-height: 250px; }
 
         /* Submit Button */
         .btn-submit {
@@ -122,43 +124,25 @@
                     <label>Job Classification</label>
                     <input type="text" id="classification" required placeholder="e.g., Feeder, Package, Hub, etc.">
                 </div>
-
-                <div class="input-group" style="margin-top: 20px;">
-                    <label>Email Address</label>
-                    <input type="email" id="member-email" placeholder="Optional, for bargaining updates">
-                </div>
             </div>
 
             <!-- Proposals Section -->
             <div class="form-section">
-                <div class="section-title">2. Contract Proposals</div>
+                <div class="section-title">2. Contract Proposal</div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">List the Article/Section number if known, followed by your proposed change or addition.</p>
 
-                <!-- Proposal 1 -->
                 <div class="input-group">
                     <label>Contract Article / Section (If Applicable)</label>
-                    <input type="text" id="article-1" placeholder="e.g., Article 26, Section 1">
+                    <input type="text" id="article" placeholder="e.g., Article 26, Section 1">
                 </div>
+                
                 <div class="input-group">
                     <label>Your Proposal</label>
-                    <textarea id="proposal-1" required placeholder="Explain your proposed change here..."></textarea>
+                    <textarea id="proposal" required placeholder="Explain your proposed change here..."></textarea>
                 </div>
-
-                <hr style="border: 0; border-top: 1px dashed #444; margin: 25px 0;">
-
-                <!-- Proposal 2 -->
-                <div class="input-group">
-                    <label>Contract Article / Section (Optional)</label>
-                    <input type="text" id="article-2">
-                </div>
-                <div class="input-group">
-                    <label>Your Proposal</label>
-                    <textarea id="proposal-2" placeholder="Second proposal..."></textarea>
-                </div>
-
             </div>
 
-            <button type="submit" id="submit-btn" class="btn-submit">Submit Proposals</button>
+            <button type="submit" id="submit-btn" class="btn-submit">Submit Proposal</button>
             
             <div id="success-msg">
                 ✅ Proposal Submitted Successfully! <br><span style="font-size: 13px; font-weight: normal;">Thank you for participating in the process.</span>
@@ -169,7 +153,6 @@
 
     <script>
         // --- 1. PRE-FILL LOGIC ---
-        // Looks for ?name=Gary in the URL and drops it into the box
         const urlParams = new URLSearchParams(window.location.search);
         const passedName = urlParams.get('name');
         
@@ -183,12 +166,10 @@
             const anonCheck = document.getElementById('anon-check');
             
             if (anonCheck.checked) {
-                // Save what they typed in the background so we don't lose it
                 nameInput.dataset.savedName = nameInput.value;
                 nameInput.value = "Anonymous";
                 nameInput.disabled = true;
             } else {
-                // Put their name back and unlock the box
                 nameInput.value = nameInput.dataset.savedName || passedName || "";
                 nameInput.disabled = false;
             }
@@ -202,26 +183,17 @@
             submitBtn.innerText = "Sending...";
             submitBtn.disabled = true;
 
+            // Simplified data payload for Power Automate
             const formData = {
                 idToken: urlParams.get('id') || "No ID Passed",
                 name: document.getElementById('member-name').value,
                 classification: document.getElementById('classification').value,
-                email: document.getElementById('member-email').value,
-                proposals: [
-                    {
-                        article: document.getElementById('article-1').value,
-                        text: document.getElementById('proposal-1').value
-                    },
-                    {
-                        article: document.getElementById('article-2').value,
-                        text: document.getElementById('proposal-2').value
-                    }
-                ]
+                article: document.getElementById('article').value,
+                proposalText: document.getElementById('proposal').value
             };
 
             console.log("Payload ready to send:", formData);
             
-            // Simulating a delay for the UI
             setTimeout(() => {
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
