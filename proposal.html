@@ -301,17 +301,6 @@
                     `;
                 });
 
-                    historyHTML += `
-                        <div style="background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 15px; margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 6px;">
-                                <span style="font-size: 12px; font-weight: bold; color: var(--accent); text-transform: uppercase;">${articleText}</span>
-                                <span style="font-size: 10px; color: var(--text-muted);">${cleanTime}</span>
-                            </div>
-                            <div style="font-size: 13px; color: #e0e0e0; line-height: 1.4; white-space: pre-wrap;">${proposalText}</div>
-                        </div>
-                    `;
-                });
-
                 historyContainer.innerHTML = historyHTML;
             })
             .catch(error => {
