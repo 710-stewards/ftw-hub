@@ -224,7 +224,7 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        function loadProposals() {
+                function loadProposals() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No token provided.";
                 return;
@@ -241,6 +241,12 @@
             .then(res => res.json())
             .then(bundle => {
                 masterProposalsCache = bundle.proposals || bundle || [];
+                
+                // --- THE FIX: Stamp a unique barcode on every item ---
+                masterProposalsCache.forEach((item, index) => {
+                    item.tempUID = 'prop_' + index;
+                });
+                
                 document.getElementById('loading').style.display = 'none';
                 applyFilters();
             }).catch(err => {
@@ -298,7 +304,7 @@
             renderCards(filteredArray);
         }
 
-                function renderCards(dataArray) {
+                        function renderCards(dataArray) {
             const display = document.getElementById('data-display');
             if (dataArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No proposals found for this filter.</div>';
@@ -307,14 +313,11 @@
 
             let html = '';
             dataArray.forEach(item => {
-                const sysId = item.Title || 'N/A';
+                const uniqueBarcode = item.tempUID; // Uses our new unique ID
                 const name = item.SubmitterName || 'Anonymous Member';
                 const category = item.Category || 'General';
                 const snippet = item.ProposalText || 'No text provided.';
-                
-                // PULL THE CLASSIFICATION
                 const classification = item.Classification ? item.Classification.toUpperCase() : 'MEMBER';
-                
                 const date = item.SubmittedDate ? new Date(item.SubmittedDate).toLocaleDateString('en-US') : 'N/A';
                 
                 html += `
@@ -331,7 +334,7 @@
                         </div>
                         
                         <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end; min-width: 140px;">
-                            <button class="btn-3d" onclick="openDrawer('${sysId}')">Read & Review</button>
+                            <button class="btn-3d" onclick="openDrawer('${uniqueBarcode}')">Read & Review</button>
                         </div>
                     </div>
                 `;
@@ -339,17 +342,16 @@
             display.innerHTML = html;
         }
 
-                        function openDrawer(recordId) {
-            const record = masterProposalsCache.find(r => r.Title === recordId);
+                                function openDrawer(uniqueBarcode) {
+            // Search the database using the unique barcode
+            const record = masterProposalsCache.find(r => r.tempUID === uniqueBarcode);
             if (!record) return;
             
-            // Format full detailed date for the drawer view
             const fullDate = record.SubmittedDate ? new Date(record.SubmittedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown Date';
 
-            // --- RESTRUCTURED HEADER ---
             const submitterName = record.SubmitterName || 'Anonymous';
-            // recordId pulls from the SharePoint Title column, which holds the Emp ID or "ANON"
-            const empId = recordId; 
+            // Safely pull the actual Employee ID from the SharePoint Title column
+            const empId = record.Title || 'Unknown'; 
 
             document.getElementById('drawer-title').innerText = `Submitted By: ${submitterName}`;
             document.getElementById('drawer-subtitle').innerHTML = `
