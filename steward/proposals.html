@@ -339,15 +339,23 @@
             display.innerHTML = html;
         }
 
-                function openDrawer(recordId) {
+                        function openDrawer(recordId) {
             const record = masterProposalsCache.find(r => r.Title === recordId);
             if (!record) return;
             
             // Format full detailed date for the drawer view
             const fullDate = record.SubmittedDate ? new Date(record.SubmittedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown Date';
 
-            document.getElementById('drawer-title').innerText = `Proposal: ${recordId}`;
-            document.getElementById('drawer-subtitle').innerText = `Submitted by ${record.SubmitterName || 'Anonymous'} on ${fullDate}`;
+            // --- RESTRUCTURED HEADER ---
+            const submitterName = record.SubmitterName || 'Anonymous';
+            // recordId pulls from the SharePoint Title column, which holds the Emp ID or "ANON"
+            const empId = recordId; 
+
+            document.getElementById('drawer-title').innerText = `Submitted By: ${submitterName}`;
+            document.getElementById('drawer-subtitle').innerHTML = `
+                <span style="color: #bbb;">Employee ID:</span> ${empId}<br>
+                <span style="color: #bbb;">Date:</span> ${fullDate}
+            `;
             
             const container = document.getElementById('drawer-main-content');
             
@@ -379,6 +387,7 @@ ${record.ProposalText || 'No details provided.'}
             document.getElementById('side-drawer').classList.add('open');
             history.pushState({ drawerOpen: true }, "", "#proposal-viewer");
         }
+
 
 
         function closeDrawer() {
