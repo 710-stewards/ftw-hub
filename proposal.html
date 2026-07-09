@@ -109,11 +109,7 @@
                 <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
             </h3>
         </div>
-        
-        <!-- THE NEW EMPTY CONTAINER -->
-        <div id="nav-links-container">
-            <!-- JavaScript will inject links.json here -->
-        </div>
+        <div id="nav-links-container"></div>
     </div>
 
     <!-- Top Bar -->
@@ -134,7 +130,6 @@
 
         <form id="proposal-form">
             
-            <!-- Member Info Section -->
             <div class="form-section">
                 <div class="section-title">1. Member Information</div>
                 
@@ -155,7 +150,6 @@
                 </div>
             </div>
 
-            <!-- Proposals Section -->
             <div class="form-section">
                 <div class="section-title">2. Contract Proposal</div>
                 <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">List the Article/Section number if known, followed by your proposed change or addition.</p>
@@ -192,15 +186,16 @@
     </div>
 
     <script>
-        // --- 1. UNIVERSAL MENU BUILDER ---
-        const urlParams = new URLSearchParams(window.location.search);
+        // --- PASTE YOUR NEW MASTER POWER AUTOMATE URL HERE ---
+        const masterFlowUrl = 'https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/230151223e8443f6bb1095abe6245ede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=K45FpawXiqM8I24ONJ4HnhKZeghVrI_rGFaq4yhr4HQ';
         
-        // Grab the security variables from the current URL
+        // --- 1. GLOBAL VARIABLES & URL PARAMS ---
+        const urlParams = new URLSearchParams(window.location.search);
         const passedGuid = urlParams.get('id');
         const passedName = urlParams.get('name');
         const passedEmpId = urlParams.get('emp'); 
 
-        // Build the secure "tail" to attach to every link
+        // --- 2. UNIVERSAL MENU BUILDER ---
         let secureQueryString = "";
         if (passedGuid) {
             secureQueryString = `?id=${passedGuid}`;
@@ -208,8 +203,7 @@
             if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
         }
 
-        // Fetch the links.json and build the menu
-        fetch('member-nav.json')
+        fetch('links.json')
             .then(response => response.json())
             .then(menuItems => {
                 const navContainer = document.getElementById('nav-links-container');
@@ -226,33 +220,25 @@
                         menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
                     }
                 });
-
                 navContainer.innerHTML = menuHTML;
             })
-            .catch(error => {
-                console.log("Error loading the navigation menu:", error);
-                document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu.</div>`;
-            });
+            .catch(error => console.log("Error loading the navigation menu:", error));
 
-
-        // --- 2. MENU CONTROLS ---
+        // --- 3. MENU CONTROLS ---
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
         }
-
         function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-
-        // --- 3. FORM PRE-FILL LOGIC ---
+        // --- 4. FORM PRE-FILL LOGIC ---
         if (passedName) {
             document.getElementById('member-name').value = decodeURIComponent(passedName);
         }
 
-        // --- 4. ANONYMOUS TOGGLE LOGIC ---
         function toggleAnonymous() {
             const nameInput = document.getElementById('member-name');
             const anonCheck = document.getElementById('anon-check');
@@ -266,7 +252,71 @@
                 nameInput.disabled = false;
             }
         }
-// --- 5. FORM SUBMISSION LOGIC ---
+
+        // --- 5. INITIAL FETCH (HISTORY GETTER) ---
+        const historyContainer = document.getElementById('history-container');
+
+        if (!passedEmpId || passedEmpId === "ANON") {
+            historyContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #555; font-size: 13px; font-style: italic;">Cannot retrieve history without a secure employee token.</div>`;
+        } else {
+            // Build the "Fetch" payload
+            const fetchPayload = {
+                action: "fetch",
+                employeeId: passedEmpId,
+                secretStewardName: "",
+                displayName: "",
+                classification: "",
+                article: "",
+                proposalText: ""
+            };
+
+            fetch(masterFlowUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fetchPayload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data || data.length === 0) {
+                    historyContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">You have no active contract proposals on file.</div>`;
+                    return;
+                }
+
+                let historyHTML = '';
+                
+                data.forEach(item => {
+                    const articleText = item.Article || "General Contract";
+                    const proposalText = item.Proposal || "No details provided.";
+                    const timeStamp = item.Timestamp || "Unknown Date";
+
+                    // Clean up the timestamp for the UI (hides the secret name)
+                    let cleanTime = timeStamp;
+                    if (timeStamp.includes(', on ')) {
+                        cleanTime = timeStamp.split(', on ')[1];
+                    } else if (timeStamp.includes(' on ')) {
+                        cleanTime = timeStamp.split(' on ')[1];
+                    }
+
+                    historyHTML += `
+                        <div style="background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 15px; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px dashed #333; padding-bottom: 6px;">
+                                <span style="font-size: 12px; font-weight: bold; color: var(--accent); text-transform: uppercase;">${articleText}</span>
+                                <span style="font-size: 10px; color: var(--text-muted);">${cleanTime}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #e0e0e0; line-height: 1.4; white-space: pre-wrap;">${proposalText}</div>
+                        </div>
+                    `;
+                });
+
+                historyContainer.innerHTML = historyHTML;
+            })
+            .catch(error => {
+                console.error("History Fetch Error:", error);
+                historyContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: #ff5555; font-size: 13px;">Error connecting to secure database.</div>`;
+            });
+        }
+
+        // --- 6. FORM SUBMISSION LOGIC (WRITER) ---
         document.getElementById('proposal-form').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -275,40 +325,34 @@
             submitBtn.disabled = true;
 
             const isAnon = document.getElementById('anon-check').checked;
+            const actualName = passedName || "Unknown Member";
 
-            const formData = {
-                // We keep this as "ANON" if checked so it DOES NOT show up in their personal history on the app
+            const submitPayload = {
+                action: "submit",
                 employeeId: isAnon ? "ANON" : (passedEmpId || "UNKNOWN_EMP_ID"),
-                
-                // We send their actual passedName silently in the background for your eyes only
-                secretStewardName: passedName || "Unknown Identity",
-                
-                // This is what goes into the main "Name" column in SharePoint
+                secretStewardName: actualName,
                 displayName: isAnon ? "Anonymous" : document.getElementById('member-name').value,
-                
                 classification: document.getElementById('classification').value,
                 article: document.getElementById('article').value,
                 proposalText: document.getElementById('proposal').value
             };
 
-            console.log("Payload ready to send to SharePoint:", formData);
-
-            // REAL POWER AUTOMATE FETCH
-            fetch('https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/230151223e8443f6bb1095abe6245ede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=K45FpawXiqM8I24ONJ4HnhKZeghVrI_rGFaq4yhr4HQ', {
+            fetch(masterFlowUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(submitPayload)
             }).then(response => {
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('success-msg').style.display = 'block';
+                
+                // Optional: Reload the page after 2 seconds to update the history list!
+                setTimeout(() => { window.location.reload(); }, 2000);
             }).catch(error => {
                 submitBtn.innerText = "Error. Try Again.";
                 submitBtn.disabled = false;
             });
         });
-
-
-            </script>
+    </script>
 </body>
 </html>
