@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local 710 Proposal Hub</title>
+    <style>
+        /* CORE CONFIGURATION - MATCHES YOUR HUB STYLE */
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --danger: #ff3333;
+            --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+
+        /* NAVIGATION DRAWER */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+
+        /* FILTER BUBBLES */
+        .filter-bubbles-container {
+            display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; 
+            padding-bottom: 5px; scrollbar-width: none;
+        }
+        .filter-bubbles-container::-webkit-scrollbar { display: none; }
+        .filter-bubble {
+            background: #222; border: 1px solid #444; color: #bbb; padding: 8px 18px;
+            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
+            white-space: nowrap; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .filter-bubble.active { background: var(--accent); color: #111; border-color: var(--accent); box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); }
+
+        /* PROPOSAL CARDS */
+        .record-card {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+        }
+        .card-meta { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
+        .submitter-name { font-size: 18px; font-weight: 900; color: white; }
+        .proposal-category { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .proposal-snippet { color: var(--text-muted); font-size: 13px; line-height: 1.4; max-width: 500px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .status-pill {
+            padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; border: 1px solid #555; background: #222; color: white; text-align: center;
+        }
+        .status-new { border-color: #3498db; color: #3498db; background: rgba(52, 152, 219, 0.1); }
+        .status-shortlisted { border-color: var(--accent-green); color: var(--accent-green); background: rgba(46, 204, 113, 0.1); }
+        .status-archived { border-color: var(--danger); color: var(--danger); background: rgba(255, 51, 51, 0.1); }
+
+        /* BUTTONS */
+        .btn-3d {
+            height: 42px; padding: 0 20px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
+            background-color: #333; color: #fff; border: 1px solid #555; white-space: nowrap;
+        }
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+
+        /* RIGHT SIDE AUDIT DRAWER */
+        .side-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 550px;
+            background: #161616; border-left: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
+        }
+        .side-drawer.open { transform: translateX(0); }
+        .drawer-header { padding: 20px; background: #222; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .drawer-handle { position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent; }
+
+        .drawer-text-block { background: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px dashed #444; color: #ddd; font-size: 14px; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; }
+        .drawer-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+        
+        select {
+            width: 100%; height: 45px; background: #262626; border: 1px solid #444;
+            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; margin-bottom: 15px;
+        }
+        select:focus { border-color: var(--accent); }
+
+    </style>
+</head>
+<body>
+
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        <div id="dynamic-nav-container"></div>      
+    </div>
+
+    <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Contract Proposals</div>
+                <div id="steward-info" class="header-sub">Member Submission Queue</div>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <input type="text" id="global-search-input" placeholder="🔍 Search proposals..." style="height: 40px; padding: 0 15px; border-radius: 20px; background: #222; border: 1px solid #444; color: white; outline: none; width: 100%; max-width: 250px;" oninput="applyFilters()">
+        </div>
+    </div>
+
+    <div class="filter-bubbles-container">
+        <button class="filter-bubble active" onclick="setFilter('ALL', this)">ALL PROPOSALS</button>
+        <button class="filter-bubble" onclick="setFilter('NEW', this)">NEW</button>
+        <button class="filter-bubble" onclick="setFilter('SHORTLISTED', this)">SHORTLISTED</button>
+        <button class="filter-bubble" onclick="setFilter('ARCHIVED', this)">ARCHIVED</button>
+    </div>
+
+    <div id="data-display">
+        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+            ↻ Fetching Member Proposals...
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE DEEP DIVE DRAWER -->
+    <div id="side-drawer" class="side-drawer">
+        <div id="drawerHandle" class="drawer-handle"></div>
+        <div class="drawer-header">
+            <div>
+                <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Proposal Details</h3>
+                <div id="drawer-subtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 4px;"></div>
+            </div>
+            <button class="btn-3d" onclick="closeDrawer()" style="height: 32px; padding: 0 10px; font-size: 11px;">✕ Close</button>
+        </div>
+        <div id="drawer-main-content" class="drawer-body">
+            <!-- Populated via Javascript -->
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        let stewardGUID = urlParams.get('steward') || localStorage.getItem('saved_steward_token');
+        if (stewardGUID) localStorage.setItem('saved_steward_token', stewardGUID);
+
+        // --- POWER AUTOMATE URLS ---
+        // 1. URL to GET proposals from SharePoint
+        const readerFlowUrl = "YOUR_READER_FLOW_URL_HERE"; 
+        
+        // 2. URL to UPDATE proposal status in SharePoint
+        const writerFlowUrl = "YOUR_WRITER_FLOW_URL_HERE"; 
+        
+        let masterProposalsCache = [];
+        let currentFilter = 'ALL';
+
+        function buildDynamicNav() {
+            let currentPage = window.location.pathname.split('/').pop();
+            if (currentPage === '') currentPage = 'index.html'; 
+
+            fetch('steward-nav.json')
+                .then(res => res.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('dynamic-nav-container');
+                    let navHtml = '';
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            if (item.filename === currentPage) {
+                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                            } else {
+                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
+                            }
+                        }
+                    });
+                    navContainer.innerHTML = navHtml;
+                })
+                .catch(err => console.error("Menu failed to load:", err));
+        }
+        buildDynamicNav();
+
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+        function loadProposals() {
+            if (!stewardGUID) {
+                document.getElementById('loading').innerText = "Security Halt: No token provided.";
+                return;
+            }
+
+            // TEMPORARY MOCK DATA FOR TESTING UI (Remove this block when connecting Power Automate)
+            /* 
+            masterProposalsCache = [
+                { Title: "PR-1001", SubmitterName: "John Doe", Category: "Wages", Article: "Article 14", ProposalText: "We need an automatic cost of living adjustment (COLA) tied to inflation.", Status: "New", SubmittedDate: "2026-07-08T12:00:00Z" },
+                { Title: "PR-1002", SubmitterName: "Jane Smith", Category: "Working Conditions", Article: "Article 22", ProposalText: "Require guaranteed AC in all package cars purchased after 2027.", Status: "Shortlisted", SubmittedDate: "2026-07-09T08:30:00Z" }
+            ];
+            applyFilters();
+            return;
+            */
+
+            fetch(readerFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_proposals" })
+            })
+            .then(res => res.json())
+            .then(bundle => {
+                masterProposalsCache = bundle.proposals || [];
+                document.getElementById('loading').style.display = 'none';
+                applyFilters();
+            }).catch(err => {
+                document.getElementById('loading').innerText = "Waiting for Power Automate URLs to be connected...";
+                console.error(err);
+            });
+        }
+
+        function setFilter(filterType, btnElem) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-bubble').forEach(btn => btn.classList.remove('active'));
+            btnElem.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('global-search-input').value.toLowerCase().trim();
+            
+            const filteredArray = masterProposalsCache.filter(item => {
+                const status = (item.Status || 'New').toUpperCase();
+                
+                // 1. Bubble Filter
+                if (currentFilter !== 'ALL' && status !== currentFilter) return false;
+                
+                // 2. Search Filter
+                if (searchTerm) {
+                    const searchData = `
+                        ${item.SubmitterName || ''} 
+                        ${item.Category || ''} 
+                        ${item.ProposalText || ''} 
+                        ${item.Title || ''}
+                    `.toLowerCase();
+                    if (!searchData.includes(searchTerm)) return false;
+                }
+                return true;
+            });
+
+            // Sort newest first
+            filteredArray.sort((a, b) => new Date(b.SubmittedDate || 0) - new Date(a.SubmittedDate || 0));
+            renderCards(filteredArray);
+        }
+
+        function renderCards(dataArray) {
+            const display = document.getElementById('data-display');
+            if (dataArray.length === 0) {
+                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No proposals found for this filter.</div>';
+                return;
+            }
+
+            let html = '';
+            dataArray.forEach(item => {
+                const sysId = item.Title || 'N/A';
+                const name = item.SubmitterName || 'Anonymous Member';
+                const category = item.Category || 'General';
+                const snippet = item.ProposalText || 'No text provided.';
+                const date = item.SubmittedDate ? item.SubmittedDate.split('T')[0] : 'N/A';
+                
+                const status = (item.Status || 'New').toLowerCase();
+                let statusClass = 'status-new';
+                let statusText = 'New';
+                
+                if (status.includes('shortlist')) { statusClass = 'status-shortlisted'; statusText = 'Shortlisted'; }
+                else if (status.includes('archive') || status.includes('reject')) { statusClass = 'status-archived'; statusText = 'Archived'; }
+
+                html += `
+                    <div class="record-card">
+                        <div class="card-meta">
+                            <div class="proposal-category">${category} • <span style="color: #666;">${date}</span></div>
+                            <div class="submitter-name">${name}</div>
+                            <div class="proposal-snippet">"${snippet}"</div>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end; min-width: 140px;">
+                            <div class="status-pill ${statusClass}">${statusText}</div>
+                            <button class="btn-3d" onclick="openDrawer('${sysId}')">Read & Review</button>
+                        </div>
+                    </div>
+                `;
+            });
+            display.innerHTML = html;
+        }
+
+        function openDrawer(recordId) {
+            const record = masterProposalsCache.find(r => r.Title === recordId);
+            if (!record) return;
+
+            document.getElementById('drawer-title').innerText = `Proposal: ${recordId}`;
+            document.getElementById('drawer-subtitle').innerText = `Submitted by ${record.SubmitterName || 'Anonymous'} on ${record.SubmittedDate ? record.SubmittedDate.split('T')[0] : 'N/A'}`;
+            
+            const container = document.getElementById('drawer-main-content');
+            
+            container.innerHTML = `
+                <span class="drawer-label">Proposal Category / Target Article</span>
+                <div class="drawer-text-block" style="padding: 10px; margin-bottom: 15px; border-color: var(--accent); color: var(--accent); font-weight: bold;">
+                    ${record.Category || 'N/A'} ${record.Article ? `— ${record.Article}` : ''}
+                </div>
+
+                <span class="drawer-label">Member's Proposal Details</span>
+                <div class="drawer-text-block">${record.ProposalText || 'No details provided.'}</div>
+
+                <hr style="border: 0; border-top: 1px dashed #333; margin: 25px 0;">
+
+                <span class="drawer-label">Steward Action</span>
+                <select id="update-status-select">
+                    <option value="New" ${record.Status === 'New' ? 'selected' : ''}>New / Unreviewed</option>
+                    <option value="Shortlisted" ${record.Status === 'Shortlisted' ? 'selected' : ''}>⭐ Shortlist for Committee</option>
+                    <option value="Archived" ${record.Status === 'Archived' ? 'selected' : ''}>📁 Archive / Decline</option>
+                </select>
+
+                <button class="btn-3d" style="width: 100%; background: var(--accent); color: #111;" onclick="saveProposalStatus('${recordId}')">
+                    💾 Save Decision
+                </button>
+            `;
+
+            document.getElementById('side-drawer').classList.add('open');
+            history.pushState({ drawerOpen: true }, "", "#proposal-viewer");
+        }
+
+        function closeDrawer() {
+            document.getElementById('side-drawer').classList.remove('open');
+            if (window.location.hash === '#proposal-viewer') history.back();
+        }
+
+        // --- THE WRITER ENGINE ---
+        function saveProposalStatus(recordId) {
+            const newStatus = document.getElementById('update-status-select').value;
+            const saveBtn = event.target;
+
+            saveBtn.innerText = '⏳ Saving...';
+            saveBtn.style.pointerEvents = 'none';
+
+            fetch(writerFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "update_proposal",
+                    "recordId": recordId,
+                    "Status": newStatus
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Update local cache so UI reflects immediately without reloading
+                    const record = masterProposalsCache.find(r => r.Title === recordId);
+                    if (record) record.Status = newStatus;
+                    
+                    saveBtn.innerText = '✅ Saved!';
+                    saveBtn.style.background = 'var(--accent-green)';
+                    
+                    setTimeout(() => {
+                        closeDrawer();
+                        applyFilters(); // Re-sorts the board
+                    }, 1000);
+                } else {
+                    alert("Cloud sync failed.");
+                    saveBtn.innerText = '⚠️ Error';
+                    saveBtn.style.pointerEvents = 'auto';
+                }
+            })
+            .catch(err => {
+                alert("Connection Error. Ensure Power Automate Writer URL is added to the code.");
+                saveBtn.style.pointerEvents = 'auto';
+            });
+        }
+
+        // Drawer resizing logic
+        const drawer = document.getElementById('side-drawer');
+        const handle = document.getElementById('drawerHandle');
+        handle.addEventListener('mousedown', initResize);
+        handle.addEventListener('touchstart', initResize, { passive: true });
+
+        function initResize() {
+            document.addEventListener('mousemove', resizeDrawer);
+            document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', resizeDrawer, { passive: false });
+            document.addEventListener('touchend', stopResize);
+        }
+        function resizeDrawer(e) {
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const newWidth = window.innerWidth - clientX;
+            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) drawer.style.width = newWidth + 'px';
+        }
+        function stopResize() {
+            document.removeEventListener('mousemove', resizeDrawer);
+            document.removeEventListener('touchmove', resizeDrawer);
+        }
+
+        window.addEventListener('popstate', function(event) {
+            if (document.getElementById('side-drawer').classList.contains('open')) {
+                document.getElementById('side-drawer').classList.remove('open');
+            }
+        });
+
+        loadProposals();
+    </script>
+</body>
+</html>
