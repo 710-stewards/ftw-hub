@@ -266,8 +266,7 @@
                 nameInput.disabled = false;
             }
         }
-
-        // --- 5. FORM SUBMISSION LOGIC ---
+                // --- 5. FORM SUBMISSION LOGIC ---
         document.getElementById('proposal-form').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -287,28 +286,25 @@
             };
 
             console.log("Payload ready to send to SharePoint:", formData);
-            
-            setTimeout(() => {
-                document.getElementById('proposal-form').reset();
-                document.getElementById('submit-btn').style.display = 'none';
-                document.getElementById('success-msg').style.display = 'block';
-            }, 1500);
 
-            WHEN READY FOR POWER AUTOMATE, REPLACE SETTIMEOUT WITH:
+            // REAL POWER AUTOMATE FETCH
             fetch('https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/230151223e8443f6bb1095abe6245ede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=K45FpawXiqM8I24ONJ4HnhKZeghVrI_rGFaq4yhr4HQ', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             }).then(response => {
+                // Once SharePoint catches it, show success
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('success-msg').style.display = 'block';
             }).catch(error => {
+                // If it fails, let them try again
                 submitBtn.innerText = "Error. Try Again.";
                 submitBtn.disabled = false;
             });
-        
         });
-    </script>
+
+
+            </script>
 </body>
 </html>
