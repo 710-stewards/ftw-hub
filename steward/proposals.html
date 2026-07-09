@@ -36,12 +36,12 @@
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
 
-        /* MOBILE OVERLAP FIX FOR PORTRAIT MODE */
+                /* MOBILE OVERLAP FIX FOR PORTRAIT MODE */
         @media (max-width: 650px) {
-            body { padding-top: 140px; } 
-            .top-navbar { padding-bottom: 15px; }
-            .header-search-container { width: 100%; margin-top: 5px; }
-            #global-search-input { max-width: 100% !important; }
+            body { padding-top: 155px; } 
+            .top-navbar { padding-bottom: 12px; }
+            .header-search-container { flex: 1 1 100%; margin-top: 10px; }
+            #global-search-input { max-width: 100% !important; float: none; }
         }
 
         /* NAVIGATION DRAWER */
@@ -290,7 +290,7 @@
             renderCards(filteredArray);
         }
 
-        function renderCards(dataArray) {
+                function renderCards(dataArray) {
             const display = document.getElementById('data-display');
             if (dataArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No proposals found for this filter.</div>';
@@ -304,14 +304,21 @@
                 const category = item.Category || 'General';
                 const snippet = item.ProposalText || 'No text provided.';
                 
-                // Safely format the date using the same logic as the member portal
+                // PULL THE CLASSIFICATION
+                const classification = item.Classification ? item.Classification.toUpperCase() : 'MEMBER';
+                
                 const date = item.SubmittedDate ? new Date(item.SubmittedDate).toLocaleDateString('en-US') : 'N/A';
                 
                 html += `
                     <div class="record-card">
                         <div class="card-meta">
                             <div class="proposal-category">${category} • <span style="color: #666;">${date}</span></div>
-                            <div class="submitter-name">${name}</div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; margin-bottom: 2px; gap: 10px;">
+                                <div class="submitter-name">${name}</div>
+                                <div style="font-size: 11px; font-weight: bold; color: var(--text-muted); letter-spacing: 0.5px; text-align: right;">${classification}</div>
+                            </div>
+                            
                             <div class="proposal-snippet">"${snippet}"</div>
                         </div>
                         
