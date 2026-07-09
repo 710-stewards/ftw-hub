@@ -68,11 +68,15 @@
         /* Inputs */
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: bold; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+        
         input[type="text"], select, textarea {
             width: 100%; background: #121212; border: 1px solid #444; color: white;
             padding: 12px; border-radius: 6px; font-size: 15px; outline: none; transition: border-color 0.2s;
         }
-        input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
+        
+        /* ADDED SELECT:FOCUS HERE */
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        
         input:disabled { background: #1a1a1a; color: #888; border-color: #333; cursor: not-allowed; }
         textarea { resize: vertical; min-height: 250px; }
 
@@ -100,7 +104,6 @@
 </head>
 <body>
 
-    <!-- Nav Drawer -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="padding: 20px 20px 10px;">
@@ -112,7 +115,6 @@
         <div id="nav-links-container"></div>
     </div>
 
-    <!-- Top Bar -->
     <div class="top-navbar">
         <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
         <div>
@@ -159,7 +161,6 @@
                     <input type="text" id="article" placeholder="e.g., Article 26, Section 1">
                 </div>
        
-                <!-- NEW CATEGORY DROPDOWN -->
                 <div class="input-group">
                     <label>Proposal Category</label>
                     <select id="category" required>
@@ -186,7 +187,6 @@
             </div>
         </form>
 
-        <!-- History Section -->
         <div class="form-header" style="margin-top: 40px; background: #161616; border-left-color: #555;">
             <h2>My Previous Submissions</h2>
             <p>Proposals you securely submitted with your name will appear here.</p>
@@ -217,7 +217,8 @@
             if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
         }
 
-        fetch('links.json')
+        // FIXED: Reverted back to member-nav.json so the menu isn't completely blank!
+        fetch('member-nav.json')
             .then(response => response.json())
             .then(menuItems => {
                 const navContainer = document.getElementById('nav-links-container');
@@ -236,7 +237,10 @@
                 });
                 navContainer.innerHTML = menuHTML;
             })
-            .catch(error => console.log("Error loading the navigation menu:", error));
+            .catch(error => {
+                console.log("Error loading the navigation menu:", error);
+                document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu. Verify member-nav.json exists.</div>`;
+            });
 
         // --- 3. MENU CONTROLS ---
         function openNavMenu() {
@@ -281,6 +285,7 @@
                 displayName: "",
                 classification: "",
                 article: "",
+                category: "", // <--- FIXED: Added this so Power Automate doesn't crash on the schema check!
                 proposalText: ""
             };
 
@@ -334,14 +339,14 @@
             const isAnon = document.getElementById('anon-check').checked;
             const actualName = passedName || "Unknown Member";
 
-                        const submitPayload = {
+            const submitPayload = {
                 action: "submit",
                 employeeId: isAnon ? "ANON" : (passedEmpId || "UNKNOWN_EMP_ID"),
                 secretStewardName: actualName,
                 displayName: isAnon ? "Anonymous" : document.getElementById('member-name').value,
                 classification: document.getElementById('classification').value,
                 article: document.getElementById('article').value,
-                category: document.getElementById('category').value, // <--- ADD THIS LINE
+                category: document.getElementById('category').value, 
                 proposalText: document.getElementById('proposal').value
             };
 
