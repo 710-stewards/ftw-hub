@@ -36,13 +36,13 @@
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
 
-        /* MOBILE OVERLAP FIX */
+        /* MOBILE OVERLAP FIX FOR PORTRAIT MODE */
         @media (max-width: 650px) {
-            body { padding-top: 150px; } 
-            .filter-bubbles-container { margin-top: 10px; }
+            body { padding-top: 140px; } 
             .top-navbar { padding-bottom: 15px; }
+            .header-search-container { width: 100%; margin-top: 5px; }
+            #global-search-input { max-width: 100% !important; }
         }
-
 
         /* NAVIGATION DRAWER */
         .main-nav-drawer {
@@ -133,16 +133,19 @@
                 <div id="steward-info" class="header-sub">Member Submission Queue</div>
             </div>
         </div>
-        <div style="text-align: right;">
-            <input type="text" id="global-search-input" placeholder="🔍 Search proposals..." style="height: 40px; padding: 0 15px; border-radius: 20px; background: #222; border: 1px solid #444; color: white; outline: none; width: 100%; max-width: 250px;" oninput="applyFilters()">
+        <div class="header-search-container" style="text-align: right; flex: 1;">
+            <input type="text" id="global-search-input" placeholder="🔍 Search proposals..." style="height: 40px; padding: 0 15px; border-radius: 20px; background: #222; border: 1px solid #444; color: white; outline: none; width: 100%; max-width: 250px; float: right;" oninput="applyFilters()">
         </div>
     </div>
 
+    <!-- SYNCHRONIZED MEMBER CATEGORIES -->
     <div class="filter-bubbles-container">
         <button class="filter-bubble active" onclick="setFilter('ALL', this)">ALL PROPOSALS</button>
-        <button class="filter-bubble" onclick="setFilter('WAGES', this)">WAGES & PAY</button>
-        <button class="filter-bubble" onclick="setFilter('BENEFITS', this)">BENEFITS</button>
-        <button class="filter-bubble" onclick="setFilter('CONDITIONS', this)">WORKING CONDITIONS</button>
+        <button class="filter-bubble" onclick="setFilter('WAGES', this)">WAGES & PREMIUMS</button>
+        <button class="filter-bubble" onclick="setFilter('HEALTHCARE', this)">HEALTHCARE & PENSION</button>
+        <button class="filter-bubble" onclick="setFilter('TIME_OFF', this)">TIME OFF & SCHEDULING</button>
+        <button class="filter-bubble" onclick="setFilter('SAFETY', this)">SAFETY & EQUIPMENT</button>
+        <button class="filter-bubble" onclick="setFilter('SENIORITY', this)">SENIORITY & BIDDING</button>
         <button class="filter-bubble" onclick="setFilter('OTHER', this)">OTHER</button>
     </div>
 
@@ -152,6 +155,7 @@
         </div>
     </div>
 
+    <!-- RIGHT SIDE DEEP DIVE DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -162,7 +166,8 @@
             <button class="btn-3d" onclick="closeDrawer()" style="height: 32px; padding: 0 10px; font-size: 11px;">✕ Close</button>
         </div>
         <div id="drawer-main-content" class="drawer-body">
-            </div>
+            <!-- Populated via Javascript -->
+        </div>
     </div>
 
     <script>
@@ -222,12 +227,11 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     "stewardGuid": stewardGUID, 
-                    "action": "load_steward_proposals" // <-- The Switch Key!
+                    "action": "load_steward_proposals" 
                 })
             })
             .then(res => res.json())
             .then(bundle => {
-                // If Power Automate wraps the array in a "proposals" property
                 masterProposalsCache = bundle.proposals || bundle || [];
                 document.getElementById('loading').style.display = 'none';
                 applyFilters();
@@ -250,12 +254,22 @@
             const filteredArray = masterProposalsCache.filter(item => {
                 const category = (item.Category || 'OTHER').toUpperCase();
                 
-                // 1. Bubble Filter Logic
+                // 1. Bubble Filter Logic - Updated to match Member Categories
                 if (currentFilter !== 'ALL') {
-                    if (currentFilter === 'WAGES' && !category.includes('WAGE') && !category.includes('PAY')) return false;
-                    if (currentFilter === 'BENEFITS' && !category.includes('BENEFIT')) return false;
-                    if (currentFilter === 'CONDITIONS' && !category.includes('CONDITION')) return false;
-                    if (currentFilter === 'OTHER' && (category.includes('WAGE') || category.includes('PAY') || category.includes('BENEFIT') || category.includes('CONDITION'))) return false;
+                    if (currentFilter === 'WAGES' && !category.includes('WAGE') && !category.includes('PREMIUM')) return false;
+                    if (currentFilter === 'HEALTHCARE' && !category.includes('HEALTHCARE') && !category.includes('PENSION')) return false;
+                    if (currentFilter === 'TIME_OFF' && !category.includes('TIME OFF') && !category.includes('SCHEDULING')) return false;
+                    if (currentFilter === 'SAFETY' && !category.includes('SAFETY') && !category.includes('EQUIPMENT')) return false;
+                    if (currentFilter === 'SENIORITY' && !category.includes('SENIORITY') && !category.includes('BIDDING')) return false;
+                    
+                    // The 'Other' bucket catches anything that doesn't trigger the major keywords above
+                    if (currentFilter === 'OTHER' && (
+                        category.includes('WAGE') || category.includes('PREMIUM') || 
+                        category.includes('HEALTHCARE') || category.includes('PENSION') || 
+                        category.includes('TIME OFF') || category.includes('SCHEDULING') || 
+                        category.includes('SAFETY') || category.includes('EQUIPMENT') || 
+                        category.includes('SENIORITY') || category.includes('BIDDING')
+                    )) return false;
                 }
                 
                 // 2. Search Filter
@@ -289,7 +303,9 @@
                 const name = item.SubmitterName || 'Anonymous Member';
                 const category = item.Category || 'General';
                 const snippet = item.ProposalText || 'No text provided.';
-                const date = item.SubmittedDate ? item.SubmittedDate.split('T')[0] : 'N/A';
+                
+                // Safely format the date using the same logic as the member portal
+                const date = item.SubmittedDate ? new Date(item.SubmittedDate).toLocaleDateString('en-US') : 'N/A';
                 
                 html += `
                     <div class="record-card">
@@ -311,9 +327,12 @@
         function openDrawer(recordId) {
             const record = masterProposalsCache.find(r => r.Title === recordId);
             if (!record) return;
+            
+            // Format full detailed date for the drawer view
+            const fullDate = record.SubmittedDate ? new Date(record.SubmittedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown Date';
 
             document.getElementById('drawer-title').innerText = `Proposal: ${recordId}`;
-            document.getElementById('drawer-subtitle').innerText = `Submitted by ${record.SubmitterName || 'Anonymous'} on ${record.SubmittedDate ? record.SubmittedDate.split('T')[0] : 'N/A'}`;
+            document.getElementById('drawer-subtitle').innerText = `Submitted by ${record.SubmitterName || 'Anonymous'} on ${fullDate}`;
             
             const container = document.getElementById('drawer-main-content');
             
