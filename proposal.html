@@ -266,7 +266,7 @@
                 nameInput.disabled = false;
             }
         }
-                // --- 5. FORM SUBMISSION LOGIC ---
+// --- 5. FORM SUBMISSION LOGIC ---
         document.getElementById('proposal-form').addEventListener('submit', function(e) {
             e.preventDefault(); 
             
@@ -277,9 +277,15 @@
             const isAnon = document.getElementById('anon-check').checked;
 
             const formData = {
+                // We keep this as "ANON" if checked so it DOES NOT show up in their personal history on the app
                 employeeId: isAnon ? "ANON" : (passedEmpId || "UNKNOWN_EMP_ID"),
-                secureGuid: passedGuid || "UNKNOWN_GUID",
-                name: document.getElementById('member-name').value,
+                
+                // We send their actual passedName silently in the background for your eyes only
+                secretStewardName: passedName || "Unknown Identity",
+                
+                // This is what goes into the main "Name" column in SharePoint
+                displayName: isAnon ? "Anonymous" : document.getElementById('member-name').value,
+                
                 classification: document.getElementById('classification').value,
                 article: document.getElementById('article').value,
                 proposalText: document.getElementById('proposal').value
@@ -293,12 +299,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             }).then(response => {
-                // Once SharePoint catches it, show success
                 document.getElementById('proposal-form').reset();
                 document.getElementById('submit-btn').style.display = 'none';
                 document.getElementById('success-msg').style.display = 'block';
             }).catch(error => {
-                // If it fails, let them try again
                 submitBtn.innerText = "Error. Try Again.";
                 submitBtn.disabled = false;
             });
