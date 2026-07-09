@@ -288,7 +288,7 @@
             if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
             if (emp) secureQueryString += `&emp=${emp}`;
 
-            fetch(member-nav.json', { cache: 'no-store' })
+            fetch('member-nav.json', { cache: 'no-store' })
                 .then(response => response.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('nav-links-container');
