@@ -1,18 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <link rel="manifest" href="manifest.json">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-  }
-</script>
-
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+      }
+    </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -208,12 +204,8 @@
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <div class="nav-section-title" style="margin-top: 10px;">Member Links</div>
-        <a href="#" class="nav-item active">My Dashboard (Active)</a>
-        <a id="lnk-library" href="#" class="nav-item">→ Document Library</a>
-        
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+        <!-- NEW CONTAINER FOR JSON LINKS -->
+        <div id="nav-links-container"></div>
     </div>
 
     <div class="top-navbar">
@@ -237,8 +229,7 @@
         </select>
     </div>
 
-    <div id="data-display">
-        </div>
+    <div id="data-display"></div>
 
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
@@ -258,15 +249,10 @@
         
         // The Token Memory Logic
         if (memberGuid) {
-            // If the URL has the ID, save it to the phone permanently
             localStorage.setItem('saved_member_token', memberGuid);
         } else {
-            // If the URL is blank (opened via Home Screen app), grab the saved ID
             memberGuid = localStorage.getItem('saved_member_token');
         }
-        
-        // Link up the dynamic contract page using the secure GUID
-        document.getElementById('lnk-library').href = `library.html?id=${memberGuid}`;
 
         // THE NEW MEMBER-SPECIFIC FLOW URL
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/40c08254f020425cba82f06f969e9661/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=-8Go0Skkb_Pv1qowZOJEIzt-PXxQpamBgjSO39_1gAc";
@@ -296,9 +282,44 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
+        // --- NEW: UNIVERSAL MENU BUILDER FUNCTION ---
+        function buildNavigation(guid, first, last, emp) {
+            let secureQueryString = `?id=${guid}`;
+            if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
+            if (emp) secureQueryString += `&emp=${emp}`;
+
+            fetch(member-nav.json', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                    let menuHTML = '';
+
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            // Determine if this is the active page
+                            const isActive = (currentPage === item.filename || (currentPage === '' && item.filename === 'index.html')) ? 'active' : '';
+                            const activeText = isActive ? ' (Active)' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
+                        }
+                    });
+
+                    // Add the Settings section at the bottom to match your original design
+                    menuHTML += `
+                        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+                        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+                    `;
+
+                    navContainer.innerHTML = menuHTML;
+                })
+                .catch(error => console.log("Error loading menu:", error));
+        }
+
         function loadDriverData() {
             if (!memberGuid) {
-                // If no GUID, show the iPhone one-time manual sync screen
                 document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('data-display').innerHTML = `
                     <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
@@ -324,10 +345,8 @@
             })
             .then(res => res.json())
             .then(data => {
-                // HIDE THE FULL SCREEN LOGO OVERLAY ON SUCCESS
                 document.getElementById('loading-overlay').style.display = 'none';
                 
-                // Parse the separated Profile and Grievance arrays from Power Automate
                 const profile = data.profile || {};
                 const grievances = data.grievances || [];
                 
@@ -342,12 +361,14 @@
                     return;
                 }
 
-                // We now get the name securely from the Seniority List, even if they have 0 grievances!
                 const firstName = profile.FirstName || profile['First Name'] || 'Driver';
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
+
+                // NEW: Trigger the menu builder now that we have the secure variables from the database!
+                buildNavigation(memberGuid, firstName, lastName, employeeId);
 
                 if (grievances.length === 0) {
                     document.getElementById('data-display').innerHTML = `
@@ -362,7 +383,6 @@
                 window.grievanceCache = grievances;
                 applyFilters();
             }).catch(err => {
-                // HIDE OVERLAY ON ERROR AS WELL
                 document.getElementById('loading-overlay').style.display = 'none';
                 document.getElementById('data-display').innerHTML = `
                     <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
@@ -376,7 +396,6 @@
             const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
             const sortMode = document.getElementById('sort-dropdown').value;
 
-            // Search filter
             let filteredArray = window.grievanceCache.filter(item => {
                 if (searchText !== '') {
                     const dispRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : (item.Disposition || item.field_6 || '');
@@ -395,7 +414,6 @@
                 return true;
             });
 
-            // Sorting Engine
             filteredArray.sort((a, b) => {
                 const dispA = (a.Disposition && typeof a.Disposition === 'object') ? a.Disposition.Value : (a.Disposition || a.field_6 || 'PENDING');
                 const dispB = (b.Disposition && typeof b.Disposition === 'object') ? b.Disposition.Value : (b.Disposition || b.field_6 || 'PENDING');
@@ -589,24 +607,17 @@
                 ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
 
-                        document.getElementById('side-drawer').classList.add('open');
-
-            // NEW: Trick the browser into thinking we opened a new page
+            document.getElementById('side-drawer').classList.add('open');
             history.pushState({ drawerOpen: true }, "", "#file-viewer");
         }
 
-
-                function closeDrawer() { 
+        function closeDrawer() { 
             document.getElementById('side-drawer').classList.remove('open'); 
-
-            // NEW: Clean up the history if they use the UI 'X' button
             if (window.location.hash === '#file-viewer') {
                 history.back();
             }
         }
 
-
-        // Drawer Drag Logic
         const drawer = document.getElementById('side-drawer');
         const handle = document.getElementById('drawerHandle');
         handle.addEventListener('mousedown', initResize);
@@ -628,37 +639,25 @@
             document.removeEventListener('touchmove', resizeDrawer);
         }
 
-                // NEW: Intercept the Android/Hardware Back Button
         window.addEventListener('popstate', function(event) {
             const drawer = document.getElementById('side-drawer');
-            // If they hit back while the drawer is open, just close the drawer!
             if (drawer.classList.contains('open')) {
                 drawer.classList.remove('open');
             }
         });
 
-        // --- iOS MANUAL SYNC FUNCTION ---
         window.saveManualToken = function() {
             const inputVal = document.getElementById('manual-token-input').value.trim();
             if (!inputVal) return;
-            
             let extractedToken = inputVal;
-            
-            // If they copy-pasted the entire URL instead of just the ID, extract just the ID automatically
             if (inputVal.includes('id=')) {
                 extractedToken = inputVal.split('id=')[1].split('&')[0];
             }
-            
-            // Save it directly into the iPhone's isolated app memory
             localStorage.setItem('saved_member_token', extractedToken);
-            
-            // Instantly reload the app so it boots up normally
             window.location.reload();
         };
         
-        // Initialize Fetch
         loadDriverData();
     </script>
-    
 </body>
 </html>
