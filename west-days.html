@@ -227,27 +227,44 @@
 function buildRowHtml(driver, zoneContext) {
     let displayStatus = "PENDING";
     let statusClass = "";
-    let highlightClass = "";
+    
+    // 1. Generate today's date in MM/DD/YYYY format to match Power Automate exactly
+    const d = new Date();
+    const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+    
+    // 2. Check if the driver's stamp is from today
+    const isToday = (driver.Timestamp === todayStr);
 
-    // CHANGED === to == so it matches "3" with 3
-    if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
-        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp || 'Recent'})`;
+    // 3. Set the visual status (Only show green/red text if the stamp is from TODAY)
+    if (driver.ZoneTag == zoneContext && driver.CurrentStatus && isToday) {
+        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
         statusClass = driver.CurrentStatus.toLowerCase() === 'off' ? 'status-badge off' : 'status-badge stay';
     }
 
+    // 4. Smart Button Logic (The Single-Click Toggle)
+    let actionButton = "";
+    
+    if (isToday && driver.CurrentStatus === 'Off') {
+        // If they have today off, the only logical action is to revoke it
+        actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+    } else {
+        // If it's pending, an old date, or they were revoked today, the next action is giving them the day off
+        actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+    }
+
     return `
-        <div class="driver-row ${highlightClass}">
+        <div class="driver-row">
             <div class="driver-info">
                 <span class="driver-name">${driver.Title}</span>
                 <span class="driver-status ${statusClass}">${displayStatus}</span>
             </div>
             <div class="action-btns">
-                <button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>
-                <button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>
+                ${actionButton}
             </div>
         </div>
     `;
 }
+
 
 // The Click Action
 function stampDriver(driverName, status, zone) {
