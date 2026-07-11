@@ -203,6 +203,7 @@
                 "NewStatus": status,
                 "Zone": parseInt(zone),
                 "Center": "West"
+                "Route": "WestPost"
             };
 
             fetch(updateFlowUrl, {
@@ -253,25 +254,32 @@
         }
 
         // Fetching and Displaying the Data
-        function loadBoardData() {
-            // For now, removing the loading screen immediately. 
-            // Once the GET flow is wired up, we move this inside the fetch response.
-            document.getElementById('loading-overlay').style.display = 'none';
+       function loadBoardData() {
+    // 1. Ask the flow for the data
+    fetch(updateFlowUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ "Route": "WestGet" })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // 2. Hide the loading screen
+        document.getElementById('loading-overlay').style.display = 'none';
 
-            /* TODO: Add the fetch(getListFlowUrl) here.
-               When the array of 78 drivers returns, we filter them into groups:
-               
-               const bidDrivers = data.filter(d => d.Group === 'Bid');
-               const coverDrivers = data.filter(d => d.Group === 'Coverage');
+        // 3. Separate the drivers by their Group
+        const bidDrivers = data.filter(d => d.Group === 'Bid');
+        const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-               Then loop through them to build the HTML for the 3 zones:
-               
-               document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 1)).join('');
-               document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 2)).join('');
-               document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => buildRowHtml(d, 3)).join('');
-            */
-        }
-
+        // 4. Draw them into the 3 zones
+        document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 1)).join('');
+        document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 2)).join('');
+        document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => buildRowHtml(d, 3)).join('');
+    })
+    .catch(error => {
+        document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+        console.error("Fetch error:", error);
+    });
+}
         // Initialize Page
         buildNavigation();
         loadBoardData();
