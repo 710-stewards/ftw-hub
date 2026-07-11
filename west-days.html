@@ -224,34 +224,61 @@
         }
 
         // Rendering the Rows
-        function buildRowHtml(driver, zoneContext) {
-            
-            // Check if this driver currently has a stamp IN THIS ZONE
-            let displayStatus = "PENDING";
-            let statusClass = "";
-            let highlightClass = "";
+function buildRowHtml(driver, zoneContext) {
+    let displayStatus = "PENDING";
+    let statusClass = "";
+    let highlightClass = "";
 
-            if (driver.ZoneTag === zoneContext && driver.CurrentStatus) {
-                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp || 'Recent'})`;
-                statusClass = driver.CurrentStatus.toLowerCase() === 'off' ? 'status-badge off' : 'status-badge stay';
-            }
+    // CHANGED === to == so it matches "3" with 3
+    if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp || 'Recent'})`;
+        statusClass = driver.CurrentStatus.toLowerCase() === 'off' ? 'status-badge off' : 'status-badge stay';
+    }
 
-            // Note: The logic to add the "highlight" class to the exact next person in line
-            // will be added here once we can read the live array of timestamps.
+    return `
+        <div class="driver-row ${highlightClass}">
+            <div class="driver-info">
+                <span class="driver-name">${driver.Title}</span>
+                <span class="driver-status ${statusClass}">${displayStatus}</span>
+            </div>
+            <div class="action-btns">
+                <button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>
+                <button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>
+            </div>
+        </div>
+    `;
+}
 
-            return `
-                <div class="driver-row ${highlightClass}">
-                    <div class="driver-info">
-                        <span class="driver-name">${driver.Title}</span>
-                        <span class="driver-status ${statusClass}">${displayStatus}</span>
-                    </div>
-                    <div class="action-btns">
-                        <button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>
-                        <button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>
-                    </div>
-                </div>
-            `;
+// The Click Action
+function stampDriver(driverName, status, zone) {
+    event.target.innerText = "...";
+    
+    const payload = {
+        "DriverName": driverName,
+        "NewStatus": status,
+        "Zone": parseInt(zone),
+        "Center": "West",
+        "Route": "WestPost"
+    };
+
+    fetch(updateFlowUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if(res.ok) {
+            // ADDED: A 1.5 second delay so SharePoint has time to save before we reload the board
+            setTimeout(() => {
+                loadBoardData(); 
+            }, 1500);
         }
+    })
+    .catch(err => {
+        alert("Error saving to database.");
+        event.target.innerText = "Error";
+    });
+}
 
         // Fetching and Displaying the Data
        function loadBoardData() {
