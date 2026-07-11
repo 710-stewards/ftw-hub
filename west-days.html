@@ -207,54 +207,63 @@ function stampDriver(driverName, status, zone) {
     });
 }
         // Rendering the Rows
-        function buildRowHtml(driver, zoneContext) {
-            let displayStatus = "PENDING";
-            let statusColor = "var(--text-muted)"; // Default gray
-            
-            // Generate today's date in MM/DD/YYYY format
-            const d = new Date();
-            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
-            
-            const isToday = (driver.Timestamp === todayStr);
-            const isRecentPast = (driver.Timestamp === window.recentPastDay);
+function buildRowHtml(driver, zoneContext) {
+    let displayStatus = "PENDING";
+    let statusColor = "var(--text-muted)"; 
+    
+    const d = new Date();
+    const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+    
+    const isToday = (driver.Timestamp === todayStr);
+    const isRecentPast = (driver.Timestamp === window.recentPastDay);
 
-            // Set Visual Status & Colors
-            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
-                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
-                
-                if (driver.CurrentStatus.toLowerCase() === 'off') {
-                    if (isToday) {
-                        statusColor = "var(--accent-green)"; // Green for today
-                    } else if (isRecentPast) {
-                        statusColor = "var(--accent)"; // Gold for yesterday
-                    } else {
-                        statusColor = "var(--text-muted)"; // Gray for older
-                    }
-                } else {
-                    statusColor = "var(--accent-red)"; // Stay is always red
-                }
-            }
+    // Look for the name in case SharePoint changed the internal column name
+    const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
 
-            // Smart Button Logic (The Single-Click Toggle with Zone check)
-            let actionButton = "";
-            if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
-                actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+    // Set Visual Status & Colors
+    if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+        
+        if (driver.CurrentStatus.toLowerCase() === 'off') {
+            if (isToday) {
+                statusColor = "var(--accent-green)"; 
+            } else if (isRecentPast) {
+                statusColor = "var(--accent)"; 
             } else {
-                actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+                statusColor = "var(--text-muted)"; 
             }
-
-            return `
-                <div class="driver-row">
-                    <div class="driver-info">
-                        <span class="driver-name">${driver.Title}</span>
-                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
-                    </div>
-                    <div class="action-btns">
-                        ${actionButton}
-                    </div>
-                </div>
-            `;
+        } else {
+            statusColor = "var(--accent-red)"; 
         }
+    }
+
+    // Build the "Updated By" text if a name exists
+    let auditTrailHtml = "";
+    if (updaterName && driver.CurrentStatus) {
+        auditTrailHtml = `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>`;
+    }
+
+    // Smart Button Logic (The Single-Click Toggle)
+    let actionButton = "";
+    if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
+        actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+    } else {
+        actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+    }
+
+    return `
+        <div class="driver-row">
+            <div class="driver-info">
+                <span class="driver-name">${driver.Title}</span>
+                <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                ${auditTrailHtml}
+            </div>
+            <div class="action-btns">
+                ${actionButton}
+            </div>
+        </div>
+    `;
+}
 
         // Fetching and Displaying the Data
         function loadBoardData() {
