@@ -1,271 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Center - Days Off Board</title>
-    
-    <style>
-        :root {
-            --bg-main: #121212;
-            --bg-card: #1e1e1e;
-            --accent: #ffcc00;
-            --accent-green: #2ecc71;
-            --accent-red: #ff3333;
-            --border: #333;
-            --text-main: #ffffff;
-            --text-muted: #888;
-        }
+// 1. Security & Auth
+const urlParams = new URLSearchParams(window.location.search);
+let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
+if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+// 2. The Power Automate Endpoints
+const updateFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
 
-        /* HEADER & NAVIGATION (Matched perfectly to your template) */
-        .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
-            background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
-        }
-        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
-        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
-        
-        .hamburger-btn {
-            background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; transition: transform 0.2s;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-        }
-        .hamburger-btn:active { transform: scale(0.9); }
+// Menu Controllers
+function openNavMenu() {
+    document.getElementById('main-nav-menu').classList.add('open');
+    document.getElementById('nav-overlay').classList.add('open');
+}
+function closeNavMenu() {
+    document.getElementById('main-nav-menu').classList.remove('open');
+    document.getElementById('nav-overlay').classList.remove('open');
+}
 
-        .main-nav-drawer {
-            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: #161616; border-right: 2px solid var(--accent);
-            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
-        }
-        .main-nav-drawer.open { transform: translateX(0); }
-        .nav-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
-            backdrop-filter: blur(2px);
-        }
-        .nav-overlay.open { display: block; }
-        
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item {
-            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
-            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
-        }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+// Menu Builder
+function buildNavigation() {
+    let secureQueryString = memberGuid ? `?id=${memberGuid}` : '';
+    fetch('member-nav.json', { cache: 'no-store' })
+        .then(response => response.json())
+        .then(menuItems => {
+            const navContainer = document.getElementById('nav-links-container');
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            let menuHTML = '';
 
-        /* LOADING OVERLAY */
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-main); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999; 
-        }
-        .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-
-        /* BOARD SPECIFIC STYLING */
-        .zone-header {
-            background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px;
-            border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
-            position: sticky; top: 75px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-        
-        .driver-row {
-            background-color: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
-            display: flex; justify-content: space-between; align-items: center;
-            flex-wrap: wrap; gap: 10px; transition: all 0.2s;
-        }
-        
-        .driver-row.highlight {
-            border-color: var(--accent);
-            background-color: #2a2615;
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
-        }
-
-        .driver-info { display: flex; flex-direction: column; min-width: 150px; }
-        .driver-name { font-size: 16px; font-weight: bold; color: white; }
-        .driver-status { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: bold; text-transform: uppercase; }
-        
-        .status-badge.off { color: var(--accent-green); }
-        .status-badge.stay { color: var(--accent-red); }
-
-        .action-btns { display: flex; gap: 8px; }
-        .btn-board {
-            padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px;
-            font-weight: bold; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 #000;
-        }
-        .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
-        .btn-off { background-color: var(--accent-green); color: #111; }
-        .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
-
-    </style>
-</head>
-<body>
-
-    <div id="loading-overlay">
-        <div class="parsing-text">↻ Loading Live Board...</div>
-    </div>
-
-    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
-    <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding: 20px; padding-bottom: 10px; display: flex; justify-content: space-between;">
-            <h3 style="color: white; font-size: 18px;">Driver Portal Menu</h3>
-            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-        </div>
-        <div id="nav-links-container"></div>
-    </div>
-
-    <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">West Center - Dispatch Board</div>
-                <div id="driver-info" class="header-sub">Live Days Off Tracker</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="board-container" style="max-width: 800px; margin: 0 auto;">
-        
-        <div class="zone-header">Bid Drivers (Round 1)</div>
-        <div id="zone-1-list"></div>
-
-        <div class="zone-header">Bid Drivers (Round 2)</div>
-        <div id="zone-2-list"></div>
-
-        <div class="zone-header">Coverage Drivers</div>
-        <div id="zone-3-list"></div>
-
-    </div>
-
-    <script>
-        // 1. Security & Auth (Kept from your template)
-        const urlParams = new URLSearchParams(window.location.search);
-        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
-        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
-
-        // 2. The Power Automate Endpoints
-        // This is the URL you generated for the Switch Flow (The POST / Update Trigger)
-        const updateFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
-        
-        // WE WILL NEED A 'GET' FLOW URL HERE TO PULL THE LIST ON LOAD
-        const getListFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc"; 
-
-        // Menu Controllers
-        function openNavMenu() {
-            document.getElementById('main-nav-menu').classList.add('open');
-            document.getElementById('nav-overlay').classList.add('open');
-        }
-        function closeNavMenu() {
-            document.getElementById('main-nav-menu').classList.remove('open');
-            document.getElementById('nav-overlay').classList.remove('open');
-        }
-
-        // Reusing your JSON Menu Builder
-        function buildNavigation() {
-            let secureQueryString = memberGuid ? `?id=${memberGuid}` : '';
-            fetch('member-nav.json', { cache: 'no-store' })
-                .then(response => response.json())
-                .then(menuItems => {
-                    const navContainer = document.getElementById('nav-links-container');
-                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                    let menuHTML = '';
-
-                    menuItems.forEach(item => {
-                        if (item.type === 'header') {
-                            menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
-                        } else if (item.type === 'link') {
-                            const isActive = (currentPage === item.filename) ? 'active' : '';
-                            const finalUrl = item.filename + secureQueryString;
-                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}</a>`;
-                        }
-                    });
-                    navContainer.innerHTML = menuHTML;
-                })
-                .catch(err => console.log("Menu Error:", err));
-        }
-
-        // The Click Action - Sends data to your Switch Flow
-        function stampDriver(driverName, status, zone) {
-            
-            // Immediately show a loading state on the button
-            event.target.innerText = "...";
-            
-            const payload = {
-                "DriverName": driverName,
-                "NewStatus": status,
-                "Zone": parseInt(zone),
-                "Center": "West",
-                "Route": "WestPost"
-            };
-
-            fetch(updateFlowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if(res.ok) {
-                    // Reload the board to show the new stamp and move the highlight
-                    loadBoardData(); 
+            menuItems.forEach(item => {
+                if (item.type === 'header') {
+                    menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                } else if (item.type === 'link') {
+                    const isActive = (currentPage === item.filename) ? 'active' : '';
+                    const finalUrl = item.filename + secureQueryString;
+                    menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}</a>`;
                 }
-            })
-            .catch(err => {
-                alert("Error saving to database.");
-                event.target.innerText = "Error";
             });
-        }
-
-        // Rendering the Rows
-function buildRowHtml(driver, zoneContext) {
-    let displayStatus = "PENDING";
-    let statusClass = "";
-    
-    // 1. Generate today's date in MM/DD/YYYY format to match Power Automate exactly
-    const d = new Date();
-    const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
-    
-    // 2. Check if the driver's stamp is from today
-    const isToday = (driver.Timestamp === todayStr);
-
-    // 3. Set the visual status (Only show green/red text if the stamp is from TODAY)
-    if (driver.ZoneTag == zoneContext && driver.CurrentStatus && isToday) {
-        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
-        statusClass = driver.CurrentStatus.toLowerCase() === 'off' ? 'status-badge off' : 'status-badge stay';
-    }
-
-        // 4. Smart Button Logic (The Single-Click Toggle)
-    let actionButton = "";
-    
-    // We added the zoneContext check here so the button only flips to REVOKE in the specific zone they were stamped in
-    if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
-        
-        actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
-        
-    } else {
-        actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
-    }
-
-    return `
-        <div class="driver-row">
-            <div class="driver-info">
-                <span class="driver-name">${driver.Title}</span>
-                <span class="driver-status ${statusClass}">${displayStatus}</span>
-            </div>
-            <div class="action-btns">
-                ${actionButton}
-            </div>
-        </div>
-    `;
-
-
+            navContainer.innerHTML = menuHTML;
+        })
+        .catch(err => console.log("Menu Error:", err));
+}
 
 // The Click Action
 function stampDriver(driverName, status, zone) {
@@ -286,7 +59,7 @@ function stampDriver(driverName, status, zone) {
     })
     .then(res => {
         if(res.ok) {
-            // ADDED: A 1.5 second delay so SharePoint has time to save before we reload the board
+            // A 1.5 second delay so SharePoint has time to save before we reload the board
             setTimeout(() => {
                 loadBoardData(); 
             }, 1500);
@@ -298,9 +71,58 @@ function stampDriver(driverName, status, zone) {
     });
 }
 
-        // Fetching and Displaying the Data
-       function loadBoardData() {
-    // 1. Ask the flow for the data
+// Rendering the Rows
+function buildRowHtml(driver, zoneContext) {
+    let displayStatus = "PENDING";
+    let statusColor = "var(--text-muted)"; // Default gray
+    
+    // Generate today's date in MM/DD/YYYY format
+    const d = new Date();
+    const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+    
+    const isToday = (driver.Timestamp === todayStr);
+    const isRecentPast = (driver.Timestamp === window.recentPastDay);
+
+    // Set Visual Status & Colors
+    if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+        
+        if (driver.CurrentStatus.toLowerCase() === 'off') {
+            if (isToday) {
+                statusColor = "var(--accent-green)"; // Green for today
+            } else if (isRecentPast) {
+                statusColor = "var(--accent)"; // Gold for yesterday
+            } else {
+                statusColor = "var(--text-muted)"; // Gray for older
+            }
+        } else {
+            statusColor = "var(--accent-red)"; // Stay is always red
+        }
+    }
+
+    // Smart Button Logic (The Single-Click Toggle)
+    let actionButton = "";
+    if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
+        actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+    } else {
+        actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+    }
+
+    return `
+        <div class="driver-row">
+            <div class="driver-info">
+                <span class="driver-name">${driver.Title}</span>
+                <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+            </div>
+            <div class="action-btns">
+                ${actionButton}
+            </div>
+        </div>
+    `;
+}
+
+// Fetching and Displaying the Data
+function loadBoardData() {
     fetch(updateFlowUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -308,14 +130,23 @@ function stampDriver(driverName, status, zone) {
     })
     .then(response => response.json())
     .then(data => {
-        // 2. Hide the loading screen
         document.getElementById('loading-overlay').style.display = 'none';
 
-        // 3. Separate the drivers by their Group
+        // --- NEW: Color Math ---
+        const d = new Date();
+        const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+        
+        // Find all unique dates that are NOT today, sort them newest to oldest
+        let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
+        pastDates.sort((a, b) => new Date(b) - new Date(a));
+        
+        // Save the single most recent past date globally so buildRowHtml can see it
+        window.recentPastDay = pastDates[0] || null; 
+
+        // Separate and Draw
         const bidDrivers = data.filter(d => d.Group === 'Bid');
         const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-        // 4. Draw them into the 3 zones
         document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 1)).join('');
         document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 2)).join('');
         document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => buildRowHtml(d, 3)).join('');
@@ -325,10 +156,7 @@ function stampDriver(driverName, status, zone) {
         console.error("Fetch error:", error);
     });
 }
-        // Initialize Page
-        buildNavigation();
-        loadBoardData();
 
-    </script>
-</body>
-</html>
+// Initialize Page
+buildNavigation();
+loadBoardData();
