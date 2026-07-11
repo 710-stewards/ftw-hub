@@ -134,10 +134,13 @@
 
     <script>
         // 1. Security & Auth
-        const urlParams = new URLSearchParams(window.location.search);
-        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
-        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
+const urlParams = new URLSearchParams(window.location.search);
+let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
+if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
 
+// NEW: Grab the dispatcher's name right out of the URL bar and decode the %20 spaces
+let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
+        
         // 2. The Power Automate Endpoint
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
 
@@ -176,33 +179,33 @@
         }
 
         // The Click Action
-        function stampDriver(driverName, status, zone) {
-            event.target.innerText = "...";
-            
-            const payload = {
-                "DriverName": driverName,
-                "NewStatus": status,
-                "Zone": parseInt(zone),
-                "Center": "West",
-                "Route": "WestPost"
-            };
+function stampDriver(driverName, status, zone) {
+    event.target.innerText = "...";
+    
+    const payload = {
+        "DriverName": driverName,
+        "NewStatus": status,
+        "Zone": parseInt(zone),
+        "Center": "West",
+        "Route": "WestPost",
+        "UpdatedBy": activeDispatcher // NEW: Toss the name into the payload
+    };
 
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if(res.ok) {
-                    setTimeout(() => { loadBoardData(); }, 1500);
-                }
-            })
-            .catch(err => {
-                alert("Error saving to database.");
-                event.target.innerText = "Error";
-            });
+    fetch(flowUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if(res.ok) {
+            setTimeout(() => { loadBoardData(); }, 1500);
         }
-
+    })
+    .catch(err => {
+        alert("Error saving to database.");
+        event.target.innerText = "Error";
+    });
+}
         // Rendering the Rows
         function buildRowHtml(driver, zoneContext) {
             let displayStatus = "PENDING";
