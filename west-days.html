@@ -241,14 +241,15 @@ function buildRowHtml(driver, zoneContext) {
         statusClass = driver.CurrentStatus.toLowerCase() === 'off' ? 'status-badge off' : 'status-badge stay';
     }
 
-    // 4. Smart Button Logic (The Single-Click Toggle)
+        // 4. Smart Button Logic (The Single-Click Toggle)
     let actionButton = "";
     
-    if (isToday && driver.CurrentStatus === 'Off') {
-        // If they have today off, the only logical action is to revoke it
+    // We added the zoneContext check here so the button only flips to REVOKE in the specific zone they were stamped in
+    if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
+        
         actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+        
     } else {
-        // If it's pending, an old date, or they were revoked today, the next action is giving them the day off
         actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
     }
 
@@ -263,7 +264,7 @@ function buildRowHtml(driver, zoneContext) {
             </div>
         </div>
     `;
-}
+
 
 
 // The Click Action
