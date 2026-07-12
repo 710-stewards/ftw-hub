@@ -371,8 +371,9 @@
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
-                // THE FIX: We now use the exact API key from the x-ray!
-                const hubBucket = profile.HubBucketValue || 'Unassigned'; 
+                // Grab the pure string directly from your updated Flow
+                const hubBucket = profile.HubBucket || 'Unassigned'; 
+ 
                 
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
 
