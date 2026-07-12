@@ -242,6 +242,13 @@
             }
         }
 
+                function adminUpdateGroup(driverName, newGroup) {
+            if(confirm(`Are you sure you want to move ${driverName} to the ${newGroup} group?`)) {
+                alert(`BACKEND REQUIRED:\n\nTo move ${driverName} to ${newGroup}, we need an "${currentCenter}Move" branch in Power Automate.`);
+            }
+        }
+
+
         function adminDeleteDriver(driverName) {
             if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
                 alert(`BACKEND REQUIRED:\n\nTo actually delete ${driverName}, we need an "${currentCenter}Delete" branch in Power Automate.`);
@@ -325,11 +332,14 @@
                 ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`
                 : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
 
-            // Admin Buttons (Including the new CLEAR button)
+                        // Admin Buttons (Move, Clear, Delete)
+            let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
             let adminBtn = `
+                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}')">TO ${switchGroupTarget.toUpperCase()}</button>
                 <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}')">CLEAR</button>
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
+
 
             let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
 
