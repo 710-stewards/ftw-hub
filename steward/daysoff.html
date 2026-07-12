@@ -37,9 +37,8 @@
             font-size: 28px; cursor: pointer; transition: transform 0.2s;
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
-        .hamburger-btn:active { transform: scale(0.9); }
 
-        /* STEWARD CONTROLS (The Toggle & Admin Switch) */
+        /* STEWARD CONTROLS */
         .steward-controls {
             position: fixed; top: 75px; left: 0; right: 0; background: #222;
             border-bottom: 1px solid var(--border); padding: 10px 20px;
@@ -54,18 +53,10 @@
         .toggle-btn.active { background: var(--accent); color: #111; }
 
         .admin-switch-container { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
-        .toggle-switch {
-            position: relative; display: inline-block; width: 44px; height: 24px;
-        }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #444; transition: .4s; border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-red); }
         input:checked + .slider:before { transform: translateX(20px); }
 
@@ -78,12 +69,31 @@
         .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* BOARD SPECIFIC STYLING */
-        .zone-header {
-            background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px;
-            border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+        /* MODAL STYLING */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); z-index: 3000; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(3px);
         }
-        
+        .modal-card {
+            background: var(--bg-card); width: 90%; max-width: 400px;
+            border-radius: 8px; border: 1px solid var(--border); padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-title { color: var(--accent); font-size: 18px; margin-bottom: 15px; font-weight: bold; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; background: #111; color: white;
+            border: 1px solid #444; border-radius: 4px; font-size: 14px;
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-full { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #444; color: white; }
+        .btn-submit { background: var(--accent); color: black; }
+
+        /* BOARD SPECIFIC STYLING */
+        .zone-header { background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px; border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
         .driver-row {
             background-color: var(--bg-card); border: 1px solid var(--border);
             border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
@@ -91,20 +101,16 @@
             flex-wrap: wrap; gap: 10px; transition: all 0.2s;
         }
         .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
-        
         .driver-info { display: flex; flex-direction: column; min-width: 150px; }
         .driver-name { font-size: 16px; font-weight: bold; color: white; }
         
         .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .btn-board {
-            padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px;
-            font-weight: bold; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 #000;
-        }
+        .btn-board { padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
         .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
         
-        /* Button Colors */
         .btn-off { background-color: var(--accent-green); color: #111; }
         .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
+        .btn-clear { background-color: #666; color: #fff; }
         .btn-move { background-color: var(--accent-blue); color: #fff; }
         .btn-delete { background-color: var(--accent-red); color: #fff; }
         .btn-add { background-color: var(--accent); color: #111; width: 100%; margin-bottom: 20px; font-size: 14px; padding: 12px; display: none; }
@@ -119,13 +125,39 @@
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="parsing-text">↻ Loading Live Board...</div>
+    <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
+
+    <div id="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Add New Driver</div>
+            <div class="form-group">
+                <label>DRIVER FULL NAME *</label>
+                <input type="text" id="newDriverName" placeholder="e.g. John Doe" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>ASSIGN TO GROUP *</label>
+                <select id="newDriverGroup">
+                    <option value="" disabled selected>Select a group...</option>
+                    <option value="Bid">Bid Driver</option>
+                    <option value="Coverage">Coverage Driver</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>SENIORITY (INSERT DIRECTLY AFTER)</label>
+                <select id="insertAfterSelect">
+                    <option value="TOP">-- Place at very top of list --</option>
+                    </select>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-full btn-cancel" onclick="closeModal()">CANCEL</button>
+                <button class="btn-full btn-submit" onclick="submitNewDriver()">SAVE DRIVER</button>
+            </div>
+        </div>
     </div>
 
     <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-            <button class="hamburger-btn" onclick="alert('Menu clicked')">☰</button>
+            <button class="hamburger-btn">☰</button>
             <div>
                 <div class="header-title" id="page-title">Steward Admin Board</div>
                 <div id="driver-info" class="header-sub">Manage Roster & Days Off</div>
@@ -148,15 +180,11 @@
     </div>
 
     <div id="board-container" style="max-width: 800px; margin: 0 auto; margin-top: 20px;">
-        
-        <button class="btn-board btn-add" onclick="adminAddDriver()">+ ADD NEW DRIVER TO DATABASE</button>
-
+        <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER TO DATABASE</button>
         <div class="zone-header">Bid Drivers (Round 1)</div>
         <div id="zone-1-list"></div>
-
         <div class="zone-header">Bid Drivers (Round 2)</div>
         <div id="zone-2-list"></div>
-
         <div class="zone-header">Coverage Drivers</div>
         <div id="zone-3-list"></div>
     </div>
@@ -164,117 +192,119 @@
     <script>
         // 1. Security & Auth
         const urlParams = new URLSearchParams(window.location.search);
-        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
-        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
         let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Steward Admin";
 
-        // 2. THE MEMORY LOGIC (Check local storage, default to West)
+        // 2. THE MEMORY LOGIC
         let currentCenter = localStorage.getItem('steward_center') || 'West';
         
         // 3. Power Automate URL
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
 
-        // Initialize UI on load
         function initUI() {
             document.getElementById('page-title').innerText = `${currentCenter} Center - Steward Admin`;
             document.getElementById('btn-west').classList.toggle('active', currentCenter === 'West');
             document.getElementById('btn-east').classList.toggle('active', currentCenter === 'East');
         }
 
-        // Center Switcher
         function switchCenter(centerName) {
             currentCenter = centerName;
-            localStorage.setItem('steward_center', centerName); // Save to memory!
+            localStorage.setItem('steward_center', centerName);
             initUI();
             document.getElementById('loading-overlay').style.display = 'flex';
             loadBoardData();
         }
 
-        // Toggle Admin CSS
         function toggleAdminMode() {
-            const isChecked = document.getElementById('adminToggle').checked;
-            if (isChecked) {
-                document.body.classList.add('admin-mode');
-            } else {
-                document.body.classList.remove('admin-mode');
-            }
+            document.body.classList.toggle('admin-mode', document.getElementById('adminToggle').checked);
         }
 
-        // --- Standard Dispatch Click ---
+        // --- NEW: Modal Controls ---
+        function openModal() {
+            document.getElementById('newDriverName').value = "";
+            document.getElementById('newDriverGroup').value = "";
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        // --- Dispatch Core Function ---
         function stampDriver(driverName, status, zone) {
             event.target.innerText = "...";
-            const payload = {
-                "DriverName": driverName,
-                "NewStatus": status,
-                "Zone": parseInt(zone),
-                "Center": currentCenter,
-                "Route": currentCenter + "Post",
-                "UpdatedBy": activeDispatcher
-            };
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
+            const payload = { "DriverName": driverName, "NewStatus": status, "Zone": parseInt(zone), "Center": currentCenter, "Route": currentCenter + "Post", "UpdatedBy": activeDispatcher };
+            fetch(flowUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
             .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
             .catch(err => alert("Error saving to database."));
         }
 
-        // --- NEW: ADMIN PLACEHOLDER FUNCTIONS ---
-        function adminUpdateGroup(driverName, newGroup, currentZone) {
-            alert(`BACKEND REQUIRED:\n\nYou clicked to move ${driverName} to ${newGroup}.\n\nTo make this work, we need to add an "${currentCenter}UpdateGroup" branch to your Power Automate flow.`);
+        // --- ADMIN FUNCTIONS ---
+        function adminClearStatus(driverName) {
+            if(confirm(`Are you sure you want to clear today's status for ${driverName}? This will reset them to PENDING.`)) {
+                alert(`BACKEND REQUIRED:\n\nTo make this work, we need an "${currentCenter}Clear" branch in Power Automate to wipe their Timestamp and Status.`);
+            }
         }
 
         function adminDeleteDriver(driverName) {
-            if(confirm(`Are you sure you want to permanently delete ${driverName} from the database?`)) {
-                alert(`BACKEND REQUIRED:\n\nTo actually delete ${driverName}, we need to add an "${currentCenter}Delete" branch to your Power Automate flow.`);
+            if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
+                alert(`BACKEND REQUIRED:\n\nTo actually delete ${driverName}, we need an "${currentCenter}Delete" branch in Power Automate.`);
             }
         }
 
-        function adminAddDriver() {
-            const newName = prompt(`Enter the new driver's full name to add them to the ${currentCenter} Center:`);
-            if (newName) {
-                alert(`BACKEND REQUIRED:\n\nTo add ${newName}, we need to build an "${currentCenter}Add" branch in your Power Automate flow.`);
+        function submitNewDriver() {
+            const name = document.getElementById('newDriverName').value.trim();
+            const group = document.getElementById('newDriverGroup').value;
+            const insertAfter = document.getElementById('insertAfterSelect').value;
+            
+            if (!name || !group) {
+                alert("You must enter a Name and select a Group.");
+                return;
             }
+            
+            alert(`BACKEND REQUIRED:\n\nWe are ready to send:\nName: ${name}\nGroup: ${group}\nInsert After: ${insertAfter}\n\nWe need an "${currentCenter}Add" branch in Power Automate to catch this.`);
+            closeModal();
         }
 
-        // --- Rotation Math ---
-        function findNextEligibleIndex(driversArray, zoneContext) {
+        // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
+        function calculateGlobalHighlight(bidList, coverList) {
+            // 1. Stack them exactly how they appear on the screen
+            let virtualBoard = [];
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
+            coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
+
+            // 2. Find the most recent date clicked across the ENTIRE board
             let mostRecentTime = 0; let mostRecentDateStr = "";
-            driversArray.forEach(d => {
-                if (d.ZoneTag == zoneContext && d.Timestamp) {
+            virtualBoard.forEach(d => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp) {
                     let ts = new Date(d.Timestamp).getTime();
                     if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
                 }
             });
-            if (mostRecentDateStr === "") return 0;
+            if (mostRecentDateStr === "") return 0; // Board is empty, highlight top guy
 
+            // 3. Find furthest person down the global list who got OFF
             let lastOffIndex = -1; let firstStayAfterOff = -1;
-            driversArray.forEach((d, i) => {
-                if (d.ZoneTag == zoneContext && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
+            virtualBoard.forEach((d, i) => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
             });
             
+            // 4. Check for any forced STAYS after that person
             let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
-            for (let i = startIndex; i < driversArray.length; i++) {
-                if (driversArray[i].ZoneTag == zoneContext && driversArray[i].Timestamp === mostRecentDateStr && driversArray[i].CurrentStatus && driversArray[i].CurrentStatus.toLowerCase() === 'stay') {
+            for (let i = startIndex; i < virtualBoard.length; i++) {
+                if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
                     firstStayAfterOff = i; break; 
                 }
             }
 
             if (firstStayAfterOff !== -1) return firstStayAfterOff;
-            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % driversArray.length;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
             else return 0; 
         }
 
         // Rendering the Rows
         function buildRowHtml(driver, zoneContext, isHighlighted = false) {
-            let displayStatus = "PENDING";
-            let statusColor = "var(--text-muted)"; 
+            let displayStatus = "PENDING"; let statusColor = "var(--text-muted)"; 
             
             const d = new Date();
             const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
-            
             const isToday = (driver.Timestamp === todayStr);
             const isRecentPast = (driver.Timestamp === window.recentPastDay);
             const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
@@ -285,23 +315,19 @@
                     if (isToday) statusColor = "var(--accent-green)"; 
                     else if (isRecentPast) statusColor = "var(--accent)"; 
                     else statusColor = "var(--text-muted)"; 
-                } else {
-                    statusColor = "var(--accent-red)"; 
-                }
+                } else { statusColor = "var(--accent-red)"; }
             }
 
             let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
 
-            // Dispatch Mode Buttons
+            // Dispatch Buttons
             let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
                 ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`
                 : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
 
-            // Admin Mode Buttons
-            let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
-            let switchZoneTarget = (driver.Group === 'Bid') ? 3 : 1;
+            // Admin Buttons (Including the new CLEAR button)
             let adminBtn = `
-                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', ${switchZoneTarget})">MOVE TO ${switchGroupTarget.toUpperCase()}</button>
+                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}')">CLEAR</button>
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
 
@@ -325,8 +351,7 @@
         // Fetching and Displaying the Data
         function loadBoardData() {
             fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+                method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ "Route": currentCenter + "Get" })
             })
             .then(response => response.json())
@@ -343,21 +368,37 @@
                 const bidDrivers = data.filter(d => d.Group === 'Bid');
                 const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-                const nextZone1 = findNextEligibleIndex(bidDrivers, 1);
-                const nextZone2 = findNextEligibleIndex(bidDrivers, 2);
-                const nextZone3 = findNextEligibleIndex(coverDrivers, 3);
+                // Populate the "Insert After" dropdown for the Admin Modal
+                const allNames = data.map(d => `<option value="${d.Title}">${d.Title}</option>`).join('');
+                document.getElementById('insertAfterSelect').innerHTML = `<option value="TOP">-- Place at very top of list --</option>` + allNames;
 
-                document.getElementById('zone-1-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 1, index === nextZone1)).join('');
-                document.getElementById('zone-2-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 2, index === nextZone2)).join('');
-                document.getElementById('zone-3-list').innerHTML = coverDrivers.map((d, index) => buildRowHtml(d, 3, index === nextZone3)).join('');
+                // --- Calculate the single GLOBAL highlight winner ---
+                const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
+                let runningIndex = 0;
+
+                // Draw Zone 1 (Round 1)
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 1, isWinner);
+                }).join('');
+
+                // Draw Zone 2 (Round 2)
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 2, isWinner);
+                }).join('');
+
+                // Draw Zone 3 (Coverage)
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 3, isWinner);
+                }).join('');
             })
             .catch(error => {
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
-                console.error("Fetch error:", error);
             });
         }
 
-        // Start it up
         initUI();
         loadBoardData();
     </script>
