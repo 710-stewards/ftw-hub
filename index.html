@@ -282,11 +282,14 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // --- NEW: UNIVERSAL MENU BUILDER FUNCTION ---
-        function buildNavigation(guid, first, last, emp) {
+        // 3. UPDATE THE FUNCTION TO ACCEPT "bucket"
+        function buildNavigation(guid, first, last, emp, bucket) {
             let secureQueryString = `?id=${guid}`;
             if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
             if (emp) secureQueryString += `&emp=${emp}`;
+            
+            // 4. ATTACH IT TO THE URL LINK
+            if (bucket) secureQueryString += `&hub=${encodeURIComponent(bucket)}`;
 
             fetch('member-nav.json', { cache: 'no-store' })
                 .then(response => response.json())
@@ -368,10 +371,13 @@
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
+                // 1. GRAB THE HUB BUCKET FROM SHAREPOINT
+                const hubBucket = profile.HubBucket || 'Unassigned'; 
+                
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
 
-                // NEW: Trigger the menu builder now that we have the secure variables from the database!
-                buildNavigation(memberGuid, firstName, lastName, employeeId);
+                // 2. PASS IT TO THE MENU BUILDER
+                buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
 
                 if (grievances.length === 0) {
                     document.getElementById('data-display').innerHTML = `
