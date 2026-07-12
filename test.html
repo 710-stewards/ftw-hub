@@ -356,10 +356,6 @@
                 const profile = data.profile || {};
                 const grievances = data.grievances || [];
                 
-                // SHOW ME EVERY SINGLE COLUMN NAME POWER AUTOMATE IS SENDING
-                alert("RAW KEYS: " + Object.keys(profile).join(", "));
-
-                
                 if (!profile.EmployeeID) {
                     document.getElementById('driver-info').innerText = "Authentication Failed";
                     document.getElementById('data-display').innerHTML = `
@@ -375,16 +371,15 @@
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
-                // THE SMART CATCH (Busts open the SharePoint Dropdown)
-                const rawHub = profile.HubBucket;
-                const hubBucket = (rawHub && typeof rawHub === 'object') ? rawHub.Value : (rawHub || 'Unassigned'); 
+                // THE FIX: We now use the exact API key from the x-ray!
+                const hubBucket = profile.HubBucketValue || 'Unassigned'; 
                 
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
 
                 // FIRE THE MENU BUILDER (Passes the hub into the function)
                 buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
 
-                // MAGICALLY REWRITE THE DASHBOARD URL (So if they hit refresh, the hub stays!)
+                // MAGICALLY REWRITE THE DASHBOARD URL
                 const fullSecureUrl = window.location.pathname + `?id=${memberGuid}&name=${encodeURIComponent((firstName + ' ' + lastName).trim())}&emp=${employeeId}&hub=${encodeURIComponent(hubBucket)}`;
                 window.history.replaceState(null, '', fullSecureUrl);
 
