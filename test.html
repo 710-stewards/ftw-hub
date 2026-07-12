@@ -1,42 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+      }
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Library | Local 710</title>
+    <title>Local 710 Member Portal</title>
     <style>
         :root {
             --bg-main: #121212;
+            --bg-card: #1e1e1e;
             --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
-        body { 
-            background-color: var(--bg-main); 
-            color: var(--text-main); 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
-        }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
-        /* Top Navbar */
+        /* RESPONSIVE HEADER & NAVIGATION */
         .top-navbar {
-            height: 70px; background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; padding: 0 20px; flex: 0 0 auto; z-index: 1000;
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
         .hamburger-btn {
             background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
+        .hamburger-btn:active { transform: scale(0.9); }
 
-        /* Drawer Styles */
+        /* MAIN NAV DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -46,230 +55,626 @@
         .main-nav-drawer.open { transform: translateX(0); }
         .nav-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
         }
         .nav-overlay.open { display: block; }
         
         .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        
-        /* Accordion Styles (Library View) */
-        #library-view { padding: 20px; padding-bottom: 80px; overflow-y: auto; flex: 1; display: block; }
-        details.accordion-section {
-            margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #1a1a1a;
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
+
+        /* LIVE SEARCH BANNER */
+        .search-banner {
+            background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
+            margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
         }
-        details summary {
-            padding: 20px; color: var(--accent); font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between;
+        .search-input {
+            flex: 1; min-width: 250px; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
         }
-        details summary::-webkit-details-marker { display: none; }
-        details[open] summary { background: #222; border-bottom: 1px solid #333; }
-        
+        .search-input:focus { border-color: var(--accent); }
+        .sort-select {
+            width: auto; min-width: 200px; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; cursor: pointer;
+        }
+
+        /* CARD ARCHITECTURE */
         .record-card {
-            display: block; width: 100%; text-align: left; border: none; font-size: 15px;
-            margin-bottom: 10px; border-left: 3px solid var(--accent); padding: 15px; 
-            background: #262626; color: white; border-radius: 4px; cursor: pointer;
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid #555;
+        }
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
+        .ctr-meta {
+            display: flex; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { 
+                flex: 1; order: 0; margin-top: 0; 
+                justify-content: center; gap: 20px; 
+            }
         }
 
-        /* NEW: Steward Card Styles */
-        .steward-card {
-            background-color: #262626; border: 1px solid #444;
-            border-radius: 8px; padding: 15px; margin-bottom: 15px;
-            border-left: 5px solid var(--accent);
+        /* READ ONLY BADGES */
+        .status-terminal {
+            background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 12px;
         }
-        .steward-card:last-child { margin-bottom: 0; }
-        .steward-name { font-size: 18px; font-weight: bold; color: white; margin-bottom: 4px; }
-        .steward-title { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }
-        .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-        .btn-action {
-            flex: 1; text-align: center; text-decoration: none;
-            padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold;
-            text-transform: uppercase; cursor: pointer; border: none;
-        }
-        .btn-call { background-color: var(--accent); color: #000; }
-        .btn-text { background-color: #333; color: white; border: 1px solid #555; }
-        .btn-save { background-color: #2ecc71; color: #000; width: 100%; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none;}
+        .status-block { display: flex; flex-direction: column; gap: 4px; }
+        .sb-label { font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sb-value { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; }
 
-        /* Mozilla Viewer Styles (Viewer View) */
-        #viewer-view { display: none; flex-direction: column; height: 100%; flex: 1; }
-        .viewer-controls {
-            background: #161616; padding: 12px 20px; border-bottom: 1px solid #333;
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        /* BUTTONS */
+        .btn-3d {
+            width: 100%; height: 42px; border: none; border-radius: 6px;
+            font-size: 13px; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
         }
-        .back-btn {
-            background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
+
+        /* RIGHT SIDE AUDIT DRAWER */
+        .side-drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; 
+            width: 100%; max-width: 450px; 
+            background: #161616; border-left: 2px solid var(--accent);
+            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
-        #doc-title { font-size: 14px; color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
-        iframe { flex: 1; width: 100%; border: none; background: #222; }
+        .side-drawer.open { transform: translateX(0); }
+        .drawer-header {
+            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
+        .pdf-frame { 
+            width: 100%; 
+            height: 75vh; 
+            min-height: 600px; 
+            border-radius: 4px; 
+            border: 1px solid #333; 
+            margin-top: 10px; 
+        }
+        .drawer-handle {
+            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+        }
+
+        /* --- NEW: TAGS LOADING OVERLAY --- */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; 
+        }
+
+        .loading-logo {
+            width: 80%;            
+            max-width: 500px;      
+            max-height: 80vh;      
+            object-fit: contain;   
+            margin-bottom: 20px;   
+        }
+
+        .parsing-text {
+            color: var(--text-muted);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-weight: bold;
+            font-size: 16px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
+    <div id="loading-overlay">
+        <img src="tagsv3.png" alt="TAGS System" class="loading-logo">
+        <div class="parsing-text">↻ Parsing records...</div>
+    </div>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="padding: 20px 20px 10px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Member Menu
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-            </h3>
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Driver Portal Menu</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <div class="nav-section-title">Resources</div>
-        <a id="lnk-member-portal" href="#" class="nav-item">→ Member Portal</a>
-        <a href="#" class="nav-item active">Document Library (Active)</a>
+        <!-- NEW CONTAINER FOR JSON LINKS -->
+        <div id="nav-links-container"></div>
     </div>
 
     <div class="top-navbar">
-        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-        <div>
-            <div class="header-title">Local 710 Portal</div>
-            <div class="header-sub">Document Library</div>
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Local 710 Member Portal</div>
+                <div id="driver-info" class="header-sub">Connecting secure driver token...</div>
+            </div>
         </div>
     </div>
 
-    <div id="library-view">
-        <div id="stewards-container"></div>
-        
-        <div id="accordion-container"></div>
+    <div class="search-banner">
+        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Date, Type, Amount, or Status...">
+        <select id="sort-dropdown" class="sort-select" onchange="applyFilters()">
+            <option value="default">Sort: Default (Pending First)</option>
+            <option value="newest">Sort: Newest Violation Date</option>
+            <option value="oldest">Sort: Oldest Violation Date</option>
+            <option value="settled_date">Sort: Settled Date (Newest)</option>
+            <option value="payout">Sort: Highest Final Payout</option>
+        </select>
     </div>
 
-    <div id="viewer-view">
-        <div class="viewer-controls">
-            <button class="back-btn" onclick="closeDocument()">← Back</button>
-            <span id="doc-title"></span>
+    <div id="data-display"></div>
+
+    <div id="side-drawer" class="side-drawer">
+        <div id="drawerHandle" class="drawer-handle"></div>
+        <div class="drawer-header">
+            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Grievance Details</h3>
+            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
-        <iframe id="pdf-viewer" src=""></iframe>
+        <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
     <script>
-        // 1. Navigation Routing (Maintains the secure 'id' GUID)
+        // Global Variables
+        window.grievanceCache = [];
+        
         const urlParams = new URLSearchParams(window.location.search);
-        const memberGUID = urlParams.get('id'); 
-
-        const portalLink = document.getElementById('lnk-member-portal');
-        if (portalLink) {
-            portalLink.href = memberGUID ? `index.html?id=${memberGUID}` : `index.html`;
+        let memberGuid = urlParams.get('id');
+        
+        // The Token Memory Logic
+        if (memberGuid) {
+            localStorage.setItem('saved_member_token', memberGuid);
+        } else {
+            memberGuid = localStorage.getItem('saved_member_token');
         }
 
-        // 2. Fetch the Stewards JSON and build the top folder
-        fetch('stewards.json')
-            .then(response => response.json())
-            .then(stewards => {
-                const container = document.getElementById('stewards-container');
-                const section = document.createElement('details');
-                section.className = 'accordion-section';
-                
-                let html = `<summary>Local 710 Stewards <span>▼</span></summary><div style="padding: 15px 20px;">`;
-                
-                stewards.forEach(steward => {
-                    const cleanPhone = steward.phone.replace(/\D/g, ''); 
-                    html += `
-                        <div class="steward-card">
-                            <div class="steward-name">${steward.name}</div>
-                            <div class="steward-title">${steward.title}</div>
-                            <div class="action-row">
-                                <a href="tel:${cleanPhone}" class="btn-action btn-call">📞 Call</a>
-                                <a href="sms:${cleanPhone}" class="btn-action btn-text">💬 Text</a>
-                            </div>
-                            <button class="btn-save" onclick="downloadVCard('${steward.name}', '${cleanPhone}')">
-                                👤 Save to Contacts
-                            </button>
-                        </div>
-                    `;
-                });
-                
-                html += `</div>`;
-                section.innerHTML = html;
-                container.appendChild(section);
-            })
-            .catch(error => {
-                console.log("Could not load stewards:", error);
-            });
+        // THE NEW MEMBER-SPECIFIC FLOW URL
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/40c08254f020425cba82f06f969e9661/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=-8Go0Skkb_Pv1qowZOJEIzt-PXxQpamBgjSO39_1gAc";
 
-        // 3. Fetch the Templates JSON and build the rest of the folders
-        fetch('templates.json')
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('accordion-container');
-                for (const category in data) {
-                    const section = document.createElement('details');
-                    section.className = 'accordion-section';
-                    
-                    let html = `<summary>${category} <span>▼</span></summary><div style="padding: 15px 20px;">`;
-                    
-                    data[category].forEach(item => {
-                        html += `<button class="record-card" onclick="openDocument('${item.url}', '${item.name}')">${item.name}</button>`;
-                    });
-                    
-                    html += `</div>`;
-                    section.innerHTML = html;
-                    container.appendChild(section);
-                }
-            })
-            .catch(error => {
-                document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
-            });
-
-        // The vCard Generator
-        function downloadVCard(name, phone) {
-            const vcardData = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nORG:Local 710 Steward\nTEL;TYPE=WORK,VOICE:${phone}\nEND:VCARD`;
-            const blob = new Blob([vcardData], { type: "text/vcard" });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${name.replace(/\s+/g, '_')}_Local710.vcf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // Viewer Logic
-        function openDocument(url, title) {
-            document.getElementById('library-view').style.display = 'none';
-            document.getElementById('viewer-view').style.display = 'flex';
-            document.getElementById('doc-title').innerText = title;
-            
-            const absoluteUrl = new URL(url, window.location.href).href;
-            const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
-            document.getElementById('pdf-viewer').src = mozillaUrl;
-
-            history.pushState({ viewerOpen: true }, "", "#doc-viewer");
-        }
-
-        function closeDocument() {
-            document.getElementById('viewer-view').style.display = 'none';
-            document.getElementById('library-view').style.display = 'block';
-            document.getElementById('pdf-viewer').src = "";
-
-            if (window.location.hash === '#doc-viewer') {
-                history.back();
+        // Date Formatter
+        const formatToUsDate = (dateString) => {
+            if (!dateString || dateString === 'N/A') return 'N/A';
+            if (!isNaN(dateString) && dateString > 10000) {
+                const utc_days = Math.floor(dateString - 25569);
+                const utc_value = utc_days * 86400;  
+                const date_info = new Date(utc_value * 1000);
+                return (date_info.getMonth() + 1) + '/' + date_info.getDate() + '/' + date_info.getFullYear();
             }
-        }
+            if (dateString.includes('T')) dateString = dateString.split('T')[0];
+            const parts = dateString.split('-');
+            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+            return dateString;
+        };
 
-        // Hamburger Menu Controls
+        // Navigation Controllers
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
         }
-
         function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // Hardware Back Button Intercept
-        window.addEventListener('popstate', function(event) {
-            const viewerView = document.getElementById('viewer-view');
-            const libraryView = document.getElementById('library-view');
+        // --- UNIVERSAL MENU BUILDER ---
+        function buildNavigation(guid, first, last, emp, bucket) {
+            let secureQueryString = `?id=${guid}`;
+            if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
+            if (emp) secureQueryString += `&emp=${emp}`;
             
-            if (viewerView.style.display === 'flex') {
-                viewerView.style.display = 'none';
-                libraryView.style.display = 'block';
-                document.getElementById('pdf-viewer').src = "";
+            // ATTACH THE HUB TO EVERY LINK IN THE MENU
+            if (bucket) secureQueryString += `&hub=${encodeURIComponent(bucket)}`;
+
+            fetch('member-nav.json', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                    
+                    // Identify the user's hub so the menu knows what to hide/show
+                    const currentHub = bucket || "Unassigned";
+
+                    let menuHTML = '';
+
+                    menuItems.forEach(item => {
+                        // THE BOUNCER: Hide the link if the driver isn't in the target hub
+                        if (item.targetHubs && item.targetHubs.length > 0) {
+                            if (!item.targetHubs.includes(currentHub)) {
+                                return; 
+                            }
+                        }
+
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const activeText = isActive ? ' (Active)' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
+                        }
+                    });
+                    navContainer.innerHTML = menuHTML;
+                })
+                .catch(error => console.log("Error loading menu:", error));
+        }
+
+        function loadDriverData() {
+            if (!memberGuid) {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('data-display').innerHTML = `
+                    <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
+                        <h3 style="color: #ff3333; margin-bottom: 5px; text-align: center;">Security Halt</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; text-align: center;">No secure routing token found in memory.</p>
+                        
+                        <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                            <h4 style="color: var(--accent); margin-bottom: 10px; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">iPhone / iOS Setup Required</h4>
+                            <p style="color: #ccc; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">Apple devices block apps from reading your Safari history. To securely link this app to your profile, please copy your personal link from your text/email and paste it below.</p>
+                            
+                            <input type="text" id="manual-token-input" placeholder="Paste your secure link here..." style="width: 100%; height: 45px; padding: 0 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #555; background: #262626; color: white; outline: none; font-size: 14px;">
+                            
+                            <button onclick="saveManualToken()" style="width: 100%; height: 42px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; text-transform: uppercase; background-color: var(--accent-green); color: #111; cursor: pointer; box-shadow: 0 4px 0 #000; transition: transform 0.1s;">Sync My Device</button>
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "memberGuid": memberGuid })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                const profile = data.profile || {};
+                const grievances = data.grievances || [];
+                
+                // ADD THIS TEMPORARY ALERT LINE:
+                alert("RAW SHAREPOINT DATA: " + JSON.stringify(profile.HubBucket));
+                
+                if (!profile.EmployeeID) {
+                    document.getElementById('driver-info').innerText = "Authentication Failed";
+                    document.getElementById('data-display').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <h3 style="color: #ff3333; margin-bottom: 10px;">Security Access Denied</h3>
+                            <p style="color: var(--text-muted);">Could not locate an active member profile for this secure link.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const firstName = profile.FirstName || profile['First Name'] || 'Driver';
+                const lastName = profile.LastName || profile['Last Name'] || '';
+                const employeeId = profile.EmployeeID || profile.Title || 'N/A';
+                
+                // THE SMART CATCH (Busts open the SharePoint Dropdown)
+                const rawHub = profile.HubBucket;
+                const hubBucket = (rawHub && typeof rawHub === 'object') ? rawHub.Value : (rawHub || 'Unassigned'); 
+                
+                document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
+
+                // FIRE THE MENU BUILDER (Passes the hub into the function)
+                buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
+
+                // MAGICALLY REWRITE THE DASHBOARD URL (So if they hit refresh, the hub stays!)
+                const fullSecureUrl = window.location.pathname + `?id=${memberGuid}&name=${encodeURIComponent((firstName + ' ' + lastName).trim())}&emp=${employeeId}&hub=${encodeURIComponent(hubBucket)}`;
+                window.history.replaceState(null, '', fullSecureUrl);
+
+                if (grievances.length === 0) {
+                    document.getElementById('data-display').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <h3 style="color: var(--accent); margin-bottom: 10px;">No Active Grievances Found</h3>
+                            <p style="color: var(--text-muted);">Your digital record is completely clear.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                window.grievanceCache = grievances;
+                applyFilters();
+            }).catch(err => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('data-display').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+                        Connection error. Cloud failed to respond.
+                    </div>`;
+                console.error(err);
+            });
+        }
+
+        function applyFilters() {
+            const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
+            const sortMode = document.getElementById('sort-dropdown').value;
+
+            let filteredArray = window.grievanceCache.filter(item => {
+                if (searchText !== '') {
+                    const dispRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : (item.Disposition || item.field_6 || '');
+                    
+                    const searchTarget = `
+                        ${item.ViolationType || item.field_3 || ''} 
+                        ${item.ViolationSubType || ''}
+                        ${item.ViolationAmount || item.field_4 || ''}
+                        ${item.SettledAmount || item.field_7 || ''}
+                        ${formatToUsDate(item.ViolationDate || item.field_2 || '')}
+                        ${dispRaw}
+                    `.toLowerCase();
+                    
+                    if (!searchTarget.includes(searchText)) return false;
+                }
+                return true;
+            });
+
+            filteredArray.sort((a, b) => {
+                const dispA = (a.Disposition && typeof a.Disposition === 'object') ? a.Disposition.Value : (a.Disposition || a.field_6 || 'PENDING');
+                const dispB = (b.Disposition && typeof b.Disposition === 'object') ? b.Disposition.Value : (b.Disposition || b.field_6 || 'PENDING');
+                
+                const isPendingA = (!dispA || dispA.toUpperCase() === 'PENDING' || dispA.toUpperCase() === 'NOTE');
+                const isPendingB = (!dispB || dispB.toUpperCase() === 'PENDING' || dispB.toUpperCase() === 'NOTE');
+                
+                const dateA = new Date(a.ViolationDate || a.field_2 || 0);
+                const dateB = new Date(b.ViolationDate || b.field_2 || 0);
+
+                if (sortMode === 'default') {
+                    if (isPendingA && !isPendingB) return -1;
+                    if (!isPendingA && isPendingB) return 1;
+                    return dateB - dateA;
+                } else if (sortMode === 'newest') {
+                    return dateB - dateA;
+                } else if (sortMode === 'oldest') {
+                    return dateA - dateB;
+                } else if (sortMode === 'settled_date') {
+                    const settleDateA = new Date(a.SettledDate || a.field_5 || 0);
+                    const settleDateB = new Date(b.SettledDate || b.field_5 || 0);
+                    return settleDateB - settleDateA;
+                } else if (sortMode === 'payout') {
+                    const payA = parseFloat(a.SettledAmount || a.field_7 || 0);
+                    const payB = parseFloat(b.SettledAmount || b.field_7 || 0);
+                    return payB - payA; 
+                }
+                return 0;
+            });
+
+            renderCards(filteredArray);
+        }
+
+        function renderCards(filteredData) {
+            const display = document.getElementById('data-display');
+            display.style.paddingBottom = '120px';
+
+            if (filteredData.length === 0) {
+                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No records matched your search.</div>';
+                return;
+            }
+
+            let html = `
+                <div style="margin: 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+                    <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">My Filing History</span>
+                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${filteredData.length} RECORD${filteredData.length > 1 ? 'S' : ''}</span>
+                </div>
+            `;
+
+            filteredData.forEach(item => {
+                const sysId = item.Title || item.field_11 || '';
+                const vDate = formatToUsDate(item.ViolationDate || item.field_2 || '');
+                const violType = item.ViolationType || item.field_3 || 'Not Set';
+                const violSubType = item.ViolationSubType || '';
+                const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
+                
+                const originalAmt = parseFloat(item.ViolationAmount || item.field_4 || 0).toFixed(2);
+                const settledAmtDisplay = parseFloat(item.SettledAmount || item.field_7 || 0).toFixed(2);
+                const settledDateDisplay = (item.SettledDate || item.field_5) ? formatToUsDate(item.SettledDate || item.field_5) : '------';
+
+                const dispTextRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : (item.Disposition || item.field_6);
+                const dispText = dispTextRaw ? dispTextRaw : 'PENDING';
+                const isPending = dispText.toUpperCase() === 'PENDING' || dispText.toUpperCase() === 'NOTE' || !dispTextRaw;
+                const statusColor = isPending ? 'var(--accent)' : 'var(--accent-green)';
+                const cardBorderColor = isPending ? '#ffcc00' : 'var(--accent-green)';
+
+                html += `
+                    <div class="record-card" style="border-left: 5px solid ${cardBorderColor}; transition: all 0.2s ease;">
+                        
+                        <div class="card-top-row">
+                            <h4 class="ctr-name">${vDate}</h4>
+                            <div class="ctr-meta">
+                                <span>${cleanMetaType}</span>
+                            </div>
+                            <div class="ctr-amt" style="color: #888; font-size: 16px;">Orig: $${originalAmt}</div>
+                        </div>
+
+                        <div class="status-terminal">
+                            <div class="status-block">
+                                <span class="sb-label">Disposition</span>
+                                <span class="sb-value" style="color: ${statusColor};">${dispText}</span>
+                            </div>
+                            <div class="status-block">
+                                <span class="sb-label">Date Settled</span>
+                                <span class="sb-value">${settledDateDisplay}</span>
+                            </div>
+                            <div class="status-block" style="text-align: right;">
+                                <span class="sb-label">Final Payout</span>
+                                <span class="sb-value" style="color: var(--accent-green); font-size: 16px;">$${settledAmtDisplay}</span>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 14px;">
+                            <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">View File Details & Document</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            display.innerHTML = html;
+        }
+
+        function openDrawer(recordId) {
+            const record = window.grievanceCache.find(r => (r.Title || r.field_11 || '') === recordId);
+            if (!record) return;
+
+            document.getElementById('drawer-title').innerText = `File Details`;
+            const container = document.getElementById('drawer-main-content');
+            
+            let safeLink = record.PublicLink || record.field_9 || '';
+            let downloadBtnHtml = '';
+
+            if (safeLink.includes("drive.google.com")) {
+                const match = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+                if (match && match[1]) {
+                    const fileId = match[1];
+                    safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
+                    downloadBtnHtml = `
+                        <div style="text-align: center; margin-top: 15px;">
+                            <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: #ffcc00; padding: 12px 24px; font-size: 14px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid #ffcc00; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                                📥 Download PDF Evidence
+                            </a>
+                        </div>
+                    `;
+                }
+            }
+
+            const rawNotes = record.NotesA || record.field_8 || '';
+            const historyHtml = rawNotes ? `
+                <div style="background-color: #1a1a1a; padding: 15px; border-radius: 4px; font-style: italic; color: #dddddd; font-size: 13px; line-height: 1.5; margin-bottom: 20px; border-left: 3px solid #666; white-space: pre-wrap;">${rawNotes}</div>
+            ` : '<div style="color: #666; font-size: 13px; margin-bottom: 20px; font-style: italic;">No operational notes attached to this case.</div>';
+
+            const violType = record.ViolationType || record.field_3 || 'N/A';
+            const subType = record.ViolationSubType || '';
+            const fullType = subType ? `${violType} — ${subType}` : violType;
+            const claimAmt = parseFloat(record.ViolationAmount || record.field_4 || 0).toFixed(2);
+            const settledAmt = parseFloat(record.SettledAmount || record.field_7 || 0).toFixed(2);
+            const status = (record.Disposition && typeof record.Disposition === 'object') ? record.Disposition.Value : (record.Disposition || record.field_6 || 'PENDING');
+            const steward = record.StewardOfRecord || record.field_12 || 'Unassigned';
+            const claimHours = record.ClaimHours || 'N/A';
+            const statusColor = status.toUpperCase() === 'PENDING' || status.toUpperCase() === 'NOTE' ? 'var(--accent)' : 'var(--accent-green)';
+
+            container.innerHTML = `
+                <div style="background: #222; padding: 15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 20px;">
+                    <h4 style="color: var(--accent); margin-bottom: 12px; font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 6px;">Master Case Data</h4>
+                    
+                    <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Tracking ID:</b></td>
+                            <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #ccc;">${recordId}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Current Status:</b></td>
+                            <td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${statusColor};">${status}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Assigned Steward:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #fff;">${steward}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Violation Date:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #fff;">${formatToUsDate(record.ViolationDate || record.field_2)}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Date Filed:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #fff;">${formatToUsDate(record.FileDate || record.field_2)}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Violation Type:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #fff;">${fullType}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Claim Hours:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #fff;">${claimHours}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px dashed #333;">
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Original Claim:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: #888; font-weight: bold;">$${claimAmt}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: var(--text-muted);"><b>Settled For:</b></td>
+                            <td style="padding: 8px 0; text-align: right; color: var(--accent-green); font-weight: bold; font-size: 15px;">$${settledAmt}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">File History & Notes</label>
+                ${historyHtml}
+
+                <label class="input-label" style="margin-bottom: 4px; display: block; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">Original Evidence PDF Document</label>
+                ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
+            `;
+
+            document.getElementById('side-drawer').classList.add('open');
+            history.pushState({ drawerOpen: true }, "", "#file-viewer");
+        }
+
+        function closeDrawer() { 
+            document.getElementById('side-drawer').classList.remove('open'); 
+            if (window.location.hash === '#file-viewer') {
+                history.back();
+            }
+        }
+
+        const drawer = document.getElementById('side-drawer');
+        const handle = document.getElementById('drawerHandle');
+        handle.addEventListener('mousedown', initResize);
+        handle.addEventListener('touchstart', initResize, { passive: true });
+
+        function initResize() {
+            document.addEventListener('mousemove', resizeDrawer);
+            document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', resizeDrawer, { passive: false });
+            document.addEventListener('touchend', stopResize);
+        }
+        function resizeDrawer(e) {
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const newWidth = window.innerWidth - clientX;
+            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) drawer.style.width = newWidth + 'px';
+        }
+        function stopResize() {
+            document.removeEventListener('mousemove', resizeDrawer);
+            document.removeEventListener('touchmove', resizeDrawer);
+        }
+
+        window.addEventListener('popstate', function(event) {
+            const drawer = document.getElementById('side-drawer');
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
             }
         });
+
+        window.saveManualToken = function() {
+            const inputVal = document.getElementById('manual-token-input').value.trim();
+            if (!inputVal) return;
+            let extractedToken = inputVal;
+            if (inputVal.includes('id=')) {
+                extractedToken = inputVal.split('id=')[1].split('&')[0];
+            }
+            localStorage.setItem('saved_member_token', extractedToken);
+            window.location.reload();
+        };
+        
+        loadDriverData();
     </script>
 </body>
 </html>
