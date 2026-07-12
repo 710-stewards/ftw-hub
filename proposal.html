@@ -200,14 +200,14 @@
     </div>
 
     <script>
-        // --- PASTE YOUR NEW MASTER POWER AUTOMATE URL HERE ---
-        const masterFlowUrl = 'https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/230151223e8443f6bb1095abe6245ede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=K45FpawXiqM8I24ONJ4HnhKZeghVrI_rGFaq4yhr4HQ';
-        
-        // --- 1. GLOBAL VARIABLES & URL PARAMS ---
+                // --- 1. GLOBAL VARIABLES & URL PARAMS ---
         const urlParams = new URLSearchParams(window.location.search);
         const passedGuid = urlParams.get('id');
         const passedName = urlParams.get('name');
         const passedEmpId = urlParams.get('emp'); 
+        
+        // 1. CATCH THE HUB FROM THE URL
+        const passedHub = urlParams.get('hub'); 
 
         // --- 2. UNIVERSAL MENU BUILDER ---
         let secureQueryString = "";
@@ -215,6 +215,9 @@
             secureQueryString = `?id=${passedGuid}`;
             if (passedName) secureQueryString += `&name=${encodeURIComponent(passedName)}`;
             if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
+            
+            // 2. KEEP IT IN THE CHAIN FOR THE HAMBURGER MENU
+            if (passedHub) secureQueryString += `&hub=${encodeURIComponent(passedHub)}`;
         }
 
         // FIXED: Reverted back to member-nav.json so the menu isn't completely blank!
