@@ -204,7 +204,6 @@
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <!-- NEW CONTAINER FOR JSON LINKS -->
         <div id="nav-links-container"></div>
     </div>
 
@@ -282,14 +281,17 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // --- UNIVERSAL MENU BUILDER ---
+        // --- ARMOR-PLATED UNIVERSAL MENU BUILDER ---
         function buildNavigation(guid, first, last, emp, bucket) {
             let secureQueryString = `?id=${guid}`;
             if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
             if (emp) secureQueryString += `&emp=${emp}`;
             
-            // ATTACH THE HUB TO EVERY LINK IN THE MENU
-            if (bucket) secureQueryString += `&hub=${encodeURIComponent(bucket)}`;
+            // CLEAN THE HUB DATA (Strips hidden spaces)
+            const cleanHub = (bucket || "Unassigned").trim();
+            if (cleanHub !== "Unassigned") {
+                secureQueryString += `&hub=${encodeURIComponent(cleanHub)}`;
+            }
 
             fetch('member-nav.json', { cache: 'no-store' })
                 .then(response => response.json())
@@ -297,23 +299,24 @@
                     const navContainer = document.getElementById('nav-links-container');
                     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                     
-                    // Identify the user's hub so the menu knows what to hide/show
-                    const currentHub = bucket || "Unassigned";
+                    // CONVERT TO LOWERCASE FOR BULLETPROOF MATH
+                    const compareHub = cleanHub.toLowerCase();
 
                     let menuHTML = '';
 
                     menuItems.forEach(item => {
-                        // THE BOUNCER: Hide the link if the driver isn't in the target hub
+                        // THE ARMOR-PLATED BOUNCER
                         if (item.targetHubs && item.targetHubs.length > 0) {
-                            if (!item.targetHubs.includes(currentHub)) {
-                                return; 
+                            const safeTargetHubs = item.targetHubs.map(h => h.trim().toLowerCase());
+                            if (!safeTargetHubs.includes(compareHub)) {
+                                return; // Skip rendering this link
                             }
                         }
 
                         if (item.type === 'header') {
                             menuHTML += `<div class="nav-section-title">${item.title}</div>`;
                         } else if (item.type === 'link') {
-                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const isActive = (currentPage === item.filename || (currentPage === '' && item.filename === 'index.html')) ? 'active' : '';
                             const activeText = isActive ? ' (Active)' : '';
                             const finalUrl = item.filename + secureQueryString;
                             menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
@@ -371,16 +374,16 @@
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
-                // THE SMART CATCH (Busts open the SharePoint Dropdown)
-                const rawHub = profile.HubBucket;
-                const hubBucket = (rawHub && typeof rawHub === 'object') ? rawHub.Value : (rawHub || 'Unassigned'); 
+                // Grab the pure string and scrub it immediately 
+                const rawHub = profile.HubBucket || 'Unassigned'; 
+                const hubBucket = (typeof rawHub === 'string') ? rawHub.trim() : 'Unassigned';
                 
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
 
-                // FIRE THE MENU BUILDER (Passes the hub into the function)
+                // FIRE THE MENU BUILDER
                 buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
 
-                // MAGICALLY REWRITE THE DASHBOARD URL (So if they hit refresh, the hub stays!)
+                // MAGICALLY REWRITE THE DASHBOARD URL
                 const fullSecureUrl = window.location.pathname + `?id=${memberGuid}&name=${encodeURIComponent((firstName + ' ' + lastName).trim())}&emp=${employeeId}&hub=${encodeURIComponent(hubBucket)}`;
                 window.history.replaceState(null, '', fullSecureUrl);
 
