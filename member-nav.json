@@ -1,7 +1,12 @@
 [
-  { "type": "header", "title": "Resources" },
-  { "type": "link", "name": "Member Portal", "filename": "index.html" },
+  { "type": "header", "title": "Member Links" },
+  { "type": "link", "name": "My Dashboard", "filename": "index.html" },
   { "type": "link", "name": "Document Library", "filename": "library.html" },
   { "type": "link", "name": "Contract Proposals", "filename": "proposal.html" },
-  { "type": "link", "name": "Days Off", "filename": "daysoff.html", "targetHubs": ["East", "West"] }
+  { 
+    "type": "link", 
+    "name": "Days Off Calendar", 
+    "filename": "daysoff.html",
+    "targetHubs": ["East", "West"] 
+  }
 ]
