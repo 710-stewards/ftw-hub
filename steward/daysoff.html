@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steward Admin - Days Off</title>
+    
+    <style>
+        :root {
+            --bg-main: #121212;
+            --bg-card: #1e1e1e;
+            --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --accent-red: #ff3333;
+            --accent-blue: #3498db;
+            --border: #333;
+            --text-main: #ffffff;
+            --text-muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 140px; }
+
+        /* HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        /* STEWARD CONTROLS (The Toggle & Admin Switch) */
+        .steward-controls {
+            position: fixed; top: 75px; left: 0; right: 0; background: #222;
+            border-bottom: 1px solid var(--border); padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 900;
+        }
+        
+        .center-toggle { display: flex; background: #111; border-radius: 6px; border: 1px solid #444; overflow: hidden; }
+        .toggle-btn {
+            padding: 8px 20px; border: none; background: transparent; color: var(--text-muted);
+            font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .toggle-btn.active { background: var(--accent); color: #111; }
+
+        .admin-switch-container { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .toggle-switch {
+            position: relative; display: inline-block; width: 44px; height: 24px;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-red); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* LOADING OVERLAY */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* BOARD SPECIFIC STYLING */
+        .zone-header {
+            background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px;
+            border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+        }
+        
+        .driver-row {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; transition: all 0.2s;
+        }
+        .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
+        
+        .driver-info { display: flex; flex-direction: column; min-width: 150px; }
+        .driver-name { font-size: 16px; font-weight: bold; color: white; }
+        
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn-board {
+            padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px;
+            font-weight: bold; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 #000;
+        }
+        .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+        
+        /* Button Colors */
+        .btn-off { background-color: var(--accent-green); color: #111; }
+        .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
+        .btn-move { background-color: var(--accent-blue); color: #fff; }
+        .btn-delete { background-color: var(--accent-red); color: #fff; }
+        .btn-add { background-color: var(--accent); color: #111; width: 100%; margin-bottom: 20px; font-size: 14px; padding: 12px; display: none; }
+
+        /* Admin Mode Toggles */
+        .dispatch-ui { display: flex; gap: 8px; }
+        .admin-ui { display: none; gap: 8px; }
+        body.admin-mode .dispatch-ui { display: none; }
+        body.admin-mode .admin-ui { display: flex; }
+        body.admin-mode .btn-add { display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="parsing-text">↻ Loading Live Board...</div>
+    </div>
+
+    <div class="top-navbar">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="alert('Menu clicked')">☰</button>
+            <div>
+                <div class="header-title" id="page-title">Steward Admin Board</div>
+                <div id="driver-info" class="header-sub">Manage Roster & Days Off</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="steward-controls">
+        <div class="center-toggle">
+            <button id="btn-west" class="toggle-btn active" onclick="switchCenter('West')">WEST</button>
+            <button id="btn-east" class="toggle-btn" onclick="switchCenter('East')">EAST</button>
+        </div>
+        <div class="admin-switch-container">
+            Admin Mode
+            <label class="toggle-switch">
+                <input type="checkbox" id="adminToggle" onchange="toggleAdminMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div id="board-container" style="max-width: 800px; margin: 0 auto; margin-top: 20px;">
+        
+        <button class="btn-board btn-add" onclick="adminAddDriver()">+ ADD NEW DRIVER TO DATABASE</button>
+
+        <div class="zone-header">Bid Drivers (Round 1)</div>
+        <div id="zone-1-list"></div>
+
+        <div class="zone-header">Bid Drivers (Round 2)</div>
+        <div id="zone-2-list"></div>
+
+        <div class="zone-header">Coverage Drivers</div>
+        <div id="zone-3-list"></div>
+    </div>
+
+    <script>
+        // 1. Security & Auth
+        const urlParams = new URLSearchParams(window.location.search);
+        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
+        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
+        let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Steward Admin";
+
+        // 2. THE MEMORY LOGIC (Check local storage, default to West)
+        let currentCenter = localStorage.getItem('steward_center') || 'West';
+        
+        // 3. Power Automate URL
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
+
+        // Initialize UI on load
+        function initUI() {
+            document.getElementById('page-title').innerText = `${currentCenter} Center - Steward Admin`;
+            document.getElementById('btn-west').classList.toggle('active', currentCenter === 'West');
+            document.getElementById('btn-east').classList.toggle('active', currentCenter === 'East');
+        }
+
+        // Center Switcher
+        function switchCenter(centerName) {
+            currentCenter = centerName;
+            localStorage.setItem('steward_center', centerName); // Save to memory!
+            initUI();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            loadBoardData();
+        }
+
+        // Toggle Admin CSS
+        function toggleAdminMode() {
+            const isChecked = document.getElementById('adminToggle').checked;
+            if (isChecked) {
+                document.body.classList.add('admin-mode');
+            } else {
+                document.body.classList.remove('admin-mode');
+            }
+        }
+
+        // --- Standard Dispatch Click ---
+        function stampDriver(driverName, status, zone) {
+            event.target.innerText = "...";
+            const payload = {
+                "DriverName": driverName,
+                "NewStatus": status,
+                "Zone": parseInt(zone),
+                "Center": currentCenter,
+                "Route": currentCenter + "Post",
+                "UpdatedBy": activeDispatcher
+            };
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => alert("Error saving to database."));
+        }
+
+        // --- NEW: ADMIN PLACEHOLDER FUNCTIONS ---
+        function adminUpdateGroup(driverName, newGroup, currentZone) {
+            alert(`BACKEND REQUIRED:\n\nYou clicked to move ${driverName} to ${newGroup}.\n\nTo make this work, we need to add an "${currentCenter}UpdateGroup" branch to your Power Automate flow.`);
+        }
+
+        function adminDeleteDriver(driverName) {
+            if(confirm(`Are you sure you want to permanently delete ${driverName} from the database?`)) {
+                alert(`BACKEND REQUIRED:\n\nTo actually delete ${driverName}, we need to add an "${currentCenter}Delete" branch to your Power Automate flow.`);
+            }
+        }
+
+        function adminAddDriver() {
+            const newName = prompt(`Enter the new driver's full name to add them to the ${currentCenter} Center:`);
+            if (newName) {
+                alert(`BACKEND REQUIRED:\n\nTo add ${newName}, we need to build an "${currentCenter}Add" branch in your Power Automate flow.`);
+            }
+        }
+
+        // --- Rotation Math ---
+        function findNextEligibleIndex(driversArray, zoneContext) {
+            let mostRecentTime = 0; let mostRecentDateStr = "";
+            driversArray.forEach(d => {
+                if (d.ZoneTag == zoneContext && d.Timestamp) {
+                    let ts = new Date(d.Timestamp).getTime();
+                    if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
+                }
+            });
+            if (mostRecentDateStr === "") return 0;
+
+            let lastOffIndex = -1; let firstStayAfterOff = -1;
+            driversArray.forEach((d, i) => {
+                if (d.ZoneTag == zoneContext && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
+            });
+            
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
+            for (let i = startIndex; i < driversArray.length; i++) {
+                if (driversArray[i].ZoneTag == zoneContext && driversArray[i].Timestamp === mostRecentDateStr && driversArray[i].CurrentStatus && driversArray[i].CurrentStatus.toLowerCase() === 'stay') {
+                    firstStayAfterOff = i; break; 
+                }
+            }
+
+            if (firstStayAfterOff !== -1) return firstStayAfterOff;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % driversArray.length;
+            else return 0; 
+        }
+
+        // Rendering the Rows
+        function buildRowHtml(driver, zoneContext, isHighlighted = false) {
+            let displayStatus = "PENDING";
+            let statusColor = "var(--text-muted)"; 
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+            
+            const isToday = (driver.Timestamp === todayStr);
+            const isRecentPast = (driver.Timestamp === window.recentPastDay);
+            const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
+
+            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+                if (driver.CurrentStatus.toLowerCase() === 'off') {
+                    if (isToday) statusColor = "var(--accent-green)"; 
+                    else if (isRecentPast) statusColor = "var(--accent)"; 
+                    else statusColor = "var(--text-muted)"; 
+                } else {
+                    statusColor = "var(--accent-red)"; 
+                }
+            }
+
+            let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
+
+            // Dispatch Mode Buttons
+            let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
+                ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`
+                : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+
+            // Admin Mode Buttons
+            let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
+            let switchZoneTarget = (driver.Group === 'Bid') ? 3 : 1;
+            let adminBtn = `
+                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', ${switchZoneTarget})">MOVE TO ${switchGroupTarget.toUpperCase()}</button>
+                <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
+            `;
+
+            let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
+
+            return `
+                <div class="${rowClass}">
+                    <div class="driver-info">
+                        <span class="driver-name">${driver.Title}</span>
+                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                        ${auditTrailHtml}
+                    </div>
+                    <div class="action-btns">
+                        <div class="dispatch-ui">${dispatchBtn}</div>
+                        <div class="admin-ui">${adminBtn}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fetching and Displaying the Data
+        function loadBoardData() {
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "Route": currentCenter + "Get" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                const d = new Date();
+                const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+                
+                let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
+                pastDates.sort((a, b) => new Date(b) - new Date(a));
+                window.recentPastDay = pastDates[0] || null; 
+
+                const bidDrivers = data.filter(d => d.Group === 'Bid');
+                const coverDrivers = data.filter(d => d.Group === 'Coverage');
+
+                const nextZone1 = findNextEligibleIndex(bidDrivers, 1);
+                const nextZone2 = findNextEligibleIndex(bidDrivers, 2);
+                const nextZone3 = findNextEligibleIndex(coverDrivers, 3);
+
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 1, index === nextZone1)).join('');
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 2, index === nextZone2)).join('');
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map((d, index) => buildRowHtml(d, 3, index === nextZone3)).join('');
+            })
+            .catch(error => {
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+                console.error("Fetch error:", error);
+            });
+        }
+
+        // Start it up
+        initUI();
+        loadBoardData();
+    </script>
+</body>
+</html>
