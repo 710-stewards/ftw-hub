@@ -83,6 +83,13 @@
             flex-wrap: wrap; gap: 10px; transition: all 0.2s;
         }
         
+        /* The gold highlight class */
+        .driver-row.highlight {
+            border-color: var(--accent);
+            background-color: #2a2615;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        }
+        
         .driver-info { display: flex; flex-direction: column; min-width: 150px; }
         .driver-name { font-size: 16px; font-weight: bold; color: white; }
         
@@ -133,25 +140,26 @@
     </div>
 
     <script>
-    // 1. Security & Auth
-const urlParams = new URLSearchParams(window.location.search);
-let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
-if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
+        // 1. Security & Auth
+        const urlParams = new URLSearchParams(window.location.search);
+        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
+        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
 
-let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
+        let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
 
-// NEW: Grab the 'hub' from the URL (Default to West if missing)
-let rawCenter = urlParams.get('hub') || 'West';
+        // Grab the 'hub' from the URL (Default to West if missing)
+        let rawCenter = urlParams.get('hub') || 'West';
 
-// NEW: This mathematically forces "EAST" into "East" and "WEST" into "West"
-let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); 
+        // Mathematically forces "EAST" into "East" and "WEST" into "West"
+        let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); 
 
-// NEW: Dynamically update the page headers
-document.title = `${currentCenter} Center - Days Off Board`;
-document.querySelector('.header-title').innerText = `${currentCenter} Center  (Monday - Friday)`;
+        // Dynamically update the page headers
+        document.title = `${currentCenter} Center - Days Off Board`;
+        document.querySelector('.header-title').innerText = `${currentCenter} Center (Monday - Friday)`;
+                
+        // 2. The Power Automate Endpoint
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
         
-// 2. The Power Automate Endpoint
-const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
         // Menu Controllers
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
@@ -163,14 +171,12 @@ const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.ap
         }
 
         // Menu Builder
-       function buildNavigation() {
-            // Keep all the URL variables together so they don't get lost when clicking menu links
+        function buildNavigation() {
             let secureQueryString = `?center=${currentCenter}`;
             if (memberGuid) secureQueryString += `&id=${memberGuid}`;
             if (urlParams.get('name')) secureQueryString += `&name=${urlParams.get('name')}`;
 
             fetch('member-nav.json', { cache: 'no-store' })
-           
                 .then(response => response.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('nav-links-container');
@@ -192,124 +198,171 @@ const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.ap
         }
 
         // The Click Action
-function stampDriver(driverName, status, zone) {
+        function stampDriver(driverName, status, zone) {
             event.target.innerText = "...";
             
             const payload = {
                 "DriverName": driverName,
                 "NewStatus": status,
                 "Zone": parseInt(zone),
-                "Center": currentCenter,             // Automatically sends "East" or "West"
-                "Route": currentCenter + "Post",     // Automatically creates "EastPost" or "WestPost"
+                "Center": currentCenter,
+                "Route": currentCenter + "Post",
                 "UpdatedBy": activeDispatcher
             };
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if(res.ok) {
+                    setTimeout(() => { loadBoardData(); }, 1500);
+                }
+            })
+            .catch(err => {
+                alert("Error saving to database.");
+                event.target.innerText = "Error";
+            });
+        }
+
+        // --- The Rotation Math ---
+        function findNextEligibleIndex(driversArray, zoneContext) {
+            let mostRecentTime = 0;
+            let mostRecentDateStr = "";
+
+            driversArray.forEach(driver => {
+                if (driver.ZoneTag == zoneContext && driver.Timestamp) {
+                    let ts = new Date(driver.Timestamp).getTime();
+                    if (ts > mostRecentTime) {
+                        mostRecentTime = ts;
+                        mostRecentDateStr = driver.Timestamp;
+                    }
+                }
+            });
+
+            if (mostRecentDateStr === "") return 0;
+
+            let lastOffIndex = -1;
+            let firstStayAfterOff = -1;
+
+            driversArray.forEach((driver, index) => {
+                if (driver.ZoneTag == zoneContext && driver.Timestamp === mostRecentDateStr) {
+                    if (driver.CurrentStatus && driver.CurrentStatus.toLowerCase() === 'off') {
+                        lastOffIndex = index;
+                    }
+                }
+            });
+
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
             
-            // ... [keep the fetch logic exactly the same] ...
-
-    fetch(flowUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    })
-    .then(res => {
-        if(res.ok) {
-            setTimeout(() => { loadBoardData(); }, 1500);
-        }
-    })
-    .catch(err => {
-        alert("Error saving to database.");
-        event.target.innerText = "Error";
-    });
-}
-        // Rendering the Rows
-function buildRowHtml(driver, zoneContext) {
-    let displayStatus = "PENDING";
-    let statusColor = "var(--text-muted)"; 
-    
-    const d = new Date();
-    const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
-    
-    const isToday = (driver.Timestamp === todayStr);
-    const isRecentPast = (driver.Timestamp === window.recentPastDay);
-
-    // Look for the name in case SharePoint changed the internal column name
-    const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
-
-    // Set Visual Status & Colors
-    if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
-        displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
-        
-        if (driver.CurrentStatus.toLowerCase() === 'off') {
-            if (isToday) {
-                statusColor = "var(--accent-green)"; 
-            } else if (isRecentPast) {
-                statusColor = "var(--accent)"; 
-            } else {
-                statusColor = "var(--text-muted)"; 
+            for (let i = startIndex; i < driversArray.length; i++) {
+                let driver = driversArray[i];
+                if (driver.ZoneTag == zoneContext && driver.Timestamp === mostRecentDateStr) {
+                    if (driver.CurrentStatus && driver.CurrentStatus.toLowerCase() === 'stay') {
+                        firstStayAfterOff = i;
+                        break; 
+                    }
+                }
             }
-        } else {
-            statusColor = "var(--accent-red)"; 
+
+            if (firstStayAfterOff !== -1) {
+                return firstStayAfterOff;
+            } else if (lastOffIndex !== -1) {
+                return (lastOffIndex + 1) % driversArray.length;
+            } else {
+                return 0; 
+            }
         }
-    }
 
-    // Build the "Updated By" text if a name exists
-    let auditTrailHtml = "";
-    if (updaterName && driver.CurrentStatus) {
-        auditTrailHtml = `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>`;
-    }
+        // Rendering the Rows
+        function buildRowHtml(driver, zoneContext, isHighlighted = false) {
+            let displayStatus = "PENDING";
+            let statusColor = "var(--text-muted)"; 
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+            
+            const isToday = (driver.Timestamp === todayStr);
+            const isRecentPast = (driver.Timestamp === window.recentPastDay);
 
-    // Smart Button Logic (The Single-Click Toggle)
-    let actionButton = "";
-    if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
-        actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
-    } else {
-        actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
-    }
+            const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
 
-    return `
-        <div class="driver-row">
-            <div class="driver-info">
-                <span class="driver-name">${driver.Title}</span>
-                <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
-                ${auditTrailHtml}
-            </div>
-            <div class="action-btns">
-                ${actionButton}
-            </div>
-        </div>
-    `;
-}
+            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+                
+                if (driver.CurrentStatus.toLowerCase() === 'off') {
+                    if (isToday) {
+                        statusColor = "var(--accent-green)"; 
+                    } else if (isRecentPast) {
+                        statusColor = "var(--accent)"; 
+                    } else {
+                        statusColor = "var(--text-muted)"; 
+                    }
+                } else {
+                    statusColor = "var(--accent-red)"; 
+                }
+            }
+
+            let auditTrailHtml = "";
+            if (updaterName && driver.CurrentStatus) {
+                auditTrailHtml = `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>`;
+            }
+
+            let actionButton = "";
+            if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
+                actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+            } else {
+                actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+            }
+
+            let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
+
+            return `
+                <div class="${rowClass}">
+                    <div class="driver-info">
+                        <span class="driver-name">${driver.Title}</span>
+                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                        ${auditTrailHtml}
+                    </div>
+                    <div class="action-btns">
+                        ${actionButton}
+                    </div>
+                </div>
+            `;
+        }
 
         // Fetching and Displaying the Data
         function loadBoardData() {
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "Route": currentCenter + "Get" }) // Creates "EastGet" or "WestGet"
+                body: JSON.stringify({ "Route": currentCenter + "Get" })
             })
-            // ... [keep the rest of the function exactly the same] ...
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading-overlay').style.display = 'none';
 
-                // --- Color Math ---
                 const d = new Date();
                 const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
                 
-                // Find all unique dates that are NOT today, sort them newest to oldest
                 let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
                 pastDates.sort((a, b) => new Date(b) - new Date(a));
                 
-                // Save the single most recent past date globally so buildRowHtml can see it
                 window.recentPastDay = pastDates[0] || null; 
 
-                // Separate and Draw
                 const bidDrivers = data.filter(d => d.Group === 'Bid');
                 const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 1)).join('');
-                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => buildRowHtml(d, 2)).join('');
-                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => buildRowHtml(d, 3)).join('');
+                // Determine the next eligible driver per zone
+                const nextZone1 = findNextEligibleIndex(bidDrivers, 1);
+                const nextZone2 = findNextEligibleIndex(bidDrivers, 2);
+                const nextZone3 = findNextEligibleIndex(coverDrivers, 3);
+
+                // Pass the index comparison to buildRowHtml so it knows when to trigger the highlight
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 1, index === nextZone1)).join('');
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 2, index === nextZone2)).join('');
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map((d, index) => buildRowHtml(d, 3, index === nextZone3)).join('');
             })
             .catch(error => {
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
