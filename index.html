@@ -282,45 +282,45 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // 3. UPDATE THE FUNCTION TO ACCEPT "bucket"
+        // --- UNIVERSAL MENU BUILDER ---
         function buildNavigation(guid, first, last, emp, bucket) {
             let secureQueryString = `?id=${guid}`;
             if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
             if (emp) secureQueryString += `&emp=${emp}`;
-
-            // 4. ATTACH IT TO THE URL LINK
+            
+            // ATTACH THE HUB TO EVERY LINK IN THE MENU
             if (bucket) secureQueryString += `&hub=${encodeURIComponent(bucket)}`;
 
             fetch('member-nav.json', { cache: 'no-store' })
                 .then(response => response.json())
-            .then(menuItems => {
-                const navContainer = document.getElementById('nav-links-container');
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                
-                // Identify the user's hub (use 'bucket' for index.html, or 'passedHub' for the sub-pages)
-                const currentHub = typeof passedHub !== 'undefined' ? passedHub : (typeof bucket !== 'undefined' ? bucket : "");
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                    
+                    // Identify the user's hub so the menu knows what to hide/show
+                    const currentHub = bucket || "Unassigned";
 
-                let menuHTML = '';
+                    let menuHTML = '';
 
-                menuItems.forEach(item => {
-                    // THE BOUNCER: If the JSON has targetHubs, check if the driver is on the list
-                    if (item.targetHubs && item.targetHubs.length > 0) {
-                        if (!item.targetHubs.includes(currentHub)) {
-                            return; // Skip rendering this link entirely
+                    menuItems.forEach(item => {
+                        // THE BOUNCER: Hide the link if the driver isn't in the target hub
+                        if (item.targetHubs && item.targetHubs.length > 0) {
+                            if (!item.targetHubs.includes(currentHub)) {
+                                return; 
+                            }
                         }
-                    }
 
-                    if (item.type === 'header') {
-                        menuHTML += `<div class="nav-section-title">${item.title}</div>`;
-                    } else if (item.type === 'link') {
-                        const isActive = (currentPage === item.filename) ? 'active' : '';
-                        const activeText = isActive ? ' (Active)' : '';
-                        const finalUrl = item.filename + secureQueryString;
-                        menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
-                    }
-                });
-                navContainer.innerHTML = menuHTML;
-            })
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const activeText = isActive ? ' (Active)' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
+                        }
+                    });
+                    navContainer.innerHTML = menuHTML;
+                })
                 .catch(error => console.log("Error loading menu:", error));
         }
 
