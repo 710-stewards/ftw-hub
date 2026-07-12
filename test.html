@@ -356,8 +356,9 @@
                 const profile = data.profile || {};
                 const grievances = data.grievances || [];
                 
-                // ADD THIS TEMPORARY ALERT LINE:
-                alert("RAW SHAREPOINT DATA: " + JSON.stringify(profile.HubBucket));
+                // SHOW ME EVERY SINGLE COLUMN NAME POWER AUTOMATE IS SENDING
+                alert("RAW KEYS: " + Object.keys(profile).join(", "));
+
                 
                 if (!profile.EmployeeID) {
                     document.getElementById('driver-info').innerText = "Authentication Failed";
