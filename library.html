@@ -146,17 +146,24 @@
     </div>
 
     <script>
-        // 1. UNIVERSAL MENU BUILDER
+       // --- 1. GLOBAL VARIABLES & URL PARAMS ---
         const urlParams = new URLSearchParams(window.location.search);
         const passedGuid = urlParams.get('id');
         const passedName = urlParams.get('name');
         const passedEmpId = urlParams.get('emp'); 
+        
+        // 1. CATCH THE HUB FROM THE URL
+        const passedHub = urlParams.get('hub'); 
 
+        // --- 2. UNIVERSAL MENU BUILDER ---
         let secureQueryString = "";
         if (passedGuid) {
             secureQueryString = `?id=${passedGuid}`;
             if (passedName) secureQueryString += `&name=${encodeURIComponent(passedName)}`;
             if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
+            
+            // 2. KEEP IT IN THE CHAIN FOR THE HAMBURGER MENU
+            if (passedHub) secureQueryString += `&hub=${encodeURIComponent(passedHub)}`;
         }
 
         fetch('member-nav.json', { cache: 'no-store' })
