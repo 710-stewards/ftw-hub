@@ -149,46 +149,63 @@
        // --- 1. GLOBAL VARIABLES & URL PARAMS ---
         const urlParams = new URLSearchParams(window.location.search);
         const passedGuid = urlParams.get('id');
-        const passedName = urlParams.get('name');
-        const passedEmpId = urlParams.get('emp'); 
+        const passedName = urlParams.get('name') || '';
+        const passedEmpId = urlParams.get('emp') || ''; 
         
-        // 1. CATCH THE HUB FROM THE URL
-        const passedHub = urlParams.get('hub'); 
+        // CATCH THE HUB FROM THE URL
+        const passedHub = urlParams.get('hub') || 'Unassigned'; 
 
-        // --- 2. UNIVERSAL MENU BUILDER ---
-        let secureQueryString = "";
-        if (passedGuid) {
-            secureQueryString = `?id=${passedGuid}`;
-            if (passedName) secureQueryString += `&name=${encodeURIComponent(passedName)}`;
-            if (passedEmpId) secureQueryString += `&emp=${passedEmpId}`;
+        // --- 2. ARMOR-PLATED UNIVERSAL MENU BUILDER ---
+        function buildNavigation(guid, fullName, emp, bucket) {
+            let secureQueryString = `?id=${guid}`;
+            if (fullName) secureQueryString += `&name=${encodeURIComponent(fullName)}`;
+            if (emp) secureQueryString += `&emp=${emp}`;
             
-            // 2. KEEP IT IN THE CHAIN FOR THE HAMBURGER MENU
-            if (passedHub) secureQueryString += `&hub=${encodeURIComponent(passedHub)}`;
+            // CLEAN THE HUB DATA
+            const cleanHub = (bucket || "Unassigned").trim();
+            if (cleanHub !== "Unassigned") {
+                secureQueryString += `&hub=${encodeURIComponent(cleanHub)}`;
+            }
+
+            fetch('member-nav.json', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'library.html';
+                    
+                    const compareHub = cleanHub.toLowerCase();
+                    let menuHTML = '';
+
+                    menuItems.forEach(item => {
+                        // THE BOUNCER
+                        if (item.targetHubs && item.targetHubs.length > 0) {
+                            const safeTargetHubs = item.targetHubs.map(h => h.trim().toLowerCase());
+                            if (!safeTargetHubs.includes(compareHub)) {
+                                return; // Skip rendering this link
+                            }
+                        }
+
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const activeText = isActive ? ' (Active)' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
+                        }
+                    });
+                    navContainer.innerHTML = menuHTML;
+                })
+                .catch(error => {
+                    console.log("Error loading the navigation menu:", error);
+                    document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu.</div>`;
+                });
         }
 
-        fetch('member-nav.json', { cache: 'no-store' })
-            .then(response => response.json())
-            .then(menuItems => {
-                const navContainer = document.getElementById('nav-links-container');
-                const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                let menuHTML = '';
-
-                menuItems.forEach(item => {
-                    if (item.type === 'header') {
-                        menuHTML += `<div class="nav-section-title">${item.title}</div>`;
-                    } else if (item.type === 'link') {
-                        const isActive = (currentPage === item.filename) ? 'active' : '';
-                        const activeText = isActive ? ' (Active)' : '';
-                        const finalUrl = item.filename + secureQueryString;
-                        menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
-                    }
-                });
-                navContainer.innerHTML = menuHTML;
-            })
-            .catch(error => {
-                console.log("Error loading the navigation menu:", error);
-                document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu.</div>`;
-            });
+        // FIRE THE MENU BUILDER
+        if (passedGuid) {
+            buildNavigation(passedGuid, passedName, passedEmpId, passedHub);
+        }
 
 
         // 2. Fetch the Stewards JSON and build the top folder
