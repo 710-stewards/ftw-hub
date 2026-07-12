@@ -140,14 +140,16 @@ if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
 
 let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
 
-// NEW: Grab the Center from the URL (Default to West if missing)
-let rawCenter = urlParams.get('center') || 'West';
-let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); // Forces "East" or "West"
+// NEW: Grab the 'hub' from the URL (Default to West if missing)
+let rawCenter = urlParams.get('hub') || 'West';
+
+// NEW: This mathematically forces "EAST" into "East" and "WEST" into "West"
+let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); 
 
 // NEW: Dynamically update the page headers
 document.title = `${currentCenter} Center - Days Off Board`;
 document.querySelector('.header-title').innerText = `${currentCenter} Center - Dispatch Board`;
-
+        
 // 2. The Power Automate Endpoint
 const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
         // Menu Controllers
