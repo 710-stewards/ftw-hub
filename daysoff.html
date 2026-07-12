@@ -133,17 +133,23 @@
     </div>
 
     <script>
-        // 1. Security & Auth
+    // 1. Security & Auth
 const urlParams = new URLSearchParams(window.location.search);
 let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
 if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
 
-// NEW: Grab the dispatcher's name right out of the URL bar and decode the %20 spaces
 let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
-        
-        // 2. The Power Automate Endpoint
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
 
+// NEW: Grab the Center from the URL (Default to West if missing)
+let rawCenter = urlParams.get('center') || 'West';
+let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); // Forces "East" or "West"
+
+// NEW: Dynamically update the page headers
+document.title = `${currentCenter} Center - Days Off Board`;
+document.querySelector('.header-title').innerText = `${currentCenter} Center - Dispatch Board`;
+
+// 2. The Power Automate Endpoint
+const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
         // Menu Controllers
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
@@ -155,9 +161,14 @@ let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get(
         }
 
         // Menu Builder
-        function buildNavigation() {
-            let secureQueryString = memberGuid ? `?id=${memberGuid}` : '';
+       function buildNavigation() {
+            // Keep all the URL variables together so they don't get lost when clicking menu links
+            let secureQueryString = `?center=${currentCenter}`;
+            if (memberGuid) secureQueryString += `&id=${memberGuid}`;
+            if (urlParams.get('name')) secureQueryString += `&name=${urlParams.get('name')}`;
+
             fetch('member-nav.json', { cache: 'no-store' })
+           
                 .then(response => response.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('nav-links-container');
@@ -180,16 +191,18 @@ let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get(
 
         // The Click Action
 function stampDriver(driverName, status, zone) {
-    event.target.innerText = "...";
-    
-    const payload = {
-        "DriverName": driverName,
-        "NewStatus": status,
-        "Zone": parseInt(zone),
-        "Center": "West",
-        "Route": "WestPost",
-        "UpdatedBy": activeDispatcher // NEW: Toss the name into the payload
-    };
+            event.target.innerText = "...";
+            
+            const payload = {
+                "DriverName": driverName,
+                "NewStatus": status,
+                "Zone": parseInt(zone),
+                "Center": currentCenter,             // Automatically sends "East" or "West"
+                "Route": currentCenter + "Post",     // Automatically creates "EastPost" or "WestPost"
+                "UpdatedBy": activeDispatcher
+            };
+            
+            // ... [keep the fetch logic exactly the same] ...
 
     fetch(flowUrl, {
         method: "POST",
@@ -270,8 +283,9 @@ function buildRowHtml(driver, zoneContext) {
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "Route": "WestGet" })
+                body: JSON.stringify({ "Route": currentCenter + "Get" }) // Creates "EastGet" or "WestGet"
             })
+            // ... [keep the rest of the function exactly the same] ...
             .then(response => response.json())
             .then(data => {
                 document.getElementById('loading-overlay').style.display = 'none';
