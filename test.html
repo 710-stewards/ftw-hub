@@ -297,7 +297,7 @@
                     const navContainer = document.getElementById('nav-links-container');
                     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
                     
-                    // Identify the user's hub so the menu knows what to hide/show
+                    // Trust the database variable we just passed in from Power Automate
                     const currentHub = bucket || "Unassigned";
 
                     let menuHTML = '';
