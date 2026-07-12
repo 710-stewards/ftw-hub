@@ -371,16 +371,16 @@
                 const lastName = profile.LastName || profile['Last Name'] || '';
                 const employeeId = profile.EmployeeID || profile.Title || 'N/A';
                 
-                // 1. GRAB THE HUB BUCKET FROM SHAREPOINT (Smart Catch)
+                // THE SMART CATCH (Busts open the SharePoint Dropdown)
                 const rawHub = profile.HubBucket;
-                const hubBucket = (rawHub && typeof rawHub === 'object') ? rawHub.Value : (rawHub || 'Unassigned');
+                const hubBucket = (rawHub && typeof rawHub === 'object') ? rawHub.Value : (rawHub || 'Unassigned'); 
                 
                 document.getElementById('driver-info').innerHTML = `Welcome, <b>${firstName} ${lastName}</b> &nbsp;|&nbsp; <i>Emp ID: ${employeeId}</i>`;
-                
-                // 2. PASS IT TO THE MENU BUILDER
+
+                // FIRE THE MENU BUILDER (Passes the hub into the function)
                 buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
 
-                // 3. MAGICALLY REWRITE THE BROWSER URL BAR WITHOUT RELOADING
+                // MAGICALLY REWRITE THE DASHBOARD URL (So if they hit refresh, the hub stays!)
                 const fullSecureUrl = window.location.pathname + `?id=${memberGuid}&name=${encodeURIComponent((firstName + ' ' + lastName).trim())}&emp=${employeeId}&hub=${encodeURIComponent(hubBucket)}`;
                 window.history.replaceState(null, '', fullSecureUrl);
 
