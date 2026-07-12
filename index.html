@@ -287,6 +287,13 @@
             let secureQueryString = `?id=${guid}`;
             if (first || last) secureQueryString += `&name=${encodeURIComponent((first + ' ' + last).trim())}`;
             if (emp) secureQueryString += `&emp=${emp}`;
+
+            // 2. PASS IT TO THE MENU BUILDER
+                buildNavigation(memberGuid, firstName, lastName, employeeId, hubBucket);
+
+                // 3. MAGICALLY REWRITE THE BROWSER URL BAR WITHOUT RELOADING
+                const fullSecureUrl = window.location.pathname + `?id=${memberGuid}&name=${encodeURIComponent((firstName + ' ' + lastName).trim())}&emp=${employeeId}&hub=${encodeURIComponent(hubBucket)}`;
+                window.history.replaceState(null, '', fullSecureUrl);
             
             // 4. ATTACH IT TO THE URL LINK
             if (bucket) secureQueryString += `&hub=${encodeURIComponent(bucket)}`;
