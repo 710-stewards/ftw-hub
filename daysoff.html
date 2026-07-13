@@ -226,54 +226,43 @@
             });
         }
 
-        // --- The Rotation Math ---
-        function findNextEligibleIndex(driversArray, zoneContext) {
-            let mostRecentTime = 0;
-            let mostRecentDateStr = "";
+                // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
+        function calculateGlobalHighlight(bidList, coverList) {
+            // 1. Stack them exactly how they appear on the screen
+            let virtualBoard = [];
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
+            coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
 
-            driversArray.forEach(driver => {
-                if (driver.ZoneTag == zoneContext && driver.Timestamp) {
-                    let ts = new Date(driver.Timestamp).getTime();
-                    if (ts > mostRecentTime) {
-                        mostRecentTime = ts;
-                        mostRecentDateStr = driver.Timestamp;
-                    }
+            // 2. Find the most recent date clicked across the ENTIRE board
+            let mostRecentTime = 0; let mostRecentDateStr = "";
+            virtualBoard.forEach(d => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp) {
+                    let ts = new Date(d.Timestamp).getTime();
+                    if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
                 }
             });
+            if (mostRecentDateStr === "") return 0; // Board is empty, highlight top guy
 
-            if (mostRecentDateStr === "") return 0;
-
-            let lastOffIndex = -1;
-            let firstStayAfterOff = -1;
-
-            driversArray.forEach((driver, index) => {
-                if (driver.ZoneTag == zoneContext && driver.Timestamp === mostRecentDateStr) {
-                    if (driver.CurrentStatus && driver.CurrentStatus.toLowerCase() === 'off') {
-                        lastOffIndex = index;
-                    }
-                }
+            // 3. Find furthest person down the global list who got OFF
+            let lastOffIndex = -1; let firstStayAfterOff = -1;
+            virtualBoard.forEach((d, i) => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
             });
-
-            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
             
-            for (let i = startIndex; i < driversArray.length; i++) {
-                let driver = driversArray[i];
-                if (driver.ZoneTag == zoneContext && driver.Timestamp === mostRecentDateStr) {
-                    if (driver.CurrentStatus && driver.CurrentStatus.toLowerCase() === 'stay') {
-                        firstStayAfterOff = i;
-                        break; 
-                    }
+            // 4. Check for any forced STAYS after that person
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
+            for (let i = startIndex; i < virtualBoard.length; i++) {
+                if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
+                    firstStayAfterOff = i; break; 
                 }
             }
 
-            if (firstStayAfterOff !== -1) {
-                return firstStayAfterOff;
-            } else if (lastOffIndex !== -1) {
-                return (lastOffIndex + 1) % driversArray.length;
-            } else {
-                return 0; 
-            }
+            if (firstStayAfterOff !== -1) return firstStayAfterOff;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
+            else return 0; 
         }
+
 
         // Rendering the Rows
         function buildRowHtml(driver, zoneContext, isHighlighted = false) {
@@ -359,11 +348,28 @@
                 const nextZone2 = findNextEligibleIndex(bidDrivers, 2);
                 const nextZone3 = findNextEligibleIndex(coverDrivers, 3);
 
-                // Pass the index comparison to buildRowHtml so it knows when to trigger the highlight
-                document.getElementById('zone-1-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 1, index === nextZone1)).join('');
-                document.getElementById('zone-2-list').innerHTML = bidDrivers.map((d, index) => buildRowHtml(d, 2, index === nextZone2)).join('');
-                document.getElementById('zone-3-list').innerHTML = coverDrivers.map((d, index) => buildRowHtml(d, 3, index === nextZone3)).join('');
-            })
+                                // --- Calculate the single GLOBAL highlight winner ---
+                const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
+                let runningIndex = 0;
+
+                // Draw Zone 1 (Round 1)
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 1, isWinner);
+                }).join('');
+
+                // Draw Zone 2 (Round 2)
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 2, isWinner);
+                }).join('');
+
+                // Draw Zone 3 (Coverage)
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 3, isWinner);
+                }).join('');
+
             .catch(error => {
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
                 console.error("Fetch error:", error);
