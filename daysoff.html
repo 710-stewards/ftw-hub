@@ -226,7 +226,7 @@
             });
         }
 
-                // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
+        // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
         function calculateGlobalHighlight(bidList, coverList) {
             // 1. Stack them exactly how they appear on the screen
             let virtualBoard = [];
@@ -262,7 +262,6 @@
             else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
             else return 0; 
         }
-
 
         // Rendering the Rows
         function buildRowHtml(driver, zoneContext, isHighlighted = false) {
@@ -343,12 +342,7 @@
                 const bidDrivers = data.filter(d => d.Group === 'Bid');
                 const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-                // Determine the next eligible driver per zone
-                const nextZone1 = findNextEligibleIndex(bidDrivers, 1);
-                const nextZone2 = findNextEligibleIndex(bidDrivers, 2);
-                const nextZone3 = findNextEligibleIndex(coverDrivers, 3);
-
-                                // --- Calculate the single GLOBAL highlight winner ---
+                // --- Calculate the single GLOBAL highlight winner ---
                 const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
                 let runningIndex = 0;
 
@@ -370,6 +364,7 @@
                     return buildRowHtml(d, 3, isWinner);
                 }).join('');
 
+            })
             .catch(error => {
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
                 console.error("Fetch error:", error);
