@@ -197,24 +197,36 @@
                 .catch(err => console.log("Menu Error:", err));
         }
 
-        // 1. Update stampDriver to accept and send the group
+                // The Universal Click Action (Now passing Date AND Group)
         function stampDriver(driverName, status, zone, group) {
             event.target.innerText = "...";
-            const payload = {
-                "DriverName": driverName,
-                "NewStatus": status,
-                "Zone": parseInt(zone),
-                "Center": currentCenter,
-                "Route": currentCenter + "Post",
-                "UpdatedBy": activeDispatcher,
-                "Group": group  // <-- Now passed every single time
+            
+            // 1. Generate today's date
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+
+            // 2. Build the complete payload
+            const payload = { 
+                "DriverName": driverName, 
+                "NewStatus": status, 
+                "Timestamp": todayStr,      // <-- Date safely added back
+                "Zone": parseInt(zone), 
+                "Center": currentCenter, 
+                "Route": currentCenter + "Post", 
+                "UpdatedBy": activeDispatcher, 
+                "Group": group              // <-- Group safely passed
             };
-            fetch(flowUrl, {
-                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+
+            // 3. Send to Power Automate
+            fetch(flowUrl, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
             })
             .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
             .catch(err => alert("Error saving to database."));
         }
+
 
         // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
         function calculateGlobalHighlight(bidList, coverList) {
