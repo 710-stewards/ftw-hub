@@ -358,7 +358,7 @@
             `;
         }
 
-        // Fetching and Displaying the Data
+                // Fetching and Displaying the Data
         function loadBoardData() {
             fetch(flowUrl, {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -403,11 +403,22 @@
                     let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
                     return buildRowHtml(d, 3, isWinner);
                 }).join('');
+
+                // --- NEW: Auto-Scroll to the Highlight ---
+                setTimeout(() => {
+                    const activeRow = document.querySelector('.driver-row.highlight');
+                    if (activeRow) {
+                        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+
             })
             .catch(error => {
                 document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+                console.error("Fetch error:", error);
             });
         }
+
 
         initUI();
         loadBoardData();
