@@ -257,24 +257,60 @@
         }
 
 
-        // --- ADMIN FUNCTIONS ---
-        function adminClearStatus(driverName, currentGroup) {
-            if(confirm(`Are you sure you want to clear today's status for ${driverName}? This resets them to PENDING.`)) {
-                // Preserves the group, wipes the daily status
-                sendAdminPayload(driverName, currentCenter + "Post", { NewStatus: "", Timestamp: "", Zone: 0, Group: currentGroup });
+                // --- ADMIN FUNCTIONS ---
+        
+        // 1. The Generic Admin Sender
+        function sendAdminPayload(driverName, routeString, extraData) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            const payload = {
+                "DriverName": driverName,
+                "Center": currentCenter,
+                "Route": routeString, 
+                "UpdatedBy": activeDispatcher,
+                ...extraData 
+            };
+
+            fetch(flowUrl, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => { 
+                alert("Error communicating with database."); 
+                document.getElementById('loading-overlay').style.display = 'none'; 
+            });
+        }
+
+        // 2. The Button Actions
+        function adminClearStatus(driverName, currentGroup, currentZone) {
+            if(confirm(`Are you sure you want to clear today's status for ${driverName}?`)) {
+                // Sends blanks to wipe the day, but explicitly passes Group and Zone so they aren't erased!
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: "", 
+                    Timestamp: "", 
+                    Zone: parseInt(currentZone) || 0, 
+                    Group: currentGroup 
+                });
             }
         }
 
         function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
-            if(confirm(`Are you sure you want to move ${driverName} to the ${newGroup} group?`)) {
-                // Updates the group, preserves their daily status
-                sendAdminPayload(driverName, currentCenter + "Post", { NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup });
+            if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
+                // Updates the Group, but explicitly passes the current day's info so we don't erase a day off!
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: currentStatus, 
+                    Timestamp: currentTimestamp, 
+                    Zone: parseInt(currentZone) || 0, 
+                    Group: newGroup 
+                });
             }
         }
 
         function adminDeleteDriver(driverName) {
             if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
-                alert(`BACKEND REQUIRED:\n\nTo actually delete ${driverName}, we need an "${currentCenter}Delete" branch in Power Automate.`);
+                // This routes to the actual Delete branch we will build
+                sendAdminPayload(driverName, currentCenter + "Delete", {});
             }
         }
 
@@ -283,14 +319,14 @@
             const group = document.getElementById('newDriverGroup').value;
             const insertAfter = document.getElementById('insertAfterSelect').value;
             
-            if (!name || !group) {
-                alert("You must enter a Name and select a Group.");
-                return;
-            }
+            if (!name || !group) { alert("You must enter a Name and select a Group."); return; }
             
-            alert(`BACKEND REQUIRED:\n\nWe are ready to send:\nName: ${name}\nGroup: ${group}\nInsert After: ${insertAfter}\n\nWe need an "${currentCenter}Add" branch in Power Automate to catch this.`);
+            let targetZone = (group === 'Bid') ? 1 : 3;
+            // This routes to the actual Add branch we will build
+            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, InsertAfter: insertAfter, NewStatus: "", Timestamp: "" });
             closeModal();
         }
+
 
         // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
         function calculateGlobalHighlight(bidList, coverList) {
@@ -355,13 +391,14 @@
                 ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
                 : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
 
-            // Admin Buttons
+                        // Admin Buttons
             let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
             let adminBtn = `
                 <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
-                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}')">CLEAR</button>
+                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}', ${driver.ZoneTag})">CLEAR</button>
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
+
 
             let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
 
