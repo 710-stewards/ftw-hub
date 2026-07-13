@@ -322,11 +322,39 @@
             if (!name || !group) { alert("You must enter a Name and select a Group."); return; }
             
             let targetZone = (group === 'Bid') ? 1 : 3;
-            // This routes to the actual Add branch we will build
-            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, InsertAfter: insertAfter, NewStatus: "", Timestamp: "" });
+            let finalSortOrder = 1; // Fallback if the board is completely empty
+
+            // 1. Isolate just the group they are joining
+            let groupList = window.masterDriverList.filter(d => d.Group === group);
+            
+            // 2. The Midpoint Math
+            if (groupList.length > 0) {
+                if (insertAfter === "TOP") {
+                    // Put them 1 full number above the current top guy
+                    finalSortOrder = (groupList[0].SortOrder || 1) - 1; 
+                } else {
+                    // Find the target driver
+                    let targetIndex = groupList.findIndex(d => d.Title === insertAfter);
+                    
+                    if (targetIndex !== -1) {
+                        let driverA_Sort = groupList[targetIndex].SortOrder || 0;
+                        
+                        // Is there a guy below him?
+                        if (targetIndex + 1 < groupList.length) {
+                            let driverB_Sort = groupList[targetIndex + 1].SortOrder || 0;
+                            finalSortOrder = (driverA_Sort + driverB_Sort) / 2; // Boom. Infinite decimal gap.
+                        } else {
+                            // Target was the absolute bottom of the list, just add 1
+                            finalSortOrder = driverA_Sort + 1;
+                        }
+                    }
+                }
+            }
+
+            // 3. Send the exact calculated decimal straight to Power Automate
+            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "" });
             closeModal();
         }
-
 
         // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
         function calculateGlobalHighlight(bidList, coverList) {
@@ -433,7 +461,10 @@
                 let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
                 pastDates.sort((a, b) => new Date(b) - new Date(a));
                 window.recentPastDay = pastDates[0] || null; 
-
+                
+                // (Inside loadBoardData)
+                window.masterDriverList = data; // NEW: Save the list to memory for the modal to use
+                
                 const bidDrivers = data.filter(d => d.Group === 'Bid');
                 const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
