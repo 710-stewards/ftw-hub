@@ -197,33 +197,23 @@
                 .catch(err => console.log("Menu Error:", err));
         }
 
-        // The Click Action
-        function stampDriver(driverName, status, zone) {
+        // 1. Update stampDriver to accept and send the group
+        function stampDriver(driverName, status, zone, group) {
             event.target.innerText = "...";
-            
             const payload = {
                 "DriverName": driverName,
                 "NewStatus": status,
                 "Zone": parseInt(zone),
                 "Center": currentCenter,
                 "Route": currentCenter + "Post",
-                "UpdatedBy": activeDispatcher
+                "UpdatedBy": activeDispatcher,
+                "Group": group  // <-- Now passed every single time
             };
-
             fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
             })
-            .then(res => {
-                if(res.ok) {
-                    setTimeout(() => { loadBoardData(); }, 1500);
-                }
-            })
-            .catch(err => {
-                alert("Error saving to database.");
-                event.target.innerText = "Error";
-            });
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => alert("Error saving to database."));
         }
 
         // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
@@ -299,9 +289,9 @@
 
             let actionButton = "";
             if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
-                actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`;
+                actionButton = `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`;
             } else {
-                actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+                actionButton = `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
             }
 
             let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
