@@ -227,27 +227,28 @@
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
         // --- Dispatch Core Function ---
-        function stampDriver(driverName, status, zone) {
+        function stampDriver(driverName, status, zone, group) {
             event.target.innerText = "...";
-            const payload = { "DriverName": driverName, "NewStatus": status, "Zone": parseInt(zone), "Center": currentCenter, "Route": currentCenter + "Post", "UpdatedBy": activeDispatcher };
+            const payload = { "DriverName": driverName, "NewStatus": status, "Zone": parseInt(zone), "Center": currentCenter, "Route": currentCenter + "Post", "UpdatedBy": activeDispatcher, "Group": group };
             fetch(flowUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
             .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
             .catch(err => alert("Error saving to database."));
         }
 
         // --- ADMIN FUNCTIONS ---
-        function adminClearStatus(driverName) {
-            if(confirm(`Are you sure you want to clear today's status for ${driverName}? This will reset them to PENDING.`)) {
-                alert(`BACKEND REQUIRED:\n\nTo make this work, we need an "${currentCenter}Clear" branch in Power Automate to wipe their Timestamp and Status.`);
+        function adminClearStatus(driverName, currentGroup) {
+            if(confirm(`Are you sure you want to clear today's status for ${driverName}? This resets them to PENDING.`)) {
+                // Preserves the group, wipes the daily status
+                sendAdminPayload(driverName, currentCenter + "Post", { NewStatus: "", Timestamp: "", Zone: 0, Group: currentGroup });
             }
         }
 
-                function adminUpdateGroup(driverName, newGroup) {
+        function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
             if(confirm(`Are you sure you want to move ${driverName} to the ${newGroup} group?`)) {
-                alert(`BACKEND REQUIRED:\n\nTo move ${driverName} to ${newGroup}, we need an "${currentCenter}Move" branch in Power Automate.`);
+                // Updates the group, preserves their daily status
+                sendAdminPayload(driverName, currentCenter + "Post", { NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup });
             }
         }
-
 
         function adminDeleteDriver(driverName) {
             if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
@@ -329,17 +330,16 @@
 
             // Dispatch Buttons
             let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
-                ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext})">REVOKE</button>`
-                : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext})">OFF</button>`;
+                ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
+                : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
 
-                        // Admin Buttons (Move, Clear, Delete)
+            // Admin Buttons
             let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
             let adminBtn = `
-                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}')">TO ${switchGroupTarget.toUpperCase()}</button>
-                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}')">CLEAR</button>
+                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
+                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}')">CLEAR</button>
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
-
 
             let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
 
