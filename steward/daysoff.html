@@ -38,6 +38,29 @@
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
 
+        /* --- NEW: MENU DRAWER CSS --- */
+        .main-nav-drawer {
+            position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
+            background: #161616; border-right: 2px solid var(--accent);
+            z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
+        }
+        .main-nav-drawer.open { transform: translateX(0); }
+        .nav-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
+        }
+        .nav-overlay.open { display: block; }
+        
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+
         /* STEWARD CONTROLS */
         .steward-controls {
             position: fixed; top: 75px; left: 0; right: 0; background: #222;
@@ -127,6 +150,15 @@
 
     <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
 
+    <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding: 20px; padding-bottom: 10px; display: flex; justify-content: space-between;">
+            <h3 style="color: white; font-size: 18px;">Steward Portal Menu</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        <div id="nav-links-container"></div>
+    </div>
+
     <div id="modal-overlay">
         <div class="modal-card">
             <div class="modal-title">Add New Driver</div>
@@ -157,7 +189,7 @@
 
     <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-            <button class="hamburger-btn">☰</button>
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
                 <div class="header-title" id="page-title">Steward Admin Board</div>
                 <div id="driver-info" class="header-sub">Manage Roster & Days Off</div>
@@ -218,7 +250,43 @@
             document.body.classList.toggle('admin-mode', document.getElementById('adminToggle').checked);
         }
 
-        // --- NEW: Modal Controls ---
+        // --- NEW: MENU CONTROLLERS ---
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+        function buildNavigation() {
+            // Passes the activeDispatcher name through the URL so you don't lose it when clicking links
+            let secureQueryString = `?name=${encodeURIComponent(activeDispatcher)}`;
+
+            fetch('member-nav.json', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                    let menuHTML = '';
+
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}</a>`;
+                        }
+                    });
+                    navContainer.innerHTML = menuHTML;
+                })
+                .catch(err => console.log("Menu Error:", err));
+        }
+
+        // --- Modal Controls ---
         function openModal() {
             document.getElementById('newDriverName').value = "";
             document.getElementById('newDriverGroup').value = "";
@@ -226,7 +294,7 @@
         }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-                // The Universal Click Action (Now passing Date AND Group)
+        // The Universal Click Action (Now passing Date AND Group)
         function stampDriver(driverName, status, zone, group) {
             event.target.innerText = "...";
             
@@ -238,12 +306,12 @@
             const payload = { 
                 "DriverName": driverName, 
                 "NewStatus": status, 
-                "Timestamp": todayStr,      // <-- Date safely added back
+                "Timestamp": todayStr, 
                 "Zone": parseInt(zone), 
                 "Center": currentCenter, 
                 "Route": currentCenter + "Post", 
                 "UpdatedBy": activeDispatcher, 
-                "Group": group              // <-- Group safely passed
+                "Group": group 
             };
 
             // 3. Send to Power Automate
@@ -256,12 +324,10 @@
             .catch(err => alert("Error saving to database."));
         }
 
-
-                // --- ADMIN FUNCTIONS ---
+        // --- ADMIN FUNCTIONS ---
         
-                // 1. The Generic Admin Sender
+        // 1. The Generic Admin Sender (Updated with the Failsafe!)
         function sendAdminPayload(driverName, routeString, extraData) {
-            // Turn on the loading screen
             document.getElementById('loading-overlay').style.display = 'flex';
             
             const payload = {
@@ -278,26 +344,21 @@
             })
             .then(res => { 
                 if(res.ok) {
-                    // Power Automate successfully said "200 OK". Reload the board!
                     setTimeout(() => { loadBoardData(); }, 1500); 
                 } else {
-                    // Power Automate sent back an error. Hide the screen and warn the Steward!
                     document.getElementById('loading-overlay').style.display = 'none'; 
                     alert("Backend Error: Power Automate failed to process the request.");
                 }
             })
             .catch(err => { 
-                // Total network failure (e.g., no cell service). Hide the screen!
                 document.getElementById('loading-overlay').style.display = 'none'; 
-                alert("Network Error: Could not reach the database. Check your connection."); 
+                alert("Network Error: Could not reach the database."); 
             });
         }
-
 
         // 2. The Button Actions
         function adminClearStatus(driverName, currentGroup, currentZone) {
             if(confirm(`Are you sure you want to clear today's status for ${driverName}?`)) {
-                // Sends blanks to wipe the day, but explicitly passes Group and Zone so they aren't erased!
                 sendAdminPayload(driverName, currentCenter + "Post", { 
                     NewStatus: "", 
                     Timestamp: "", 
@@ -309,7 +370,6 @@
 
         function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
             if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
-                // Updates the Group, but explicitly passes the current day's info so we don't erase a day off!
                 sendAdminPayload(driverName, currentCenter + "Post", { 
                     NewStatus: currentStatus, 
                     Timestamp: currentTimestamp, 
@@ -321,7 +381,6 @@
 
         function adminDeleteDriver(driverName) {
             if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
-                // This routes to the actual Delete branch we will build
                 sendAdminPayload(driverName, currentCenter + "Delete", {});
             }
         }
@@ -334,49 +393,38 @@
             if (!name || !group) { alert("You must enter a Name and select a Group."); return; }
             
             let targetZone = (group === 'Bid') ? 1 : 3;
-            let finalSortOrder = 1; // Fallback if the board is completely empty
+            let finalSortOrder = 1;
 
-            // 1. Isolate just the group they are joining
             let groupList = window.masterDriverList.filter(d => d.Group === group);
             
-            // 2. The Midpoint Math
             if (groupList.length > 0) {
                 if (insertAfter === "TOP") {
-                    // Put them 1 full number above the current top guy
                     finalSortOrder = (groupList[0].SortOrder || 1) - 1; 
                 } else {
-                    // Find the target driver
                     let targetIndex = groupList.findIndex(d => d.Title === insertAfter);
-                    
                     if (targetIndex !== -1) {
                         let driverA_Sort = groupList[targetIndex].SortOrder || 0;
-                        
-                        // Is there a guy below him?
                         if (targetIndex + 1 < groupList.length) {
                             let driverB_Sort = groupList[targetIndex + 1].SortOrder || 0;
-                            finalSortOrder = (driverA_Sort + driverB_Sort) / 2; // Boom. Infinite decimal gap.
+                            finalSortOrder = (driverA_Sort + driverB_Sort) / 2;
                         } else {
-                            // Target was the absolute bottom of the list, just add 1
                             finalSortOrder = driverA_Sort + 1;
                         }
                     }
                 }
             }
 
-            // 3. Send the exact calculated decimal straight to Power Automate
             sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "" });
             closeModal();
         }
 
         // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
         function calculateGlobalHighlight(bidList, coverList) {
-            // 1. Stack them exactly how they appear on the screen
             let virtualBoard = [];
             bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
             bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
             coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
 
-            // 2. Find the most recent date clicked across the ENTIRE board
             let mostRecentTime = 0; let mostRecentDateStr = "";
             virtualBoard.forEach(d => {
                 if (d.ZoneTag == d.expectedZone && d.Timestamp) {
@@ -384,15 +432,13 @@
                     if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
                 }
             });
-            if (mostRecentDateStr === "") return 0; // Board is empty, highlight top guy
+            if (mostRecentDateStr === "") return 0; 
 
-            // 3. Find furthest person down the global list who got OFF
             let lastOffIndex = -1; let firstStayAfterOff = -1;
             virtualBoard.forEach((d, i) => {
                 if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
             });
             
-            // 4. Check for any forced STAYS after that person
             let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
             for (let i = startIndex; i < virtualBoard.length; i++) {
                 if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
@@ -426,19 +472,16 @@
 
             let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
 
-            // Dispatch Buttons
             let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
                 ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
                 : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
 
-                        // Admin Buttons
             let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
             let adminBtn = `
                 <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
                 <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}', ${driver.ZoneTag})">CLEAR</button>
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
-
 
             let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
 
@@ -457,7 +500,7 @@
             `;
         }
 
-                // Fetching and Displaying the Data
+        // Fetching and Displaying the Data
         function loadBoardData() {
             fetch(flowUrl, {
                 method: "POST", headers: { "Content-Type": "application/json" },
@@ -474,39 +517,32 @@
                 pastDates.sort((a, b) => new Date(b) - new Date(a));
                 window.recentPastDay = pastDates[0] || null; 
                 
-                // (Inside loadBoardData)
-                window.masterDriverList = data; // NEW: Save the list to memory for the modal to use
+                window.masterDriverList = data; 
                 
                 const bidDrivers = data.filter(d => d.Group === 'Bid');
                 const coverDrivers = data.filter(d => d.Group === 'Coverage');
 
-                // Populate the "Insert After" dropdown for the Admin Modal
                 const allNames = data.map(d => `<option value="${d.Title}">${d.Title}</option>`).join('');
                 document.getElementById('insertAfterSelect').innerHTML = `<option value="TOP">-- Place at very top of list --</option>` + allNames;
 
-                // --- Calculate the single GLOBAL highlight winner ---
                 const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
                 let runningIndex = 0;
 
-                // Draw Zone 1 (Round 1)
                 document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
                     let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
                     return buildRowHtml(d, 1, isWinner);
                 }).join('');
 
-                // Draw Zone 2 (Round 2)
                 document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
                     let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
                     return buildRowHtml(d, 2, isWinner);
                 }).join('');
 
-                // Draw Zone 3 (Coverage)
                 document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
                     let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
                     return buildRowHtml(d, 3, isWinner);
                 }).join('');
 
-                // --- NEW: Auto-Scroll to the Highlight ---
                 setTimeout(() => {
                     const activeRow = document.querySelector('.driver-row.highlight');
                     if (activeRow) {
@@ -521,8 +557,9 @@
             });
         }
 
-
+        // Initialize Page
         initUI();
+        buildNavigation();
         loadBoardData();
     </script>
 </body>
