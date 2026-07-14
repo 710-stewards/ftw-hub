@@ -150,14 +150,16 @@
 
     <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
 
+        <!-- NAVIGATION DRAWER (Standard Steward Hub Style) -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding: 20px; padding-bottom: 10px; display: flex; justify-content: space-between;">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
             <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
-        <div id="nav-links-container"></div>
+        <div id="dynamic-nav-container"></div>      
     </div>
+ 
 
     <div id="modal-overlay">
         <div class="modal-card">
@@ -261,30 +263,40 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        function buildNavigation() {
-            // Passes the activeDispatcher name through the URL so you don't lose it when clicking links
+                function buildDynamicNav() {
+            let currentPage = window.location.pathname.split('/').pop();
+            if (currentPage === '') currentPage = 'index.html'; 
+
+            // Passes the activeDispatcher name through the URL so you don't lose it
             let secureQueryString = `?name=${encodeURIComponent(activeDispatcher)}`;
 
+            // Matches your standard Hub JSON file
             fetch('steward-nav.json', { cache: 'no-store' })
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(menuItems => {
-                    const navContainer = document.getElementById('nav-links-container');
-                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-                    let menuHTML = '';
-
+                    const navContainer = document.getElementById('dynamic-nav-container');
+                    let navHtml = '';
+                    
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
-                            menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                            navHtml += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
                         } else if (item.type === 'link') {
-                            const isActive = (currentPage === item.filename) ? 'active' : '';
-                            const finalUrl = item.filename + secureQueryString;
-                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}</a>`;
+                            if (item.filename === currentPage) {
+                                // Standard Hub Active format
+                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                            } else {
+                                // Standard Hub Inactive format with the arrow
+                                navHtml += `<a href="${item.filename}${secureQueryString}" class="nav-item">→ ${item.name}</a>`;
+                            }
                         }
                     });
-                    navContainer.innerHTML = menuHTML;
+                    navContainer.innerHTML = navHtml;
                 })
-                .catch(err => console.log("Menu Error:", err));
+                .catch(err => console.error("Menu failed to load:", err));
         }
+        
+        // Call it immediately
+        buildDynamicNav();
 
         // --- Modal Controls ---
         function openModal() {
