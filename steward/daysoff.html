@@ -259,8 +259,9 @@
 
                 // --- ADMIN FUNCTIONS ---
         
-        // 1. The Generic Admin Sender
+                // 1. The Generic Admin Sender
         function sendAdminPayload(driverName, routeString, extraData) {
+            // Turn on the loading screen
             document.getElementById('loading-overlay').style.display = 'flex';
             
             const payload = {
@@ -275,12 +276,23 @@
                 method: "POST", headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
-            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .then(res => { 
+                if(res.ok) {
+                    // Power Automate successfully said "200 OK". Reload the board!
+                    setTimeout(() => { loadBoardData(); }, 1500); 
+                } else {
+                    // Power Automate sent back an error. Hide the screen and warn the Steward!
+                    document.getElementById('loading-overlay').style.display = 'none'; 
+                    alert("Backend Error: Power Automate failed to process the request.");
+                }
+            })
             .catch(err => { 
-                alert("Error communicating with database."); 
+                // Total network failure (e.g., no cell service). Hide the screen!
                 document.getElementById('loading-overlay').style.display = 'none'; 
+                alert("Network Error: Could not reach the database. Check your connection."); 
             });
         }
+
 
         // 2. The Button Actions
         function adminClearStatus(driverName, currentGroup, currentZone) {
