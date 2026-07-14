@@ -6,5 +6,6 @@
   { "type": "link", "name": "Seniority List", "filename": "seniority.html" },
   { "type": "link", "name": "Member Portal Links", "filename": "portal-links.html" },
   { "type": "link", "name": "Steward Library", "filename": "library.html" },
-  { "type": "link", "name": "Contract Proposals", "filename": "proposals.html" }
+  { "type": "link", "name": "Contract Proposals", "filename": "proposals.html" },
+  { "type": "link", "name": "Days Off", "filename": "daysoff.html" }
 ]
