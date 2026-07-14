@@ -38,7 +38,7 @@
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
 
-        /* --- NEW: MENU DRAWER CSS --- */
+        /* NAVIGATION DRAWER (Proposal Hub Style) */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -150,17 +150,17 @@
 
     <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
 
-        <!-- NAVIGATION DRAWER (Standard Steward Hub Style) -->
+    <!-- NAVIGATION DRAWER (Standard Steward Hub Style) -->
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; padding: 20px;">
             <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
             <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         <div id="dynamic-nav-container"></div>      
     </div>
- 
 
+    <!-- MODAL -->
     <div id="modal-overlay">
         <div class="modal-card">
             <div class="modal-title">Add New Driver</div>
@@ -252,7 +252,7 @@
             document.body.classList.toggle('admin-mode', document.getElementById('adminToggle').checked);
         }
 
-        // --- NEW: MENU CONTROLLERS ---
+        // --- NAVIGATION CONTROLLERS ---
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
@@ -263,7 +263,7 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-                function buildDynamicNav() {
+        function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
             if (currentPage === '') currentPage = 'index.html'; 
 
@@ -294,9 +294,6 @@
                 })
                 .catch(err => console.error("Menu failed to load:", err));
         }
-        
-        // Call it immediately
-        buildDynamicNav();
 
         // --- Modal Controls ---
         function openModal() {
@@ -306,15 +303,13 @@
         }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        // The Universal Click Action (Now passing Date AND Group)
+        // The Universal Click Action
         function stampDriver(driverName, status, zone, group) {
             event.target.innerText = "...";
             
-            // 1. Generate today's date
             const d = new Date();
             const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
 
-            // 2. Build the complete payload
             const payload = { 
                 "DriverName": driverName, 
                 "NewStatus": status, 
@@ -326,7 +321,6 @@
                 "Group": group 
             };
 
-            // 3. Send to Power Automate
             fetch(flowUrl, { 
                 method: "POST", 
                 headers: { "Content-Type": "application/json" }, 
@@ -337,8 +331,6 @@
         }
 
         // --- ADMIN FUNCTIONS ---
-        
-        // 1. The Generic Admin Sender (Updated with the Failsafe!)
         function sendAdminPayload(driverName, routeString, extraData) {
             document.getElementById('loading-overlay').style.display = 'flex';
             
@@ -368,14 +360,10 @@
             });
         }
 
-        // 2. The Button Actions
         function adminClearStatus(driverName, currentGroup, currentZone) {
             if(confirm(`Are you sure you want to clear today's status for ${driverName}?`)) {
                 sendAdminPayload(driverName, currentCenter + "Post", { 
-                    NewStatus: "", 
-                    Timestamp: "", 
-                    Zone: parseInt(currentZone) || 0, 
-                    Group: currentGroup 
+                    NewStatus: "", Timestamp: "", Zone: parseInt(currentZone) || 0, Group: currentGroup 
                 });
             }
         }
@@ -383,10 +371,7 @@
         function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
             if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
                 sendAdminPayload(driverName, currentCenter + "Post", { 
-                    NewStatus: currentStatus, 
-                    Timestamp: currentTimestamp, 
-                    Zone: parseInt(currentZone) || 0, 
-                    Group: newGroup 
+                    NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup 
                 });
             }
         }
@@ -430,7 +415,7 @@
             closeModal();
         }
 
-        // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
+        // --- GLOBAL ROTATION MATH ---
         function calculateGlobalHighlight(bidList, coverList) {
             let virtualBoard = [];
             bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
@@ -571,7 +556,7 @@
 
         // Initialize Page
         initUI();
-        buildNavigation();
+        buildDynamicNav();
         loadBoardData();
     </script>
 </body>
