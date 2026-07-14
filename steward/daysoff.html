@@ -265,7 +265,7 @@
             // Passes the activeDispatcher name through the URL so you don't lose it when clicking links
             let secureQueryString = `?name=${encodeURIComponent(activeDispatcher)}`;
 
-            fetch('member-nav.json', { cache: 'no-store' })
+            fetch('steward-nav.json', { cache: 'no-store' })
                 .then(response => response.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('nav-links-container');
