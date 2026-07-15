@@ -111,15 +111,17 @@
         body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
         body.light-mode .hamburger-btn { color: #121212; } 
         
-        /* BLACK OUTLINE FOR LIGHT MODE GOLD TEXT */
+                /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
         body.light-mode .header-sub,
         body.light-mode .ctr-meta,
         body.light-mode .name-error-banner,
         body.light-mode .id-error-banner {
-            -webkit-text-stroke: 0.3px rgba(0,0,0,0.6); 
-            text-shadow: 0px 1px 2px rgba(0,0,0,0.2); 
+            color: #b37700 !important; /* Deeper amber/gold for natural contrast on white */
+            -webkit-text-stroke: 0 !important; /* Kills the funky outline */
+            text-shadow: none !important;
             font-weight: 900;
         }
+
 
         /* 3-DOT SETTINGS DROPDOWN */
         .settings-dropdown {
