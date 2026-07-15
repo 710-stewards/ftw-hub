@@ -13,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local 710 Intake Hub</title>
-    <style>
+        <style>
         /* CORE CONFIGURATION */
         :root {
             --bg-main: #121212;
@@ -26,7 +26,41 @@
             --text-muted: #888;
         }
 
-                /* --- RESTORED NAV DRAWER STYLES --- */
+        /* GLOBAL STYLES */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+
+        /* RESPONSIVE HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
+        }
+        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
+        
+        .hamburger-btn {
+            background: none; border: none; color: var(--accent); 
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+        }
+        .hamburger-btn:active { transform: scale(0.9); }
+
+        /* FLOATING TOAST ALERT */
+        .local-dates-box { position: relative; } 
+        .save-status { 
+            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
+            font-size: 13px; font-weight: bold; padding: 12px 24px; border-radius: 30px; 
+            background: #333; color: var(--text-muted); transition: bottom 0.4s ease-in-out;
+            z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .save-status.saving { bottom: 30px; background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
+        .save-status.dirty { bottom: 30px; background: #440000; color: var(--danger); border: 1px solid var(--danger); }
+
+        /* MAIN NAV DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: var(--bg-main); border-right: 2px solid var(--accent);
@@ -44,6 +78,21 @@
         .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
         .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+
+        /* 3-DOT SETTINGS DROPDOWN */
+        .settings-dropdown {
+            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
 
         /* LIGHT MODE OVERRIDES */
         body.light-mode {
@@ -76,22 +125,7 @@
             font-weight: 900;
         }
 
-
-        /* 3-DOT SETTINGS DROPDOWN */
-        .settings-dropdown {
-            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
-            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
-        }
-        .settings-dropdown.open { display: flex; }
-        .settings-item {
-            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
-            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
-
-        /* CARD ARCHITECTURE (FIXED SOLID BORDERS) */
+        /* CARD ARCHITECTURE */
         .record-card {
             background-color: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
@@ -103,17 +137,27 @@
         .card-split-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; align-items: flex-start;
         }
-
+        .card-top-row {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;
+        }
+        .ctr-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
+        .ctr-meta {
+            display: flex; color: var(--accent); font-size: 14px;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
 
         /* INPUT WRAPPERS */
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        input, select {
+        input, select, textarea {
             width: 100%; height: 42px; background: #262626; border: 1px solid #444;
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
-        input:focus, select:focus { border-color: var(--accent); }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         input.emp-input { font-size: 15px; font-weight: bold; }
         input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
 
@@ -187,7 +231,12 @@
             50% { opacity: 0.4; }
             100% { opacity: 1; }
         }
+
+        @media (min-width: 650px) {
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
+        }
     </style>
+
 </head>
 <body>
 
