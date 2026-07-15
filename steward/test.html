@@ -26,84 +26,7 @@
             --text-muted: #888;
         }
 
-                /* LIGHT MODE OVERRIDES */
-        body.light-mode {
-            --bg-main: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-main: #121212;
-            --text-muted: #555;
-            --border: #d1d5db;
-        }
-        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
-        body.light-mode .drawer-header { background: #f8f9fa; }
-        body.light-mode .nav-item { color: #333; }
-        body.light-mode .nav-item:hover { background: #f0f2f5; }
-        body.light-mode .nav-item.active { background: #fffbe6; }
-        body.light-mode input, body.light-mode select, body.light-mode textarea { background: #ffffff; color: #111; }
-        body.light-mode .sys-id-display-box { border-color: #ccc; }
-        body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
-        
-        /* 3-DOT SETTINGS DROPDOWN */
-        .settings-dropdown {
-            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
-            display: none; flex-direction: column; overflow: hidden; min-width: 220px;
-        }
-        .settings-dropdown.open { display: flex; }
-        .settings-item {
-            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
-            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
-            border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
-        }
-        .settings-item:last-child { border-bottom: none; }
-        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
-
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
-
-        /* RESPONSIVE HEADER & NAVIGATION */
-        .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
-            background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
-        }
-        .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
-        .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
-        
-        .hamburger-btn {
-            background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; transition: transform 0.2s;
-            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
-        }
-        .hamburger-btn:active { transform: scale(0.9); }
-
-             
-        
-        /* SAVE STATUS INDICATOR (NOW A FLOATING TOAST) */
-        .local-dates-box { position: relative; } 
-        .save-status { 
-            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            font-size: 13px; font-weight: bold; padding: 12px 24px; border-radius: 30px; 
-            background: #333; color: var(--text-muted); transition: bottom 0.4s ease-in-out;
-            z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .save-status.saving { bottom: 30px; background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .save-status.dirty { bottom: 30px; background: #440000; color: var(--danger); border: 1px solid var(--danger); }
-
-        /* LIGHT MODE OVERRIDES */
-        body.light-mode {
-            --bg-main: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-main: #121212;
-            --text-muted: #555;
-            --border: #d1d5db;
-            --accent: #cca300; /* Slightly darker gold for contrast */
-        }
-        body.light-mode .top-navbar, body.light-mode .mai        /* --- RESTORED NAV DRAWER STYLES --- */
+                /* --- RESTORED NAV DRAWER STYLES --- */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: var(--bg-main); border-right: 2px solid var(--accent);
@@ -121,7 +44,17 @@
         .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
         .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-n-nav-drawer { background: #ffffff; border-color: #d1d5db; }
+
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
+        }
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
         body.light-mode .drawer-header { background: #f8f9fa; }
         body.light-mode .nav-item { color: #333; }
         body.light-mode .nav-item:hover { background: #f0f2f5; }
@@ -131,18 +64,17 @@ n-nav-drawer { background: #ffffff; border-color: #d1d5db; }
         body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
         body.light-mode .hamburger-btn { color: #121212; } 
         
-             /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
+        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
         body.light-mode .header-sub,
         body.light-mode .ctr-meta,
         body.light-mode .name-error-banner,
         body.light-mode .id-error-banner,
         body.light-mode .group-header-title {
-            color: #b37700 !important; /* Deeper amber/gold for natural contrast on white */
+            color: #b37700 !important; 
             -webkit-text-stroke: 0 !important; 
             text-shadow: none !important;
             font-weight: 900;
         }
-
 
 
         /* 3-DOT SETTINGS DROPDOWN */
