@@ -628,12 +628,12 @@
         const displayContainer = document.getElementById('data-display');
         displayContainer.style.paddingBottom = '120px';
 
-        if (recordsList.length === 0) {
+                if (recordsList.length === 0) {
             displayContainer.innerHTML = `
                 <div class="empty-queue-wrapper">
                     <div class="empty-text-msg">
-                    <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span> 
-                    Intake queue is clear. No pending records found for this view.
+                        <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
+                        Intake queue is clear. No pending records found for this view.
                     </div>
                     <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
                         → Head to Processing Hub
@@ -642,6 +642,7 @@
             `;
             return;
         }
+
 
         const isGrouped = document.getElementById('toggle-group-steward').checked;
         const groupedRecords = {};
