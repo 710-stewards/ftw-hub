@@ -269,8 +269,11 @@
             </div>
         </div>
         
-        <div class="local-dates-box">
+                <div class="local-dates-box">
             <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+            
+            <!-- INVISIBLE OVERLAY -->
+            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
             
             <div id="settings-dropdown" class="settings-dropdown">
                 
@@ -446,10 +449,20 @@
         document.getElementById('nav-overlay').classList.remove('open');
     }
 
-        // --- 3-DOT MENU & THEME LOGIC ---
+            // --- 3-DOT MENU & THEME LOGIC ---
     function toggleSettingsMenu() {
-        document.getElementById('settings-dropdown').classList.toggle('open');
+        const dropdown = document.getElementById('settings-dropdown');
+        const overlay = document.getElementById('settings-overlay');
+        
+        dropdown.classList.toggle('open');
+        
+        if (dropdown.classList.contains('open')) {
+            overlay.style.display = 'block';
+        } else {
+            overlay.style.display = 'none';
+        }
     }
+
 
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
@@ -469,14 +482,6 @@
             window.location.reload();
         }
     }
-
-    // Close the 3-dot dropdown if the user clicks anywhere else on the screen
-    document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('settings-dropdown');
-        const kebabBtn = document.querySelector('.top-navbar .hamburger-btn:last-child');
-        if (dropdown.classList.contains('open') && !dropdown.contains(event.target) && !kebabBtn.contains(event.target)) {
-            dropdown.classList.remove('open');
-        }
     });
 
 
@@ -686,12 +691,13 @@
                 return dateA - dateB;
             });
 
-            htmlContent += `
+                htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
+                    <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
                     <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} PENDING</span>
                 </div>
             `;
+
 
             items.forEach((item) => {
                 const sysId = item['Title'] || '';
