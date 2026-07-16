@@ -17,15 +17,15 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+        
+        /* Pushed content down to make room for the taller header */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
 
-        /* RESPONSIVE HEADER & NAVIGATION */
+        /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
+            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
@@ -37,10 +37,33 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
+        /* CLEAN FULL-WIDTH SEARCH BAR */
+        .search-input {
+            width: 100%; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 15px; outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .search-input:focus { border-color: var(--accent); }
+
+        /* 3-DOT MENU STYLES */
+        .settings-dropdown {
+            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 250px; max-width: 90vw;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
+
         /* MAIN NAV DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: #161616; border-right: 2px solid var(--accent);
+            background: var(--bg-main); border-right: 2px solid var(--accent);
             z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
             box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
         }
@@ -51,22 +74,36 @@
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
 
-        /* SEARCH BANNER */
-        .search-banner {
-            background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
-            margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
         }
-        .search-input {
-            flex: 1; min-width: 250px; height: 45px; background: #262626; border: 1px solid #444;
-            color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .drawer-header { background: #f8f9fa; }
+        body.light-mode .nav-item { color: #333; }
+        body.light-mode .nav-item:hover { background: #f0f2f5; }
+        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode .hamburger-btn { color: #121212; } 
+        body.light-mode .search-input { background: #ffffff !important; color: #111 !important; border-color: #ccc !important; }
+        body.light-mode .warning-box { background-color: #f8f9fa; border-color: #d1d5db; color: #555; }
+        body.light-mode .custom-modal { background: #ffffff; border-color: #ccc; }
+        body.light-mode .modal-title { color: #111; }
+        body.light-mode #modal-phone-input { background: #ffffff !important; color: #111 !important; border-color: #ccc !important; }
+        body.light-mode .btn-reset, body.light-mode .btn-modal-no { background-color: #f0f2f5; color: #111; border-color: #ccc; }
+        
+        body.light-mode .header-sub, body.light-mode .member-meta b {
+            color: #b37700 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-weight: 900;
         }
-        .search-input:focus { border-color: var(--accent); }
 
         /* RECORD GRID */
         .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 16px; }
@@ -77,9 +114,9 @@
             border-radius: 8px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
             display: flex; flex-direction: column; gap: 12px; position: relative;
         }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed #333; padding-bottom: 10px; }
-        .member-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
-        .member-meta { font-size: 13px; color: #aaaaaa; margin-top: 4px; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; }
+        .member-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
+        .member-meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
         
         .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
         .btn-send { flex: 1; min-width: 110px; text-align: center; padding: 12px 10px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: transform 0.1s; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
@@ -94,8 +131,6 @@
         .pill-yes { background: rgba(46, 204, 113, 0.1); color: var(--accent-green); border-color: var(--accent-green); }
         .pill-no { background: rgba(255, 51, 51, 0.1); color: var(--danger); border-color: var(--danger); }
         
-        .warning-box { flex: 2; min-width: 230px; text-align: center; background-color: #333333; color: #777777; padding: 12px; border-radius: 4px; font-size: 13px; font-weight: bold; border: 1px dashed #444; }
-
         /* CUSTOM PHONE MODAL */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -103,11 +138,11 @@
             z-index: 4000; display: none; align-items: center; justify-content: center;
         }
         .custom-modal {
-            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
+            background: var(--bg-card); border: 1px solid var(--accent); border-radius: 8px;
             width: 90%; max-width: 400px; padding: 25px; text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 5px; }
+        .modal-title { font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 5px; }
         .modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
         .modal-btn-row { display: flex; gap: 12px; margin-top: 20px; }
         .btn-modal-yes { background: var(--accent-green); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -115,42 +150,66 @@
 
         /* LOADING SPINNER OVERLAY FOR CARDS */
         .card-loader { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(30,30,30,0.9); border-radius: 8px; display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 10; color: var(--accent); font-weight: bold; font-size: 14px; }
+        body.light-mode .card-loader { background: rgba(255,255,255,0.9); }
     </style>
 </head>
 <body>
 
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Navigation Panel
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
-            </h3>
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
         
-        <div id="dynamic-nav-container">
-            </div>
-        
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+        <div id="dynamic-nav-container"></div>
     </div>
 
+    <!-- DOUBLE DECKER STICKY HEADER -->
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Local 710 Dispatch Hub</div>
-                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+        <!-- ROW 1: Titles & Menus -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+                <div>
+                    <div class="header-title">Dispatch Hub</div>
+                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+                </div>
+            </div>
+            
+            <div style="position: relative;">
+                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+                
+                <!-- INVISIBLE OVERLAY -->
+                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+                
+                <div id="settings-dropdown" class="settings-dropdown">
+                    <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="search-banner">
-        <input type="text" id="live-search-box" class="search-input" onkeyup="filterDrivers()" placeholder="🔍 Search Driver Name or Emp ID...">
-        <div style="font-size: 12px; color: var(--accent); font-weight: bold; padding: 0 10px;" id="record-counter">Loading...</div>
+        <!-- ROW 2: Sticky 100% Width Search Bar -->
+        <div style="width: 100%;">
+            <input type="text" id="live-search-box" class="search-input" onkeyup="filterDrivers()" placeholder="🔍 Search Driver Name or Emp ID...">
+        </div>
     </div>
 
     <div id="data-display" style="padding-bottom: 120px;">
+        <!-- RECORD COUNTER MOVED HERE -->
+        <div style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px;" id="record-counter">Loading...</div>
+        
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Fetching Dispatch Roster...
         </div>
@@ -181,45 +240,35 @@
         
         let masterSeniority = [];
         let masterStewardRoster = [];
-        let currentStewardName = 'Authorized Viewer'; // Global scope to hold for the audit stamp
+        let currentStewardName = 'Authorized Viewer'; 
 
        function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
             let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+            if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
             fetch('steward-nav.json')
                 .then(res => res.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('dynamic-nav-container');
                     let navHtml = '';
 
-                    // 3. Loop through the JSON and build the menu
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
                             navHtml += `<div class="nav-section-title">${item.title}</div>`;
                         } 
                         else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
                             if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
                                 navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
                             } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
                                 navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                             }
                         }
                     });
-
-                    // Drop the finished HTML into the drawer
                     navContainer.innerHTML = navHtml;
                 })
                 .catch(err => console.error("Menu failed to load:", err));
         }
 
-        // Fire the function to build the menu
         buildDynamicNav();
 
         function openNavMenu() {
@@ -230,6 +279,34 @@
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
+
+        // --- 3-DOT MENU & THEME LOGIC ---
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settings-dropdown');
+            const overlay = document.getElementById('settings-overlay');
+            
+            dropdown.classList.toggle('open');
+            
+            if (dropdown.classList.contains('open')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            toggleSettingsMenu(); 
+        }
+
+        function clearToken() {
+            if(confirm("Are you sure you want to log out and clear your security token?")) {
+                localStorage.removeItem('saved_steward_token');
+                window.location.reload();
+            }
+        }
         
         function generateUUID() {
             return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
@@ -237,7 +314,6 @@
             );
         }
 
-        // AUTO-FORMATTER LOGIC FOR PHONE INPUT
         document.getElementById('modal-phone-input').addEventListener('input', function (e) {
             let raw = e.target.value.replace(/\D/g, ''); 
             
@@ -250,7 +326,6 @@
             e.target.value = !match[2] ? match[1] : '(' + match[1] + ') ' + match[2] + (match[3] ? '-' + match[3] : '');
         });
 
-        // PHONE MODAL LOGIC
         let editingPhoneEmpId = null;
 
         function openPhoneModal(empId, driverName) {
@@ -267,60 +342,59 @@
         }
 
         function commitPhoneNumber() {
-    if (!editingPhoneEmpId) return;
-    
-    const rawDigits = document.getElementById('modal-phone-input').value.replace(/\D/g, '');
-    
-    if (rawDigits.length !== 10) {
-        alert("Validation Failed: Please enter a valid 10-digit area code and phone number.");
-        return;
-    }
-
-    const finalPhoneToSave = '1' + rawDigits;
-    const timeStamp = new Date().toLocaleString('en-US');
-    const auditSignature = `${currentStewardName} - ${timeStamp}`;
-    
-    // 🔥 CAPTURE THE ID BEFORE CLOSING THE MODAL 🔥
-    const safeEmpId = editingPhoneEmpId;
-    
-    const loader = document.getElementById(`loader-${safeEmpId}`);
-    if (loader) {
-        loader.innerHTML = '<div style="font-size: 24px; margin-bottom: 10px;">↻</div>Syncing Roster...';
-        loader.style.display = 'flex';
-    }
-    
-    closePhoneModal(); // This erases editingPhoneEmpId, but we saved it above!
-
-    fetch(flowUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            "stewardGuid": stewardGUID, 
-            "action": "update_phone",
-            "empId": safeEmpId, // Use the safely captured ID
-            "newPhone": finalPhoneToSave,
-            "auditSignature": auditSignature
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-            const driver = masterSeniority.find(d => d.Title === safeEmpId);
-            if (driver) {
-                driver.PhoneNumber = finalPhoneToSave;
-                driver.ModifiedBy = auditSignature;
+            if (!editingPhoneEmpId) return;
+            
+            const rawDigits = document.getElementById('modal-phone-input').value.replace(/\D/g, '');
+            
+            if (rawDigits.length !== 10) {
+                alert("Validation Failed: Please enter a valid 10-digit area code and phone number.");
+                return;
             }
-            filterDrivers();
-        } else {
-            alert("Cloud sync failed. Phone number was not saved.");
-            if (loader) loader.style.display = 'none';
+
+            const finalPhoneToSave = '1' + rawDigits;
+            const timeStamp = new Date().toLocaleString('en-US');
+            const auditSignature = `${currentStewardName} - ${timeStamp}`;
+            
+            const safeEmpId = editingPhoneEmpId;
+            
+            const loader = document.getElementById(`loader-${safeEmpId}`);
+            if (loader) {
+                loader.innerHTML = '<div style="font-size: 24px; margin-bottom: 10px;">↻</div>Syncing Roster...';
+                loader.style.display = 'flex';
+            }
+            
+            closePhoneModal(); 
+
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    "stewardGuid": stewardGUID, 
+                    "action": "update_phone",
+                    "empId": safeEmpId, 
+                    "newPhone": finalPhoneToSave,
+                    "auditSignature": auditSignature
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    const driver = masterSeniority.find(d => d.Title === safeEmpId);
+                    if (driver) {
+                        driver.PhoneNumber = finalPhoneToSave;
+                        driver.ModifiedBy = auditSignature;
+                    }
+                    filterDrivers();
+                } else {
+                    alert("Cloud sync failed. Phone number was not saved.");
+                    if (loader) loader.style.display = 'none';
+                }
+            })
+            .catch(err => {
+                alert("Network error occurred.");
+                if (loader) loader.style.display = 'none';
+                console.error(err);
+            });
         }
-    })
-    .catch(err => {
-        alert("Network error occurred.");
-        if (loader) loader.style.display = 'none';
-        console.error(err);
-    });
-}
 
         function loadDispatchData() {
             if (!stewardGUID) {
