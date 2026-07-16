@@ -7,7 +7,10 @@
     <style>
         :root {
             --bg-main: #121212;
+            --bg-card: #1e1e1e;
             --accent: #ffcc00;
+            --danger: #ff3333;
+            --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
@@ -15,9 +18,9 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
         html, body {
-    overscroll-behavior-y: auto !important; 
-    overflow-y: auto !important;
-}  
+            overscroll-behavior-y: auto !important; 
+            overflow-y: auto !important;
+        }  
         body { 
             background-color: var(--bg-main); 
             color: var(--text-main); 
@@ -25,20 +28,37 @@
             display: flex; 
             flex-direction: column; 
             overflow: hidden;
+            padding-top: 70px; /* Accounts for the fixed header */
         }
 
         /* Top Navbar */
         .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0;
             height: 70px; background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; padding: 0 20px; flex: 0 0 auto; z-index: 1000;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000;
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
         .hamburger-btn {
             background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
+
+        /* 3-DOT MENU STYLES */
+        .settings-dropdown {
+            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 200px;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
 
         /* Drawer Styles */
         .main-nav-drawer {
@@ -54,33 +74,62 @@
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; transition: all 0.2s; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; transition: all 0.2s; }
+        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
         
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
+        }
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer, body.light-mode .viewer-controls { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .drawer-header { background: #f8f9fa; border-color: #d1d5db; }
+        body.light-mode .nav-item { color: #333; }
+        body.light-mode .nav-item:hover { background: #f0f2f5; }
+        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode .hamburger-btn { color: #121212; } 
+        body.light-mode details.accordion-section { background: #ffffff; border-color: #ccc; }
+        body.light-mode details[open] summary { background: #f8f9fa; border-color: #ccc; }
+        body.light-mode .record-card { background: #f0f2f5; color: #111; border-color: #ccc; }
+        body.light-mode .back-btn { background: #f0f2f5; color: #111; border: 1px solid #ccc; }
+        body.light-mode iframe { background: #ffffff; }
+
+        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
+        body.light-mode .header-sub, body.light-mode details summary {
+            color: #b37700 !important; 
+            -webkit-text-stroke: 0 !important; 
+            text-shadow: none !important;
+            font-weight: 900;
+        }
+
         /* Accordion Styles (Library View) */
         #library-view { padding: 20px; padding-bottom: 80px; overflow-y: auto; flex: 1; display: block; }
         details.accordion-section {
-            margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #1a1a1a;
+            margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; background: #1a1a1a;
         }
         details summary {
             padding: 20px; color: var(--accent); font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between;
         }
         details summary::-webkit-details-marker { display: none; }
-        details[open] summary { background: #222; border-bottom: 1px solid #333; }
+        details[open] summary { background: #222; border-bottom: 1px solid var(--border); }
         
         .record-card {
             display: block; width: 100%; text-align: left; border: none; font-size: 15px;
             margin-bottom: 10px; border-left: 3px solid var(--accent); padding: 15px; 
-            background: #262626; color: white; border-radius: 4px; cursor: pointer;
+            background: #262626; color: var(--text-main); border-radius: 4px; cursor: pointer;
         }
 
         /* Mozilla Viewer Styles (Viewer View) */
         #viewer-view { display: none; flex-direction: column; height: 100%; flex: 1; }
         .viewer-controls {
-            background: #161616; padding: 12px 20px; border-bottom: 1px solid #333;
+            background: #161616; padding: 12px 20px; border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between; gap: 10px;
         }
         .back-btn {
@@ -92,40 +141,52 @@
 </head>
 <body>
 
-    <!-- Nav Drawer -->
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding: 20px 20px 10px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Navigation Panel
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
                 <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-            </h3>
-        </div>
-        
-       <div id="dynamic-nav-container">
             </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
+        </div>
         
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+        <div id="dynamic-nav-container"></div>
     </div>
 
-    <!-- Top Bar -->
     <div class="top-navbar">
-        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-        <div>
-            <div class="header-title">Local 710 Steward Portal</div>
-            <div class="header-sub">Official Document Library</div>
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">Steward Portal</div>
+                <div class="header-sub">Document Library</div>
+            </div>
+        </div>
+
+        <div style="position: relative;">
+            <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0;">⋮</button>
+            
+            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+            
+            <div id="settings-dropdown" class="settings-dropdown">
+                <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+            </div>
         </div>
     </div>
 
-    <!-- VIEW 1: The Accordion Folders -->
     <div id="library-view">
         <div id="accordion-container">
-            <!-- JavaScript loads JSON here -->
-        </div>
+            </div>
     </div>
 
-    <!-- VIEW 2: The Mozilla PDF Viewer -->
     <div id="viewer-view">
         <div class="viewer-controls">
             <button class="back-btn" onclick="closeDocument()">← Back</button>
@@ -135,50 +196,41 @@
     </div>
 
     <script>
-        // 1. Navigation Routing (Maintains the secure 'steward' GUID)
+        // Navigation Routing (Maintains the secure 'steward' GUID)
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward'); 
 
         function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
             let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+            if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
             fetch('steward-nav.json')
                 .then(res => res.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('dynamic-nav-container');
                     let navHtml = '';
 
-                    // 3. Loop through the JSON and build the menu
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
                             navHtml += `<div class="nav-section-title">${item.title}</div>`;
                         } 
                         else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
                             if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
                                 navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
                             } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
                                 navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                             }
                         }
                     });
 
-                    // Drop the finished HTML into the drawer
                     navContainer.innerHTML = navHtml;
                 })
                 .catch(err => console.error("Menu failed to load:", err));
         }
 
-        // Fire the function to build the menu
         buildDynamicNav();
 
-        // 2. Fetch the NEW JSON and build the folders
+        // Fetch the JSON and build the folders
         fetch('steward-templates.json')
             .then(response => response.json())
             .then(data => {
@@ -208,14 +260,10 @@
             
             document.getElementById('doc-title').innerText = title;
             
-            // This line magically converts your short link into the full GitHub web address
             const absoluteUrl = new URL(url, window.location.href).href;
-            
-            // Now we send the FULL address to Mozilla so it knows where to look
             const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
             document.getElementById('pdf-viewer').src = mozillaUrl;
 
-            // Android Back Button Trap
             history.pushState({ viewerOpen: true }, "", "#doc-viewer");
         }
 
@@ -229,7 +277,7 @@
             }
         }
 
-        // 4. Hamburger Menu Controls
+        // Hamburger & Settings Menu Controls
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
@@ -238,6 +286,33 @@
         function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settings-dropdown');
+            const overlay = document.getElementById('settings-overlay');
+            
+            dropdown.classList.toggle('open');
+            
+            if (dropdown.classList.contains('open')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            toggleSettingsMenu(); 
+        }
+
+        function clearToken() {
+            if(confirm("Are you sure you want to log out and clear your security token?")) {
+                localStorage.removeItem('saved_steward_token');
+                window.location.reload();
+            }
         }
 
         // Intercept the Android/Hardware Back Button
