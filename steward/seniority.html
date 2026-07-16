@@ -156,15 +156,18 @@
     </script>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
-    <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px; padding-top: 20px; padding-left: 20px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Navigation Panel
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
-            </h3>
+        <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
+        
         <div id="dynamic-nav-container"></div>
     </div>
+
 
     <div class="top-navbar">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
