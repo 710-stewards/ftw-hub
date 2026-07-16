@@ -458,8 +458,6 @@
                 window.location.reload();
             }
         }
-
-
         function unlockCard(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
             card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
