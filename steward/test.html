@@ -1,32 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js');
-    }
-    </script> 
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Intake Hub</title>
-        <style>
-        /* CORE CONFIGURATION */
+    <title>Local 710 Processing Hub</title>
+    <style>
         :root {
             --bg-main: #121212;
             --bg-card: #1e1e1e;
             --accent: #ffcc00;
             --accent-green: #2ecc71;
-            --danger: #ff3333;
             --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
 
-        /* GLOBAL STYLES */
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
@@ -48,128 +36,99 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
-        /* FLOATING TOAST ALERT */
-        .local-dates-box { position: relative; } 
-        .save-status { 
-            position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%);
-            font-size: 13px; font-weight: bold; padding: 12px 24px; border-radius: 30px; 
-            background: #333; color: var(--text-muted); transition: bottom 0.4s ease-in-out;
-            z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-            display: flex; align-items: center; justify-content: center;
+        /* MOBILE OVERLAP & DATE WRAP FIX */
+        .local-dates-box { flex: 1; text-align: right; min-width: 220px; }
+        @media (max-width: 650px) {
+            body { padding-top: 140px; } 
+            .local-dates-box { 
+                text-align: center; 
+                min-width: 100%; 
+                padding-top: 10px; border-top: 1px dashed #333; 
+            }
         }
-        .save-status.saving { bottom: 30px; background: #004422; color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .save-status.dirty { bottom: 30px; background: #440000; color: var(--danger); border: 1px solid var(--danger); }
 
-        /* MAIN NAV DRAWER */
+        /* MAIN NAV DRAWER (LEFT SIDE) */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: var(--bg-main); border-right: 2px solid var(--accent);
+            background: #161616; border-right: 2px solid var(--accent);
             z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
             box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
         }
         .main-nav-drawer.open { transform: translateX(0); }
         .nav-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* 3-DOT SETTINGS DROPDOWN */
-        .settings-dropdown {
-            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
-            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
+       
+        /* OVERHEAD KPI STATS BAR */
+        .stats-banner {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px; margin-bottom: 25px; background: #161616; padding: 12px;
+            border-radius: 8px; border: 1px solid var(--border);
         }
-        .settings-dropdown.open { display: flex; }
-        .settings-item {
-            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
-            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
-            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
-        }
-        .settings-item:last-child { border-bottom: none; }
-        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
-
-        /* LIGHT MODE OVERRIDES */
-        body.light-mode {
-            --bg-main: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-main: #121212;
-            --text-muted: #555;
-            --border: #d1d5db;
-            --accent: #cca300; 
-        }
-        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
-        body.light-mode .drawer-header { background: #f8f9fa; }
-        body.light-mode .nav-item { color: #333; }
-        body.light-mode .nav-item:hover { background: #f0f2f5; }
-        body.light-mode .nav-item.active { background: #fffbe6; }
-        body.light-mode input, body.light-mode select, body.light-mode textarea { background: #ffffff; color: #111; }
-        body.light-mode .sys-id-display-box { border-color: #ccc; }
-        body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
-        body.light-mode .hamburger-btn { color: #121212; } 
-        
-        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
-        body.light-mode .header-sub,
-        body.light-mode .ctr-meta,
-        body.light-mode .name-error-banner,
-        body.light-mode .id-error-banner,
-        body.light-mode .group-header-title {
-            color: #b37700 !important; 
-            -webkit-text-stroke: 0 !important; 
-            text-shadow: none !important;
-            font-weight: 900;
-        }
+        .stat-box { text-align: center; padding: 6px; }
+        .stat-val { font-size: 16px; font-weight: bold; color: var(--accent); }
+        .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-top: 2px; }
 
         /* CARD ARCHITECTURE */
         .record-card {
             background-color: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
         }
-        .record-card.ai-match { border: 2px solid var(--accent-green); border-left: 6px solid var(--accent-green); }
-        .record-card.ai-fail { border: 2px solid var(--danger); border-left: 6px solid var(--danger); }
-        
         .card-split-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; align-items: flex-start;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 16px; margin-top: 10px; align-items: flex-start;
         }
+
+        /* NEW HIGH-SPEED HEADER CSS */
         .card-top-row {
             display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;
+            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
         }
-        .ctr-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
-        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
+        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
         .ctr-meta {
             display: flex; color: var(--accent); font-size: 14px;
             font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
             flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
+        }
+        @media (min-width: 650px) {
+            .ctr-meta { 
+                flex: 1; order: 0; margin-top: 0; 
+                justify-content: center; gap: 20px; 
+            }
         }
 
         /* INPUT WRAPPERS */
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        input, select, textarea {
+        input, select {
             width: 100%; height: 42px; background: #262626; border: 1px solid #444;
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-        input.emp-input { font-size: 15px; font-weight: bold; }
-        input.id-input { font-size: 15px; font-weight: bold; font-family: monospace; text-align: center; }
+        input:focus, select:focus { border-color: var(--accent); }
+        
+        /* Specialized COMBO BOX styling */
+        input.status-select::-webkit-calendar-picker-indicator { display: none !important; }
 
-        .sys-id-display-box { 
-            background: transparent; color: var(--text-muted); border: 1px dashed #444; 
-            padding: 0 12px; border-radius: 6px; font-size: 13px; font-family: monospace; 
-            font-weight: bold; width: 100%; height: 42px; display: flex; align-items: center; 
+        .hold-reason-input {
+            background: #201a00; border-color: #665200; color: #fff;
+            margin-top: 8px; transition: all 0.2s ease;
         }
-
-        /* DATA WARNING ALERTS */
-        .alert-missing-date { border: 2px solid #ff3333 !important; background-color: rgba(255, 51, 51, 0.15) !important; }
-        .alert-wild-amount { border: 2px solid #fd7e14 !important; background-color: rgba(253, 126, 20, 0.15) !important; color: #fd7e14 !important; }
 
         /* BUTTONS */
         .btn-3d {
@@ -178,1098 +137,1090 @@
             letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
         }
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
-        .btn-approve { background-color: var(--accent-green); color: #111; }
+        .btn-settle { background-color: var(--accent-green); color: #111; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; 
-            width: 100%; max-width: 450px;
+            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; /* Stretches across the entire screen */
             background: #161616; border-left: 2px solid var(--accent);
-            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
+            z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
+        
         .side-drawer.open { transform: translateX(0); }
         .drawer-header {
             padding: 20px; background: #222; border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center;
         }
         .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
-        .drawer-handle {
-            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
+        
+        .pdf-frame { 
+            width: 100%; 
+            height: calc(100vh - 220px); /* Dynamically fills the screen height */
+            min-height: 800px; /* Forces enough vertical space for an 8.5x11 document */
+            border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
         }
 
-        /* EMPTY QUEUE CENTERED LAYOUT */
-        .empty-queue-wrapper {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 60vh; text-align: center; gap: 20px; 
+        /* CUSTOM MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
+            z-index: 4000; display: none; align-items: center; justify-content: center;
         }
-        .empty-text-msg { color: var(--text-muted); font-size: 16px; font-weight: bold; }
-        .btn-redirect {
-            background-color: var(--accent); color: #000; padding: 14px 28px;
-            border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.1s, background-color 0.2s;
-            border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+        .custom-modal {
+            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
+            width: 90%; max-width: 400px; padding: 25px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .btn-redirect:active { transform: translateY(2px); }
-        .btn-redirect:hover { background-color: #ffdb4d; }
-
-        /* TAGS LOADING OVERLAY */
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--bg-main); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 9999; 
+        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
+        .modal-text { font-size: 13px; color: #bbb; margin-bottom: 20px; line-height: 1.5; }
+        .modal-btn-row { display: flex; gap: 12px; }
+        .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    
+   /* --- PRINT SPREADSHEET MODE --- */
+        @media print {
+            @page { size: landscape; margin: 0.5in; } /* Forces Landscape orientation */
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .top-navbar, .main-nav-drawer, .nav-overlay, .stats-banner, #data-display, #side-drawer, .modal-overlay, #search-print-row {
+                display: none !important;
+            }
+            
+            #print-section { display: block !important; width: 100%; }
+            
+            /* Spreadsheet Styling with Autofit Layout */
+            .print-table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 11px; margin-top: 15px; table-layout: fixed; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 8px 6px; text-align: left; vertical-align: top; word-wrap: break-word; }
+            .print-table th { background-color: #ddd !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-transform: uppercase; font-size: 10px; }
+            .print-header { text-align: center; font-size: 20px; font-weight: bold; color: black; }
+            .print-meta { text-align: center; font-size: 12px; color: #333; margin-bottom: 10px; }
         }
-        .loading-logo { width: 80%; max-width: 500px; max-height: 80vh; object-fit: contain; margin-bottom: 20px; }
-        .parsing-text {
-            color: var(--text-muted); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-
-        @media (min-width: 650px) {
-            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
-        }
+    
     </style>
-
 </head>
 <body>
 
-    <script>
-        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
-        if (localStorage.getItem('tags_theme') === 'light') {
-            document.body.classList.add('light-mode');
-        }
-    </script>
-    
-    <div id="loading-overlay">
-        <img src="steward.png" alt="TAGS System" class="loading-logo">
-        <div class="parsing-text">↻ Parsing records...</div>
-    </div>
-
-    <div id="global-datalists" style="display: none;"></div>
+    <datalist id="global-disposition-list"></datalist>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
-            <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
-                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-            </div>
-            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
+    <div id="main-nav-menu" class="main-nav-drawer">
+        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
+            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
         
-        <div id="dynamic-nav-container"></div>      
+        <div style="padding: 10px 20px 0px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                HIDE SETTLED CASES
+                <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+        
+        <div style="padding: 10px 20px 15px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
+                GROUP BY STEWARD
+                <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+            </label>
+        </div>
+        
+        <div id="dynamic-nav-container">
+            </div>     
+        
+        <div class="nav-section-title">Coverage Mode</div>
+        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
+        </div>
+        
+        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
+        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
     </div>
 
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
             <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
-                <div class="header-title">Local 710 Intake Hub</div>
-                <div id="steward-info" class="header-sub">Initializing live stream...</div>
+                <div class="header-title">Local 710 Processing Hub</div>
+                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
             </div>
         </div>
         
-                <div class="local-dates-box">
-            <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
-            
-            <!-- INVISIBLE OVERLAY -->
-            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
-            
-            <div id="settings-dropdown" class="settings-dropdown">
-                
-                <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                    Display Options
-                </div>
-                
-                <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
-                    Group by Steward
-                    <input type="checkbox" id="toggle-group-steward" checked onchange="filterRecords()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                </label>
-
-                <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                    Coverage Roster
-                </div>
-                
-                <div id="coverage-checkboxes" style="max-height: 250px; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border);">
-                    <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
-                </div>
-
-                <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
-                <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+        <div class="local-dates-box">
+            <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
+                Last Local: <span id="display-last-local" style="color: white;">Fetching...</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; text-transform: uppercase;">
+                Next Local: <span id="display-next-local">None Scheduled</span>
             </div>
         </div>
     </div>
 
-    <div id="save-indicator" class="save-status">✓ Connected</div>
-    <div id="data-display"></div>
+<div id="search-print-row" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="flex: 1; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
+        
+        <button onclick="generatePrintLayout()" style="height: 50px; padding: 0 20px; border-radius: 8px; background: var(--accent); color: #111; font-weight: bold; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;">
+            🖨️ 
+        </button>
+    </div>
+    
+    <div class="stats-banner">
+        <div class="stat-box">
+            <div id="metric-open-cases" class="stat-val">0</div>
+            <div class="stat-lbl">Pending Cases</div>
+        </div>
+        <div class="stat-box">
+            <div id="metric-liability" class="stat-val">$0.00</div>
+            <div class="stat-lbl">Pending Amount</div>
+        </div>
+        <div class="stat-box" style="border-left: 1px dashed #333;">
+            <div id="metric-today-count" class="stat-val" style="color: var(--accent-green);">0</div>
+            <div class="stat-lbl">Settled Cases</div>
+        </div>
+        <div class="stat-box">
+            <div id="metric-today-paid" class="stat-val" style="color: var(--accent-green);">$0.00</div>
+            <div class="stat-lbl">Total Paid Out</div>
+        </div>
+    </div>
 
-    <div id="new-member-modal-overlay" class="nav-overlay" style="display: none; align-items: center; justify-content: center; z-index: 4000;">
-        <div class="record-card" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); margin: 0 auto; margin-top: 10vh; max-height: 85vh; overflow-y: auto;">
-            <h3 style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 10px;">⚠️ Unrecognized ID: Add to Master Roster</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="input-wrapper">
-                    <span class="input-label">First Name <span style="color: var(--danger);">*</span></span>
-                    <input type="text" id="add-fname">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Last Name <span style="color: var(--danger);">*</span></span>
-                    <input type="text" id="add-lname">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Emp ID <span style="color: var(--danger);">*</span></span>
-                    <input type="text" id="add-empid" style="font-weight: bold; color: var(--accent);">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Phone</span>
-                    <input type="text" id="add-phone">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Center</span>
-                    <input type="text" id="add-center">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Job Class</span>
-                    <input type="text" id="add-job">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Work Group</span>
-                    <select id="add-workgroup"></select>
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">FT/PT</span>
-                    <select id="add-ftpt">
-                        <option value="F">Full-Time (F)</option>
-                        <option value="P">Part-Time (P)</option>
-                    </select>
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Hire Date</span>
-                    <input type="date" id="add-hire">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">PT Sen Date</span>
-                    <input type="date" id="add-ptdate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">FT Sen Date</span>
-                    <input type="date" id="add-ftdate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Active</span>
-                    <select id="add-active">
-                        <option value="YES">YES</option>
-                        <option value="NO">NO</option>
-                    </select>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button onclick="closeNewMemberModal()" style="flex: 1; height: 42px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
-                <button id="btn-save-new-member" onclick="saveNewMemberFromHub()" style="flex: 2; height: 42px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save to Master Roster</button>
-            </div>
+    <div id="data-display">
+        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
+            ↻ Fetching Verified Grievance Logs...
         </div>
     </div>
 
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
-            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Deep Dive Evidence</h3>
+            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Case Details</h3>
             <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
         </div>
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    let stewardGUID = urlParams.get('steward');
+    <div id="note-modal-overlay" class="modal-overlay">
+        <div class="custom-modal">
+            <div class="modal-title">Missing Settlement Notes</div>
+            <div class="modal-text">
+                Are you sure you want to save without adding a note?
+            </div>
+            <div class="modal-btn-row">
+                <button id="btn-note-no" class="btn-modal-no">No, Go Back</button>
+                <button id="btn-note-yes" class="btn-modal-yes">Yes, Save Anyway</button>
+            </div>
+        </div>
+    </div>
 
-    if (stewardGUID) {
-        localStorage.setItem('saved_steward_token', stewardGUID);
-    } else {
-        stewardGUID = localStorage.getItem('saved_steward_token');
-    }
+    <div id="disp-modal-overlay" class="modal-overlay">
+        <div class="custom-modal">
+            <div class="modal-title">New Disposition Detected</div>
+            <div class="modal-text">
+                You entered <b id="new-disp-text" style="color: var(--accent);"></b>.<br>
+                Would you like to save this to the global dropdown list for all stewards to use?
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 22px;">
+                <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">How should this action behave?</label>
+                <select id="modal-action-type" style="margin-top: 6px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px; width: 100%; color: white; font-size: 13px; cursor: pointer;">
+                    <option value="Settlement">Negotiated Settlement (Locks file, requires notes)</option>
+                    <option value="Final">Standard Closure (Locks file, no notes required)</option>
+                    <option value="Note">Active Hold / Update (Keeps file open, logs a note)</option>
+                </select>
+            </div>
 
-    // READER FLOW
-    const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+            <div class="modal-btn-row">
+                <button id="btn-save-disp-no" class="btn-modal-no">No, Just Use Once</button>
+                <button id="btn-save-disp-yes" class="btn-modal-yes">Yes, Save Globally</button>
+            </div>
+        </div>
+    </div>
 
-    // WRITER FLOW
-    const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
-
-    function buildDynamicNav() {
-        let currentPage = window.location.pathname.split('/').pop();
-        if (currentPage === '') currentPage = 'index.html'; 
-
-        fetch('steward-nav.json')
-            .then(res => res.json())
-            .then(menuItems => {
-                const navContainer = document.getElementById('dynamic-nav-container');
-                let navHtml = '';
-                menuItems.forEach(item => {
-                    if (item.type === 'header') {
-                        navHtml += `<div class="nav-section-title">${item.title}</div>`;
-                    } 
-                    else if (item.type === 'link') {
-                        if (item.filename === currentPage) {
-                            navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
-                        } else {
-                            navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
-                        }
-                    }
-                });
-                navContainer.innerHTML = navHtml;
-            })
-            .catch(err => console.error("Menu failed to load:", err));
-    }
-    buildDynamicNav();
-
-    let fullDataCache = [];
-    let masterSeniorityArray = []; 
-    let masterStewardRoster = [];
-    let violTypeOptionsHtml = '';
-    let subViolOptionsHtml = '';
-    let currentStewardName = 'Steward';
-    let currentStewardId = '';
-    let lastHiddenCardId = null;
-    let undoTimeoutTimer = null;
-
-    const formatToUsDate = (isoString) => {
-        if (!isoString || isoString === 'N/A') return 'N/A';
-        const parts = isoString.split('T')[0].split('-');
-        if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-        return isoString;
-    };
-
-    function openNavMenu() {
-        document.getElementById('main-nav-menu').classList.add('open');
-        document.getElementById('nav-overlay').classList.add('open');
-    }
-    function closeNavMenu() {
-        document.getElementById('main-nav-menu').classList.remove('open');
-        document.getElementById('nav-overlay').classList.remove('open');
-    }
-
-            // --- 3-DOT MENU & THEME LOGIC ---
-    function toggleSettingsMenu() {
-        const dropdown = document.getElementById('settings-dropdown');
-        const overlay = document.getElementById('settings-overlay');
-        
-        dropdown.classList.toggle('open');
-        
-        if (dropdown.classList.contains('open')) {
-            overlay.style.display = 'block';
-        } else {
-            overlay.style.display = 'none';
-        }
-    }
-
-
-    function toggleTheme() {
-        document.body.classList.toggle('light-mode');
-        const isLight = document.body.classList.contains('light-mode');
-        localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
-        toggleSettingsMenu(); // Auto-close menu after clicking
-    }
-
+    <div id="print-section" style="display: none;"></div>
     
-    function clearToken() {
-        if(confirm("Are you sure you want to log out and clear your security token?")) {
-            localStorage.removeItem('saved_steward_token');
-            window.location.reload();
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const stewardGUID = urlParams.get('steward');
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
+        
+        let masterGrievanceCache = []; // SECURE VAULT
+        let verifiedCacheArray = [];   // ACTIVE DISPLAY FILTER
+        let masterDropdownOptionsArray = [];
+        let masterStewardRoster = [];
+        let myProfileData = {};
+        let currentStewardName = '';
+
+        function buildDynamicNav() {
+            // 1. Figure out exactly what page the user is currently looking at
+            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
+            let currentPage = window.location.pathname.split('/').pop();
+            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+
+            // 2. Fetch the central menu file
+            fetch('steward-nav.json')
+                .then(res => res.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('dynamic-nav-container');
+                    let navHtml = '';
+
+                    // 3. Loop through the JSON and build the menu
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
+                        } 
+                        else if (item.type === 'link') {
+                            // THE MAGIC: Check if the JSON link matches the page we are on
+                            if (item.filename === currentPage) {
+                                // It matches! Lock it down and make it gold.
+                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                            } else {
+                                // It doesn't match. Make it a normal link and append the secure token!
+                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
+                            }
+                        }
+                    });
+
+                    // Drop the finished HTML into the drawer
+                    navContainer.innerHTML = navHtml;
+                })
+                .catch(err => console.error("Menu failed to load:", err));
         }
-    }
 
+        // Fire the function to build the menu
+        buildDynamicNav();
+        const getTodayString = () => new Date().toISOString().split('T')[0];
 
-    function updateHeader(checkedBoxes) {
-        let viewName = 'Multiple';
-        if (checkedBoxes && checkedBoxes.length === 1) {
-            const checkbox = document.querySelector(`.steward-filter-chk[value="${checkedBoxes[0]}"]`);
-            if (checkbox) viewName = checkbox.getAttribute('data-name');
-        } else if (checkedBoxes && checkedBoxes.length === 0) {
-            viewName = 'None';
+        // Format Date to MM/DD/YYYY securely
+        const formatToUsDate = (isoString) => {
+            if (!isoString || isoString === 'N/A') return 'N/A';
+            const parts = isoString.split('T')[0].split('-');
+            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+            return isoString;
+        };
+
+        // Nav Drawer Controllers
+        function openNavMenu() {
+            document.getElementById('main-nav-menu').classList.add('open');
+            document.getElementById('nav-overlay').classList.add('open');
+        }
+        function closeNavMenu() {
+            document.getElementById('main-nav-menu').classList.remove('open');
+            document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+        function unlockCard(recordId, btnElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
+            card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                elem.style.pointerEvents = 'auto';
+            });
+            
+            card.style.background = 'var(--bg-card)';
+            card.style.borderColor = 'var(--border)';
+            btnElem.innerText = 'Submit Box';
+            btnElem.style.backgroundColor = 'var(--accent-green)';
+            btnElem.onclick = function() { executeSettlementCommit(recordId); };
+        }
+
+        function toggleSettledVisibility() {
+            const hideSettled = document.getElementById('toggle-hide-settled').checked;
+            document.querySelectorAll('.record-card').forEach(card => {
+                const isLocked = card.querySelector('.status-select').disabled;
+                if (isLocked) {
+                    card.style.display = hideSettled ? 'none' : 'block';
+                    card.style.opacity = '1'; 
+                    card.style.transform = 'translateX(0)'; 
+                }
+            });
         }
         
-        const viewCount = fullDataCache.filter(item => {
-            if (item.isVerifiedLocally) return false;
-            const st = (item.StewardOfRecord || '').trim();
-            return checkedBoxes ? checkedBoxes.includes(st) : false;
-        }).length;
-        
-        document.getElementById('steward-info').innerText = `Coverage: ${viewName} | ${viewCount} Pending Intake`;
-    }
-
-    function loadPending() {
-        if (!stewardGUID) {
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('data-display').innerHTML = `
-                <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
-                    <h3 style="color: #ff3333; margin-bottom: 5px; text-align: center;">Security Halt</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; text-align: center;">No secure routing token found in memory.</p>
-                    
-                    <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-                        <h4 style="color: var(--accent); margin-bottom: 10px; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">iPhone / iOS Setup Required</h4>
-                        <p style="color: #ccc; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">Apple devices block apps from reading your Safari history. To securely link this app to your Steward profile, please copy your personal link and paste it below.</p>
-                        
-                        <input type="text" id="manual-token-input" placeholder="Paste your secure link here..." style="width: 100%; height: 45px; padding: 0 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #555; background: #262626; color: white; outline: none; font-size: 14px;">
-                        
-                        <button onclick="saveManualToken()" style="width: 100%; height: 42px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; text-transform: uppercase; background-color: var(--accent-green); color: #111; cursor: pointer; box-shadow: 0 4px 0 #000; transition: transform 0.1s;">Sync My Device</button>
-                    </div>
-                </div>`;
-            return;
-        }
-
-        fetch(flowUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
-        })
-        .then(response => response.json())
-        .then(dataBundle => {
-            document.getElementById('loading-overlay').style.display = 'none';
-            
-            fullDataCache = dataBundle.pendingGrievances || [];
-            const dropdownOptions = dataBundle.dropdownOptions || [];
-            masterSeniorityArray = dataBundle.seniorityList || [];
-            masterStewardRoster = dataBundle.stewardRoster || [];
-            
-            const myProfile = masterStewardRoster.find(s => {
-                const targetGuid = (s.GUID || s.Title || '').toString().toLowerCase().trim();
-                return targetGuid === stewardGUID.toLowerCase().trim();
-            }) || {};
-            
-            currentStewardName = myProfile.StewardName || myProfile.DisplayName || 'Steward';
-            currentStewardId = myProfile.StewardID || ''; 
-
-            if (fullDataCache.length === 0) {
-                document.getElementById('steward-info').innerText = `Coverage: ${currentStewardName} | 0 Pending Intake`;
-                document.getElementById('data-display').innerHTML = `
-                    <div class="empty-queue-wrapper">
-                        <div class="empty-text-msg">
-                            <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
-                            Intake queue is clear. No pending records found for this view.
-                        </div>
-                        <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
-                            → Head to Processing Hub
-                        </button>
-                    </div>
-                `;
+        function loadHubData() {
+            if (!stewardGUID) {
+                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
             }
 
-            let seniorityOptionsHtml = '';
-            masterSeniorityArray.forEach(person => {
-                const fName = person.FirstName || person['First Name'] || '';
-                const lName = person.LastName || person['Last Name'] || '';
-                const fullRosterName = `${fName} ${lName}`.trim();
-                if (fullRosterName) {
-                    seniorityOptionsHtml += `<option value="${fullRosterName}"></option>`;
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_hub" })
+            })
+            .then(res => res.json())
+            .then(bundle => {
+                masterGrievanceCache = bundle.pendingGrievances || [];
+                masterStewardRoster = bundle.stewardRoster || [];
+                masterDropdownOptionsArray = bundle.dropdownOptions || [];
+
+                // STRICT SECURITY VERIFICATION CHECK
+                myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
+                
+                if (!myProfileData) {
+                    document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
+                    return; // KILL SCRIPT
                 }
-            });
 
-            const violationTypeRows = dropdownOptions.filter(opt => opt.Title === 'ViolationType');
-            const subViolationRows = dropdownOptions.filter(opt => opt.Title === 'ViolationSubType');
+                currentStewardName = myProfileData.StewardName;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
-            violTypeOptionsHtml = '';
-            violationTypeRows.forEach(opt => {
-                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
-                if(val) violTypeOptionsHtml += `<option value="${val}">${val}</option>`;
-            });
-
-            subViolOptionsHtml = '';
-            subViolationRows.forEach(opt => {
-                const val = opt.OptionValue || opt['OptionValue'] || opt.Value || '';
-                if(val) subViolOptionsHtml += `<option value="${val}">${val}</option>`;
-            });
-
-            document.getElementById('global-datalists').innerHTML = `<datalist id="master-seniority-list">${seniorityOptionsHtml}</datalist>`;
-
-            const coverageContainer = document.getElementById('coverage-checkboxes');
-            coverageContainer.innerHTML = '';
-            const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
-
-                        sortedRoster.forEach(st => {
-                if (st.StewardName && st.StewardID) {
-                    const isMe = st.StewardID === currentStewardId;
-                    coverageContainer.innerHTML += `
-                        <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; padding: 6px 0;">
-                            <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="filterRecords()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                            ${st.StewardName} ${isMe ? '(Me)' : ''}
-                        </label>
-                    `;
-                }
-            });
-
-
-            filterRecords();
-        }).catch(err => {
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('data-display').innerHTML = `
-                <div style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
-                    Interface parsing failure. Check format mappings.
-                </div>`;
-            console.error(err);
-        });
-    }
-
-    function filterRecords() {
-        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-        
-        const filtered = fullDataCache.filter(item => {
-            if (item.isVerifiedLocally) return false; 
-            const recordSteward = (item.StewardOfRecord || item['StewardOfRecord'] || '').trim();
-            return checkedBoxes.includes(recordSteward);
-        });
-        
-        updateHeader(checkedBoxes); 
-        renderCards(filtered);
-    }
-
-    function renderCards(recordsList) {
-        const displayContainer = document.getElementById('data-display');
-        displayContainer.style.paddingBottom = '120px';
-
-                if (recordsList.length === 0) {
-            displayContainer.innerHTML = `
-                <div class="empty-queue-wrapper">
-                    <div class="empty-text-msg">
-                        <span style="color: var(--accent-green); font-size: 18px; margin-right: 5px;">✓</span> 
-                        Intake queue is clear. No pending records found for this view.
-                    </div>
-                    <button onclick="window.location.href='hub.html?steward=' + stewardGUID" class="btn-redirect">
-                        → Head to Processing Hub
-                    </button>
-                </div>
-            `;
-            return;
-        }
-
-
-        const isGrouped = document.getElementById('toggle-group-steward').checked;
-        const groupedRecords = {};
-        
-        if (isGrouped) {
-            recordsList.forEach(item => {
-                const stID = (item.StewardOfRecord || item['StewardOfRecord'] || 'Unassigned').trim();
-                let stName = stID;
-                const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
-                if (checkbox) stName = checkbox.getAttribute('data-name');
-                if (!groupedRecords[stName]) groupedRecords[stName] = [];
-                groupedRecords[stName].push(item);
-            });
-        } else {
-            groupedRecords['All Selected Files'] = [...recordsList];
-        }
-
-        let htmlContent = '';
-        const sortedGroupNames = Object.keys(groupedRecords).sort();
-
-        for (const groupName of sortedGroupNames) {
-            const items = groupedRecords[groupName];
-            items.sort((a, b) => {
-                let lastA = (a.LastName || '').toLowerCase();
-                let lastB = (b.LastName || '').toLowerCase();
-                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop().toLowerCase();
-                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop().toLowerCase();
-
-                if (lastA < lastB) return -1;
-                if (lastA > lastB) return 1;
-
-                let firstA = (a.FirstName || '').toLowerCase();
-                let firstB = (b.FirstName || '').toLowerCase();
+                // --- POPULATE COVERAGE CHECKBOXES ---
+                const coverageContainer = document.getElementById('coverage-checkboxes');
+                coverageContainer.innerHTML = '';
                 
-                if (firstA < firstB) return -1;
-                if (firstA > firstB) return 1;
+                // Sort roster alphabetically by name
+                const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
 
-                let dateA = a.ViolationDate ? new Date(a.ViolationDate) : new Date(0);
-                let dateB = b.ViolationDate ? new Date(b.ViolationDate) : new Date(0);
-                
-                return dateA - dateB;
-            });
-
-                htmlContent += `
-                <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                    <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
-                    <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} PENDING</span>
-                </div>
-            `;
-
-
-            items.forEach((item) => {
-                const sysId = item['Title'] || '';
-                let empId = (item['EmployeeID'] || '').toString().trim();
-                const isAiMatched = item['AIMatched'] === true || item['AIMatched'] === 'true' || item['AIMatched'] === 1;
-                let cardClass = isAiMatched ? 'ai-match' : 'ai-fail';
-                
-                let displayName = isAiMatched 
-                    ? `${item['FirstName'] || ''} ${item['LastName'] || ''}`.trim()
-                    : (item['RawOCRName'] || 'Unknown Driver').trim();
-
-                const violType = item['ViolationType'] || '';
-                const subType = item['ViolationSubType'] || '';
-                const amt = item['ViolationAmount'] || '0.00';
-                const originalAmt = parseFloat(amt).toFixed(2);
-                
-                const fileDate = item['FileDate'] ? item['FileDate'].split('T')[0] : '';
-                const violDate = item['ViolationDate'] ? item['ViolationDate'].split('T')[0] : '';
-                
-                const vDateDisplay = formatToUsDate(violDate);
-
-                let idAlertHtml = '';
-                let nameAlertHtml = '';
-                let idInputStyleOverride = '';
-                let nameInputStyleOverride = '';
-
-                const rosterMatch = masterSeniorityArray.find(person => {
-                    const fName = person.FirstName || person['First Name'] || '';
-                    const lName = person.LastName || person['Last Name'] || '';
-                    return `${fName} ${lName}`.trim().toLowerCase() === displayName.toLowerCase();
+                sortedRoster.forEach(st => {
+                    if (st.StewardName && st.StewardID) {
+                        const isMe = st.StewardID === myProfileData.StewardID;
+                        coverageContainer.innerHTML += `
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
+                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyCoverageFilter()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                                ${st.StewardName} ${isMe ? '(Me)' : ''}
+                            </label>
+                        `;
+                    }
                 });
 
-                if (!isAiMatched) {
-                    if (displayName !== 'Unknown Driver') displayName = displayName + ' *'; 
-                    nameAlertHtml = '<span class="name-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; margin-top: 4px; letter-spacing: 0.3px;">⚠️ VERIFY MEMBER</span>';
-                    nameInputStyleOverride = 'border-color: #ffcc00;';
+                // --- BUILD GLOBAL DATALIST COMBOBOX ---
+                const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
+                let datalistHtml = '';
+                dispRows.forEach(opt => {
+                    const val = opt.OptionValue || opt.Value || '';
+                    if (val) {
+                        datalistHtml += `<option value="${val}">`;
+                    }
+                });
+                document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
-                    if (rosterMatch) {
-                        const officialRosterId = (rosterMatch.Title || '').toString().trim();
-                        if (empId !== officialRosterId) {
-                            empId = ''; 
-                            idAlertHtml = '<span class="id-error-banner" style="color: #ff3333; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ ID MISMATCH</span>';
-                            idInputStyleOverride = 'border-color: #ff3333; background: #3a1a1a;';
-                            cardClass = 'ai-fail'; 
+                // --- LAST & NEXT LOCAL DATE ENGINE ---
+                const localScheduleArray = bundle.localLevelSchedule || [];
+                let nextLocalRaw = null;
+                let lastLocalRaw = null;
+
+                if (localScheduleArray.length > 0) {
+                    localScheduleArray.sort((a, b) => new Date(b.LocalLevel) - new Date(a.LocalLevel));
+
+                    const date1 = localScheduleArray[0].LocalLevel;
+                    const date1String = date1.split('T')[0];
+                    const todayString = getTodayString();
+
+                    if (date1String >= todayString) {
+                        nextLocalRaw = date1;
+                        if (localScheduleArray.length > 1) {
+                            lastLocalRaw = localScheduleArray[1].LocalLevel;
                         }
-                    } else if (displayName !== 'Unknown Driver *') {
-                        idAlertHtml = '<span class="id-error-banner" style="color: #ffcc00; font-size: 10px; font-weight: bold; display: block; text-align: left; margin-top: 4px; letter-spacing: 0.3px;">⚠️ MISSING ID</span>';
-                        idInputStyleOverride = 'border-color: #ffcc00;';
+                    } else {
+                        lastLocalRaw = date1;
                     }
                 }
 
-                let itemStewardName = (item.StewardOfRecord || '').trim();
-                const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
-                if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
-                const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+                const formatMeetingDate = (rawDate) => {
+                    if (!rawDate) return null;
+                    return new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+                };
 
-                htmlContent += `
-                    <div class="record-card ${cardClass}" id="card-${sysId}" style="transition: all 0.2s ease;">
-                        
-                        <div class="card-top-row">
-                            <h4 class="ctr-name">${displayName.replace(' *', '')}</h4>
-                            <div class="ctr-meta">
-                                <span>${vDateDisplay}</span>
-                                <span>${violType} ${subType ? '— ' + subType : ''}</span>
-                            </div>
-                            <div class="ctr-amt">$${originalAmt}</div>
-                        </div>
+                document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
+                document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
 
-                        <div style="display: flex; gap: 15px; margin-bottom: 14px;" onclick="event.stopPropagation()">
-                            <div class="input-wrapper" style="flex: 1;">
-                                <span class="input-label emp-label">Member Name</span>
-                                <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
-                                ${nameAlertHtml}
-                            </div>
-                            <div class="input-wrapper" style="width: 110px; flex-shrink: 0;">
-                                <span class="input-label emp-label">Emp ID</span>
-                                <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
-                                ${idAlertHtml}
-                            </div>
-                        </div>
-
-                        ${stewardBadgeHtml ? `<div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">${stewardBadgeHtml}</div>` : ''}
-
-                        <div class="card-split-grid" onclick="event.stopPropagation()">
-                            <div class="input-wrapper">
-                                <span class="input-label">File Date</span>
-                                <input type="date" class="file-date" value="${fileDate}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Date</span>
-                                <input type="date" class="violation-date" value="${violDate}">
-                            </div>
-                            
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Type</span>
-                                <select class="violtype-select">
-                                    <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                    ${violTypeOptionsHtml || `
-                                        <option value="Discharge">Discharge</option>
-                                        <option value="Suspension">Suspension</option>
-                                        <option value="Pay Claim">Pay Claim</option>
-                                        <option value="Protest">Protest</option>
-                                        <option value="Other">Other</option>
-                                    `}
-                                </select>
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sub Violation</span>
-                                <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
-                                    <option value="${subType}" hidden>${subType || 'Select...'}</option>
-                                    ${subViolOptionsHtml}
-                                    <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
-                                </select>
-                                <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
-                            </div>
-
-                            <div class="input-wrapper">
-                                <span class="input-label">Claim Amt ($)</span>
-                                <input type="number" step="0.01" class="amt-input" value="${amt}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sys ID</span>
-                                <div class="sys-id-display-box">${sysId}</div>
-                            </div>
-
-                            <div class="input-wrapper">
-                                <span class="input-label">&nbsp;</span>
-                                <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">Review PDF File</button>
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">&nbsp;</span>
-                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
-                            </div>
-                            
-                        </div>
-                    </div>
-                `;
+                // TRIGGER INITIAL SECURE FILTER RENDER
+                applyCoverageFilter();
+            }).catch(err => {
+                document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
+                console.error(err);
             });
         }
-        displayContainer.innerHTML = htmlContent;
 
-        // Force validation scan immediately after HTML injection
-        document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
-        document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
-    }
-
-    function handleRosterSelection(recordId, inputElem) {
-        const typedName = inputElem.value.trim();
-        const card = document.getElementById(`card-${recordId}`);
-        if (!card) return;
-
-        const idInput = card.querySelector('.id-input');
-        const nameInput = card.querySelector('.emp-input');
-
-        const match = masterSeniorityArray.find(person => {
-            const fName = person.FirstName || person['First Name'] || '';
-            const lName = person.LastName || person['Last Name'] || '';
-            return `${fName} ${lName}`.trim().toLowerCase() === typedName.toLowerCase();
-        });
-        
-        if (match) {
-            idInput.value = match.Title || match['Title'] || '';
-            idInput.style.cssText = ''; 
-            nameInput.style.cssText = '';
+        function applyCoverageFilter() {
+            const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
+            const searchTerm = (document.getElementById('global-search-input').value || '').toLowerCase().trim();
             
-            const idAlert = card.querySelector('.id-error-banner');
-            if (idAlert) idAlert.remove();
-            
-            const nameAlert = card.querySelector('.name-error-banner');
-            if (nameAlert) nameAlert.remove();
-        } else {
-            idInput.value = '';
+            verifiedCacheArray = masterGrievanceCache.filter(item => {
+                // 1. Check Steward Coverage First
+                const st = (item.StewardOfRecord || '').trim();
+                const matchesSteward = checkedBoxes.includes(st);
+                
+                if (!matchesSteward) return false;
+                if (!searchTerm) return true; // If search box is empty, let it through
+
+                // 2. Build a giant hidden string of all the case data to search against
+                const searchableData = `
+                    ${item.FirstName || ''} ${item.LastName || ''}
+                    ${item.RawOCRName || ''}
+                    ${item.EmployeeID || ''}
+                    ${item.Title || ''}
+                    ${item.ViolationType || ''}
+                    ${item.ViolationSubType || ''}
+                    ${item.NotesA || ''}
+                    ${item.NotesB || ''}
+                    ${(item.Disposition && item.Disposition.Value) ? item.Disposition.Value : (item.Disposition || '')}
+                `.toLowerCase();
+
+                // 3. Keep the card if the search term exists anywhere in that giant string
+                return searchableData.includes(searchTerm);
+            });
+
+            calculateMetrics();
+            renderHubCards();
         }
-    }
 
-    function handleSubViolChange(recordId, selectElem) {
-        const card = document.getElementById(`card-${recordId}`);
-        if (!card) return;
-        const customInput = card.querySelector('.subviol-custom-input');
-        
-        if (selectElem.value === 'CUSTOM_OTHER') {
-            customInput.style.display = 'block';
-            customInput.value = '';
-            customInput.focus();
-        } else {
-            customInput.style.display = 'none';
+        function calculateMetrics() {
+            let openCount = 0;
+            let openLiability = 0;
+            let closedCount = 0;
+            let closedPayout = 0;
+
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                if (currentDisp) {
+                    closedCount++;
+                    closedPayout += parseFloat(item.SettledAmount || 0);
+                } else {
+                    openCount++;
+                    openLiability += parseFloat(item.ViolationAmount || 0);
+                }
+            });
+
+            document.getElementById('metric-open-cases').innerText = openCount;
+            document.getElementById('metric-liability').innerText = `$${openLiability.toFixed(2)}`;
+            document.getElementById('metric-today-count').innerText = closedCount;
+            document.getElementById('metric-today-paid').innerText = `$${closedPayout.toFixed(2)}`;
         }
-    }
 
-    // --- NEW: SELF-DIAGNOSING APPROVAL ENGINE ---
-    function executeRowCommit(recordId) {
-        try {
-            const card = document.getElementById(`card-${recordId}`);
-            let fullInputName = card.querySelector('.emp-input').value.trim();
-            const updatedEmpId = card.querySelector('.id-input').value.trim();
-            const updatedFileDate = card.querySelectorAll('input[type="date"]')[0].value;
-            const updatedViolDate = card.querySelectorAll('input[type="date"]')[1].value;
-            const updatedViolType = card.querySelector('.violtype-select').value;
-            const updatedAmount = card.querySelector('.amt-input').value;
+       function renderHubCards() {
+            const display = document.getElementById('data-display');
+            display.style.paddingBottom = '120px';
 
-            if (!updatedEmpId) {
-                alert("Approval Blocked: A valid Employee ID must be populated before verifying this record.");
+            if (verifiedCacheArray.length === 0) {
+                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found for this view.</div>';
                 return;
             }
 
-            // ID INTERCEPTOR
-            const isKnownId = masterSeniorityArray.some(p => (p.Title || '').toString().trim() === updatedEmpId);
-            if (!isKnownId) {
-                if (typeof openNewMemberModal !== "function") {
-                    alert("⚠️ CRITICAL ERROR: The browser cannot find the Modal function. The JavaScript was incorrectly copied.");
-                    return;
+            const isGrouped = document.getElementById('toggle-group-steward').checked;
+            const grouped = {};
+            
+            if (isGrouped) {
+                // The array is already sorted by Power Automate. Push keeps that exact order!
+                verifiedCacheArray.forEach(item => {
+                    const stID = (item.StewardOfRecord || '').trim();
+                    let stName = stID;
+                    
+                    const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
+                    if (checkbox) stName = checkbox.getAttribute('data-name');
+                    else if (!stID) stName = 'Unassigned Roster';
+
+                    if (!grouped[stName]) grouped[stName] = [];
+                    grouped[stName].push(item);
+                });
+            } else {
+                // If ungrouped, just pass the perfectly sorted array straight through
+                grouped['All Selected Files'] = [...verifiedCacheArray];
+            }
+
+            let html = '';
+
+            // This only sorts the Group Headers (the Steward Names) alphabetically
+            const sortedGroupNames = Object.keys(grouped).sort();
+
+            for (const groupName of sortedGroupNames) {
+                            const items = grouped[groupName]; // No JavaScript scrambling!
+
+                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
+            items.sort((a, b) => {
+                // 1. Safe Last Name extraction
+                let lastA = (a.LastName || '').trim();
+                let lastB = (b.LastName || '').trim();
+                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
+                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
+
+                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
+                if (lastCompare !== 0) return lastCompare;
+
+                // 2. Safe First Name extraction (Fixed OCR Fallback)
+                let firstA = (a.FirstName || '').trim();
+                let firstB = (b.FirstName || '').trim();
+                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
+                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
+                
+                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
+                if (firstCompare !== 0) return firstCompare;
+
+                // 3. Bulletproof Date Sort (Oldest first)
+                let dateA = a.ViolationDate || '9999-12-31';
+                let dateB = b.ViolationDate || '9999-12-31';
+                
+                return dateA.localeCompare(dateB);
+            });
+
+
+                html += `
+                    <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
+                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} TOTAL CASE${items.length > 1 ? 'S' : ''}  </span>
+                    </div>
+                `;
+
+                items.forEach(item => {
+                    const sysId = item.Title || '';
+                    const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
+                    const empId = item.EmployeeID || '-------';
+                    
+                    const fDateRaw = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
+                    const vDateRaw = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
+                    const fDate = formatToUsDate(fDateRaw);
+                    const vDate = formatToUsDate(vDateRaw);
+                    
+                    const violType = item.ViolationType || 'Not Set';
+                    const violSubType = item.ViolationSubType || '';
+                    const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
+                    
+                    const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
+                    
+                    const rawHistory = item.NotesA || '';
+                    const existingHistoryHtml = rawHistory ? `
+                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
+                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Case Timeline History:</b>
+                            <div style="white-space: pre-wrap;">${rawHistory}</div>
+                        </div>
+                    ` : '';
+
+                    const currentWorksheetNotes = item.NotesB || '';
+                    const internalHistoryHtml = currentWorksheetNotes ? `
+    <div class="internal-history-box" style="margin-top: 10px; padding: 10px; background: #1a1a1a; border: 1px dashed #555; border-radius: 6px; font-size: 12px; color: #ccc; line-height: 1.5;">
+        <b style="color: #ff9900; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">🔒 Private Ledger History:</b>
+        <div style="white-space: pre-wrap;">${currentWorksheetNotes}</div>
+    </div>
+` : '';
+                    const isBofpi = !!item.BOFPITIC;
+                    const isNps = !!item.NPS;
+
+                    let itemStewardName = (item.StewardOfRecord || '').trim();
+                    const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
+                    if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
+                    else if (!itemStewardName) itemStewardName = 'Unassigned Roster';
+
+                    const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+
+                    html += `
+                        <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
+                            
+                            <div class="card-top-row">
+                                <h4 class="ctr-name">${empName}</h4>
+                                <div class="ctr-meta">
+                                    <span>${vDate}</span>
+                                    <span>${cleanMetaType}</span>
+                                </div>
+                                <div class="ctr-amt">$${originalAmt}</div>
+                            </div>
+
+                            <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap;">
+                                ${stewardBadgeHtml}
+                                <span>Driver ID: <span style="color: #bbb;">${empId}</span></span>
+                                <span>Sys ID: <span style="color: #bbb;">${sysId}</span></span>
+                                <span>File Date: <span style="color: #bbb;">${fDate}</span></span>
+                            </div>
+
+                            <div class="card-split-grid" onclick="event.stopPropagation()">
+                                <div class="input-wrapper">
+                                    <span class="input-label">Action / Disposition</span>
+                                    <input type="text" list="global-disposition-list" class="status-select" placeholder="Select or type..." oninput="handleStatusLogic('${sysId}', this)">
+                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
+                                    
+                                    <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 10px; font-weight: bold; color: var(--text-muted);">
+                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                            <input type="checkbox" class="chk-bofpi" ${isBofpi ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> B.O.F.P.I.T.I.C.
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                            <input type="checkbox" class="chk-nps" ${isNps ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> N.P.S.
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="input-wrapper settlement-fields">
+                                    <span class="input-label">Date Settled</span>
+                                    <input type="date" class="settled-date-input" value="">
+                                </div>
+                                
+                                <div class="input-wrapper settlement-fields">
+                                    <span class="input-label">Final Paid Amt ($)</span>
+                                    <input type="number" step="0.01" class="final-amt-input" value="">
+                                </div>
+                                
+                                <div class="input-wrapper">
+                                    <span class="input-label">&nbsp;</span>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">View File</button>
+                                        <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="input-wrapper" style="margin-top: 14px;" onclick="event.stopPropagation()">
+                                <span class="input-label">Steward Notes (Not Visible to Member)</span>
+                                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                    <input type="text" class="worksheet-notes-input" value="" placeholder="Type a new private note here..." style="flex: 1; margin: 0;">
+                                    <button class="btn-3d btn-save-note" style="width: 48px; flex-shrink: 0; background: #333; color: var(--accent); border: 1px solid #555; font-size: 18px;" onclick="saveQuickNote('${sysId}', this)">
+                                        💾
+                                    </button>
+                                </div>
+                               ${internalHistoryHtml}
+                            </div>
+                            ${existingHistoryHtml}
+                        </div>
+                    `;
+                });
+            }
+
+            display.innerHTML = html;
+
+            verifiedCacheArray.forEach(item => {
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                
+                if (currentDisp) {
+                    const card = document.getElementById(`hub-card-${item.Title}`);
+                    if (card) {
+                        card.querySelector('.status-select').value = currentDisp;
+                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
+                        if (item.SettledDate) {
+                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
+                        }
+                        
+                        card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
+                        card.querySelector('.chk-nps').checked = !!item.NPS;
+                        
+                        card.style.background = 'var(--bg-card)';
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+                        
+                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
+                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                            elem.style.pointerEvents = 'none';
+                        });
+
+                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
+
+                        if (document.getElementById('toggle-hide-settled').checked) {
+                            card.style.display = 'none';
+                        }
+                        
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
+                    }
                 }
-                openNewMemberModal(fullInputName, updatedEmpId);
-                return; 
+            });
+        }
+        
+        function handleStatusLogic(recordId, inputElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const selectedText = inputElem.value.trim();
+            const origAmt = card.getAttribute('data-orig-amt');
+            
+            const finalAmtInput = card.querySelector('.final-amt-input');
+            const settledDateInput = card.querySelector('.settled-date-input');
+            const holdReasonInput = card.querySelector('.hold-reason-input');
+            const settlementFields = card.querySelectorAll('.settlement-fields');
+
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText);
+            
+            let mode = 'Settlement'; 
+            if (chosenOption) {
+                mode = chosenOption.ActionType || 'Final';
+                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
             }
 
-            if (fullInputName.endsWith('*')) {
-                fullInputName = fullInputName.slice(0, -1).trim();
+            if (selectedText) {
+                settlementFields.forEach(field => field.style.display = 'flex');
+                if (!settledDateInput.value) settledDateInput.value = getTodayString();
+            } else {
+                settlementFields.forEach(field => field.style.display = 'none');
             }
 
-            let updatedViolSubType = card.querySelector('.subviol-select').value;
-            if (updatedViolSubType === 'CUSTOM_OTHER') {
-                updatedViolSubType = card.querySelector('.subviol-custom-input').value.trim();
+            if (mode === 'Note') {
+                holdReasonInput.style.display = 'block';
+                holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
+                finalAmtInput.value = "";
+            } 
+            else if (mode === 'Settlement') {
+                holdReasonInput.style.display = 'block';
+                holdReasonInput.placeholder = "REQUIRED: Type final settlement terms...";
+                finalAmtInput.value = ''; 
+            } 
+            else {
+                holdReasonInput.style.display = 'none';
+                holdReasonInput.value = '';
+                
+                if (selectedText === 'Claim Allowed') {
+                    finalAmtInput.value = origAmt; 
+                } else if (selectedText) {
+                    finalAmtInput.value = '0.00';
+                }
+            }
+        }
+
+        function executeSettlementCommit(recordId) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const selectedStatus = card.querySelector('.status-select').value.trim();
+            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
+
+            if (!selectedStatus) {
+                alert("Validation Blocked: Please type or select an action/disposition first.");
+                return;
             }
 
-            const nameParts = fullInputName.split(' ');
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.slice(1).join(' ') || '';
+            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus);
+            let mode = 'Settlement';
+            if (chosenOption) {
+                mode = chosenOption.ActionType || 'Final';
+                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
+            }
 
-            const ind = document.getElementById('save-indicator');
-            ind.innerText = "↻ Committing changes...";
-            ind.className = "save-status saving";
+            // --- INTERCEPT 1: MISSING SETTLEMENT NOTE ---
+            if (mode === 'Settlement' && !customHoldReason) {
+                const noteModal = document.getElementById('note-modal-overlay');
+                noteModal.style.display = 'flex';
+
+                document.getElementById('btn-note-yes').onclick = function() {
+                    noteModal.style.display = 'none';
+                    processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
+                };
+                
+                document.getElementById('btn-note-no').onclick = function() {
+                    noteModal.style.display = 'none';
+                    // User opted to go back, so we do nothing and let them edit
+                    return; 
+                };
+            } else {
+                // Not missing a note (or note wasn't required), proceed to next check
+                processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
+            }
+        }
+
+        function processDispositionIntercept(recordId, selectedStatus, mode, chosenOption) {
+            // --- INTERCEPT 2: NEW DISPOSITION DETECTED ---
+            if (!chosenOption) {
+                document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
+                const modal = document.getElementById('disp-modal-overlay');
+                const actionSelect = document.getElementById('modal-action-type');
+                
+                actionSelect.value = "Settlement";
+                modal.style.display = 'flex';
+
+                document.getElementById('btn-save-disp-yes').onclick = function() {
+                    modal.style.display = 'none';
+                    const chosenBehavior = actionSelect.value;
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "Yes"); 
+                };
+
+                document.getElementById('btn-save-disp-no').onclick = function() {
+                    modal.style.display = 'none';
+                    const chosenBehavior = actionSelect.value; 
+                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "No"); 
+                };
+            } else {
+                // Standard flow: known disposition, skip the popup
+                finalizeCommit(recordId, selectedStatus, mode, "No");
+            }
+        }
+
+        // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
+        function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const targetDate = card.querySelector('.settled-date-input').value;
+            let finalPayout = card.querySelector('.final-amt-input').value;
+            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
+            const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
+            const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
+            const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
+
+            if (finalPayout === '') finalPayout = '0.00';
+
+            const dateParts = targetDate.split('-');
+            const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
+            const timeStamp = new Date().toLocaleString('en-US');
+            const auditSignature = `${currentStewardName} - ${timeStamp}`;
+            
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "stewardGuid": stewardGUID,
+                    "action": "process_hub_item",
+                    "titleId": recordId,
+                    "SelectedStatus": selectedStatus,
+                    "ActionType": mode,
+                    "TargetDate": targetDate,
+                    "DisplayDate": displayDate,
+                    "FinalPayoutAmount": finalPayout,
+                    "HoldReason": customHoldReason,
+                    "WorksheetNotes": activeWorksheetNotes,
+                    "BOFPITIC": bofpiFlag,
+                    "NPS": npsFlag,
+                    "UpdatedByStamp": auditSignature,
+                    "SaveGlobalDisposition": saveGlobalFlag
+                })
+            })
+            .then(res => {
+               if (res.ok) {
+                    const hideSettledActive = document.getElementById('toggle-hide-settled').checked;
+
+                    if (mode === 'Note') {
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+                        setTimeout(() => {
+                            card.style.borderColor = 'var(--border)';
+                            card.style.borderLeftColor = 'var(--accent)';
+                            card.querySelector('.hold-reason-input').value = '';
+                        }, 1200);
+                        alert(`Note appended successfully: Case remains active.`);
+                    } 
+                    else {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.background = 'var(--bg-card)'; 
+                        card.style.borderColor = 'var(--accent-green)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+                        
+                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
+                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
+                            elem.style.pointerEvents = 'none';
+                        });
+                        
+                        const actionBtn = card.querySelector('.btn-settle');
+                        actionBtn.innerText = 'Edit / Unlock';
+                        actionBtn.style.backgroundColor = 'var(--accent)';
+                        actionBtn.onclick = function() { unlockCard(recordId, this); };
+                        
+                        if (hideSettledActive) {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(100px)';
+                            setTimeout(() => {
+                                card.style.display = 'none';
+                            }, 300);
+                        }
+                    }
+                } else {
+                    alert(`Cloud sync failed! HTTP Status Code: ${res.status}`);
+                }
+            });
+        }
+
+                function saveQuickNote(recordId, btnElem) {
+            const card = document.getElementById(`hub-card-${recordId}`);
+            const noteValue = card.querySelector('.worksheet-notes-input').value.trim();
+            
+            // Visual feedback so you know it's saving
+            const originalHtml = btnElem.innerHTML;
+            btnElem.innerHTML = '⏳';
+            btnElem.style.pointerEvents = 'none';
 
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "stewardGuid": stewardGUID,
-                    "action": "verify",
+                    "action": "quick_save_note",
                     "titleId": recordId,
-                    "FirstName": firstName,
-                    "LastName": lastName,
-                    "EmployeeID": updatedEmpId,
-                    "FileDate": updatedFileDate,
-                    "ViolationDate": updatedViolDate,
-                    "ViolationType": updatedViolType,
-                    "ViolationSubType": updatedViolSubType,
-                    "ViolationAmount": updatedAmount
+                    "WorksheetNotes": noteValue
                 })
             })
             .then(res => {
                 if (res.ok) {
-                    const rec = fullDataCache.find(r => r.Title === recordId);
-                    if (rec) rec.isVerifiedLocally = true;
-                    
-                    const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-                    updateHeader(checkedBoxes);
-
-                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.9)';
-                    
-                    setTimeout(() => { 
-                        card.style.display = 'none'; 
-                    }, 300);
-
-                    ind.innerText = "✓ Action Complete";
-                    ind.className = "save-status";
-
-                    if (typeof triggerUndoToast === "function") {
-                        triggerUndoToast(recordId);
-                    }
+                    // Turn button green with a checkmark on success
+                    card.querySelector('.worksheet-notes-input').value = '';
+                    btnElem.innerHTML = '✅';
+                    btnElem.style.borderColor = 'var(--accent-green)';
+                    setTimeout(() => {
+                        btnElem.innerHTML = originalHtml;
+                        btnElem.style.borderColor = '#555';
+                        btnElem.style.pointerEvents = 'auto';
+                    }, 2000);
                 } else {
-                    alert("Cloud sync failed. Check connection.");
-                    ind.innerText = "⚠️ Sync Error";
-                    ind.className = "save-status dirty";
+                    alert("Failed to save note. Check connection.");
+                    btnElem.innerHTML = '⚠️';
+                    btnElem.style.pointerEvents = 'auto';
                 }
             });
-        } catch (error) {
-            alert("⚠️ JAVASCRIPT CRASH: " + error.message);
-        }
-    }
-
-    function triggerUndoToast(recordId) {
-        clearTimeout(undoTimeoutTimer);
-        lastHiddenCardId = recordId;
-
-        let toast = document.getElementById('undo-toast-banner');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'undo-toast-banner';
-            toast.style.cssText = "position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--accent); padding: 12px 24px; border-radius: 8px; display: flex; align-items: center; gap: 20px; z-index: 9999; box-shadow: 0 8px 24px rgba(0,0,0,0.6); font-size: 14px; font-weight: bold;";
-            document.body.appendChild(toast);
         }
 
-        toast.innerHTML = `
-            <span style="color: white; letter-spacing: 0.3px;">Record Verified</span>
-            <button onclick="executeUndoAction()" style="background: transparent; border: none; color: var(--accent); font-weight: bold; text-transform: uppercase; cursor: pointer; font-size: 14px; padding: 4px 8px; transition: color 0.2s;">↩ Undo</button>
-        `;
-        toast.style.display = 'flex';
 
-        undoTimeoutTimer = setTimeout(() => {
-            toast.style.display = 'none';
-            lastHiddenCardId = null;
-        }, 5000);
-    }
+        function openHubDrawer(recordId) {
+            const record = masterGrievanceCache.find(r => r.Title === recordId);
+            if (!record) return;
 
-    function executeUndoAction() {
-        if (!lastHiddenCardId) return;
-
-        const rec = fullDataCache.find(r => r.Title === lastHiddenCardId);
-        if (rec) rec.isVerifiedLocally = false;
-        
-        const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-        updateHeader(checkedBoxes);
-
-        const card = document.getElementById(`card-${lastHiddenCardId}`);
-        if (card) {
-            card.style.display = 'flex';
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'scale(1)';
-            }, 10);
-        }
-
-        const toast = document.getElementById('undo-toast-banner');
-        if (toast) toast.style.display = 'none';
-        
-        clearTimeout(undoTimeoutTimer);
-        lastHiddenCardId = null;
-    }
-
-    function openDrawer(recordId) {
-        const record = fullDataCache.find(r => r.Title === recordId);
-        document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
-        const drawerContent = document.getElementById('drawer-main-content');
-        if (!record) {
-            drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record context dropped.</p>`;
-            return;
-        }
-        let safeLink = record.PublicLink || '';
-        let downloadBtnHtml = '';
-        if (safeLink.includes("drive.google.com")) {
-            const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-            if (fileIdMatch && fileIdMatch[1]) {
-                const fileId = fileIdMatch[1];
-                safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                downloadBtnHtml = `
-                    <div style="text-align: center; margin-top: 12px;">
-                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: var(--accent); padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid var(--accent);">
-                            📥 Download PDF Copy </a>
-                    </div>
-                `;
-            }
-        }
-        drawerContent.innerHTML = `
-            <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-                <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Raw Extracted Name:</b> ${record.RawOCRName || 'N/A'}</p>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
-                <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
-            </div>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Steward Internal Notes</label>
-            <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" placeholder="Type notes here..."></textarea>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
-            ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
-        `;
-        document.getElementById('side-drawer').classList.add('open');
-        history.pushState({ drawerOpen: true }, "", "#file-viewer");
-    }
-
-    function closeDrawer() {
-        document.getElementById('side-drawer').classList.remove('open');
-        if (window.location.hash === '#file-viewer') {
-            history.back();
-        }
-    }
-
-    const drawer = document.getElementById('side-drawer');
-    const handle = document.getElementById('drawerHandle');
-    handle.addEventListener('mousedown', initResize);
-    handle.addEventListener('touchstart', initResize, { passive: true });
-
-    function initResize(e) {
-        document.addEventListener('mousemove', resizeDrawer);
-        document.addEventListener('mouseup', stopResize);
-        document.addEventListener('touchmove', resizeDrawer, { passive: false });
-        document.addEventListener('touchend', stopResize);
-    }
-
-    function resizeDrawer(e) {
-        let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const newWidth = window.innerWidth - clientX;
-        if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
-            drawer.style.width = newWidth + 'px';
-        }
-    }
-
-    function stopResize() {
-        document.removeEventListener('mousemove', resizeDrawer);
-        document.removeEventListener('touchmove', resizeDrawer);
-    }
-
-    function validateIntakeAlerts(inputElement, fieldType) {
-        let value = inputElement.value.trim();
-        if (fieldType === 'date') {
-            if (!value) {
-                inputElement.classList.add('alert-missing-date');
-            } else {
-                inputElement.classList.remove('alert-missing-date');
-            }
-        } else if (fieldType === 'amount') {
-            let amount = parseFloat(value);
-            if (isNaN(amount) || amount < 10 || amount > 1000) {
-                inputElement.classList.add('alert-wild-amount');
-            } else {
-                inputElement.classList.remove('alert-wild-amount');
-            }
-        }
-    }
-
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('file-date') || e.target.classList.contains('violation-date')) {
-            validateIntakeAlerts(e.target, 'date');
-        }
-        if (e.target.classList.contains('amt-input')) {
-            validateIntakeAlerts(e.target, 'amount');
-        }
-    });
-
-    window.addEventListener('popstate', function(event) {
-        const drawer = document.getElementById('side-drawer');
-        if (drawer.classList.contains('open')) {
-            drawer.classList.remove('open');
-        }
-    });
-
-    window.saveManualToken = function() {
-        const inputVal = document.getElementById('manual-token-input').value.trim();
-        if (!inputVal) return;
-        let extractedToken = inputVal;
-        if (inputVal.includes('steward=')) {
-            extractedToken = inputVal.split('steward=')[1].split('&')[0];
-        }
-        localStorage.setItem('saved_steward_token', extractedToken);
-        window.location.reload();
-    };
-
-    // --- MODAL ENGINE (Self-Diagnosing) ---
-    function openNewMemberModal(fullName, empId) {
-        const modal = document.getElementById('new-member-modal-overlay');
-        
-        if (!modal) {
-            alert("⚠️ HTML MISSING: The browser cannot find the Modal HTML. This is a copy/paste error.");
-            return;
-        }
-        
-        let fName = '';
-        let lName = '';
-        if (fullName) {
-            const nameParts = fullName.replace('*', '').trim().split(' ');
-            fName = nameParts[0] || '';
-            lName = nameParts.slice(1).join(' ') || '';
-        }
-        
-        document.getElementById('add-fname').value = fName;
-        document.getElementById('add-lname').value = lName;
-        document.getElementById('add-empid').value = empId;
-        
-        const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
-        masterSeniorityArray.forEach(p => {
-            let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
-            if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
-            if (wgRaw && typeof wgRaw === 'string' && wgRaw.trim() !== '' && wgRaw !== '---') {
-                wgSet.add(wgRaw.toUpperCase()); 
-            }
-        });
-        let wgHtml = '<option value="" hidden>Select Work Group...</option>';
-        Array.from(wgSet).sort().forEach(group => {
-            wgHtml += `<option value="${group}">${group}</option>`;
-        });
-        document.getElementById('add-workgroup').innerHTML = wgHtml;
-
-        modal.style.display = 'flex';
-    }
-
-    function closeNewMemberModal() {
-        document.getElementById('new-member-modal-overlay').style.display = 'none';
-    }
-
-    function saveNewMemberFromHub() {
-        const checkFname = document.getElementById('add-fname').value.trim();
-        const checkLname = document.getElementById('add-lname').value.trim();
-        const checkEmpId = document.getElementById('add-empid').value.trim();
-
-        if (!checkFname || !checkLname || !checkEmpId) {
-            alert("Action Blocked: First Name, Last Name, and Emp ID are mandatory.");
-            return; 
-        }
-
-        const saveBtn = document.getElementById('btn-save-new-member');
-        saveBtn.innerText = '⏳ Saving to Roster...';
-        saveBtn.style.pointerEvents = 'none';
-
-        const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
-        const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
-
-        const payload = {
-            stewardGuid: stewardGUID,
-            action: "save_member",
-            recordId: "NEW", 
-            FirstName: checkFname,
-            LastName: checkLname,
-            EmployeeID: checkEmpId,
-            HubBucket: document.getElementById('add-workgroup').value,
-            PhoneNumber: document.getElementById('add-phone').value,
-            Center: document.getElementById('add-center').value,
-            JobClass: document.getElementById('add-job').value,
-            HireDate: document.getElementById('add-hire').value || null,
-            PTSeniorityDate: document.getElementById('add-ptdate').value || null,
-            FTSeniorityDate: document.getElementById('add-ftdate').value || null,
-            FTPT: document.getElementById('add-ftpt').value,
-            Active: document.getElementById('add-active').value,
-            ModifiedByStamp: updateStamp
-        };
-
-        if (!payload.HireDate) delete payload.HireDate;
-        if (!payload.PTSeniorityDate) delete payload.PTSeniorityDate;
-        if (!payload.FTSeniorityDate) delete payload.FTSeniorityDate;
-
-        fetch(saveFlowUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        })
-        .then(res => {
-            if (res.ok) {
-                saveBtn.innerText = '✅ Saved!';
-                saveBtn.style.background = 'var(--accent-green)';
-                
-                masterSeniorityArray.push({
-                    Title: checkEmpId,
-                    FirstName: checkFname,
-                    LastName: checkLname,
-                    HubBucket: payload.HubBucket
-                });
-
-                setTimeout(() => {
-                    closeNewMemberModal();
-                    saveBtn.innerText = '💾 Save to Master Roster';
-                    saveBtn.style.background = 'var(--accent)';
-                    saveBtn.style.pointerEvents = 'auto';
-                    
-                    alert("Member successfully added! You can now hit Verify & Approve.");
-                }, 1000);
-            } else {
-                alert('Cloud sync failed!');
-                saveBtn.innerText = '⚠️ Error';
-                saveBtn.style.pointerEvents = 'auto';
-            }
-        })
-        .catch(err => {
-            alert('Connection error.');
-            saveBtn.style.pointerEvents = 'auto';
-        });
-    }
+            document.getElementById('drawer-title').innerText = `Audit Vault: ${recordId}`;
+            const container = document.getElementById('drawer-main-content');
             
-    loadPending();
+            let safeLink = record.PublicLink || '';
+            if (safeLink.includes("drive.google.com")) {
+                const match = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+                if (match && match[1]) safeLink = `https://drive.google.com/file/d/${match[1]}/preview`;
+            }
 
+            container.innerHTML = `
+                <div style="background: #222; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 13px;">
+                    <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? formatToUsDate(record.FileDate.split('T')[0]) : 'N/A'}</p>
+                    <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? formatToUsDate(record.ViolationDate.split('T')[0]) : 'N/A'}</p>
+                    <p style="margin-bottom: 6px;"><b>Original Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
+                </div>
+                <label class="input-label" style="margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
+                ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
+            `;
+
+                        document.getElementById('side-drawer').classList.add('open');
+            
+            // NEW: Trick the browser into thinking we opened a new page
+            history.pushState({ drawerOpen: true }, "", "#file-viewer");
+        }
+
+
+                function closeDrawer() { 
+            document.getElementById('side-drawer').classList.remove('open'); 
+            
+            // NEW: Clean up the history if they use the UI 'X' button
+            if (window.location.hash === '#file-viewer') {
+                history.back();
+            }
+        }
+
+        const drawer = document.getElementById('side-drawer');
+        const handle = document.getElementById('drawerHandle');
+        handle.addEventListener('mousedown', initResize);
+        handle.addEventListener('touchstart', initResize, { passive: true });
+
+        function initResize() {
+            document.addEventListener('mousemove', resizeDrawer);
+            document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', resizeDrawer, { passive: false });
+            document.addEventListener('touchend', stopResize);
+        }
+        function resizeDrawer(e) {
+            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const newWidth = window.innerWidth - clientX;
+            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) drawer.style.width = newWidth + 'px';
+        }
+        function stopResize() {
+            document.removeEventListener('mousemove', resizeDrawer);
+            document.removeEventListener('touchmove', resizeDrawer);
+        }
+
+    function generatePrintLayout() {
+            if (verifiedCacheArray.length === 0) {
+                alert("Nothing to print! The list is currently empty.");
+                return;
+            }
+
+            // Check if user is hiding settled cases
+            const hideSettled = document.getElementById('toggle-hide-settled').checked;
+            
+            // Filter and sort the data for the printer
+            let printData = [...verifiedCacheArray].filter(item => {
+                if (hideSettled) {
+                    const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                    if (currentDisp) return false; 
+                }
+                return true;
+            }).sort((a, b) => {
+                let lastA = (a.LastName || '').trim(); let lastB = (b.LastName || '').trim();
+                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
+                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
+                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
+                if (lastCompare !== 0) return lastCompare;
+                
+                let firstA = (a.FirstName || '').trim(); let firstB = (b.FirstName || '').trim();
+                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
+                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
+                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
+                if (firstCompare !== 0) return firstCompare;
+
+                let dateA = a.ViolationDate || '9999-12-31'; let dateB = b.ViolationDate || '9999-12-31';
+                return dateA.localeCompare(dateB);
+            });
+
+            if (printData.length === 0) {
+                alert("All selected cases are hidden. Adjust your filters and try again.");
+                return;
+            }
+
+            // Build the HTML Table
+            let html = `
+                <div class="print-header">Local 710 Processing Hub - Active Board</div>
+                <div class="print-meta">Generated on: ${new Date().toLocaleString('en-US')} | Coverage: ${currentStewardName}</div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Member Name</th>
+                            <th style="width: 9%;">File Date</th>
+                            <th style="width: 9%;">Viol. Date</th>
+                            <th style="width: 10%;">Violation Type</th>
+                            <th style="width: 9%;">Steward</th>
+                            <th style="width: 8%;">Claimed $</th>
+                            <th style="width: 40%;">Notes & Disposition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            printData.forEach(item => {
+                const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown';
+                const fDate = item.FileDate ? formatToUsDate(item.FileDate.split('T')[0]) : 'N/A';
+                const vDate = item.ViolationDate ? formatToUsDate(item.ViolationDate.split('T')[0]) : 'N/A';
+                const violType = item.ViolationSubType ? `${item.ViolationType} - ${item.ViolationSubType}` : (item.ViolationType || 'Not Set');
+                const steward = item.StewardOfRecord || 'Unassigned';
+                const origAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
+                
+                // --- COMPILE THE NOTES COLUMN ---
+                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                const sDate = item.SettledDate ? formatToUsDate(item.SettledDate.split('T')[0]) : '';
+                const settledAmt = parseFloat(item.SettledAmount || 0).toFixed(2);
+                
+                let dispHtml = '';
+                if (currentDisp) {
+                    dispHtml = `<strong>Status:</strong> ${currentDisp}`;
+                    if (sDate) dispHtml += ` (${sDate})`;
+                    
+                    // Condenses to a single line: Status: Claim Allowed (06/22/2026) $341.00
+                    dispHtml += ` $${settledAmt}<br><br>`;
+                }
+
+                const notesAHtml = item.NotesA ? `<strong>Timeline:</strong><br>${item.NotesA}<br><br>` : '';
+                const notesBHtml = item.NotesB ? `<strong>Private Ledger:</strong><br>${item.NotesB}` : '';
+                
+                let combinedNotes = `${dispHtml}${notesAHtml}${notesBHtml}`.trim();
+                
+                // Strips off any empty line breaks at the very end of the cell so it stays compact
+                combinedNotes = combinedNotes.replace(/(<br>)+$/, '');
+                
+                html += `
+                    <tr>
+                        <td><strong>${empName}</strong></td>
+                        <td>${fDate}</td>
+                        <td>${vDate}</td>
+                        <td>${violType}</td>
+                        <td>${steward}</td>
+                        <td><strong>$${origAmt}</strong></td>
+                        <td style="font-size: 10px; color: #444; white-space: pre-wrap; line-height: 1.3;">${combinedNotes}</td>
+                    </tr>
+                `;
+            });
+
+            html += `</tbody></table>`;
+            
+            // Drop it into the invisible container and trigger the print screen
+            document.getElementById('print-section').innerHTML = html;
+            window.print();
+        }
+
+                // NEW: Intercept the Android/Hardware Back Button
+        window.addEventListener('popstate', function(event) {
+            const drawer = document.getElementById('side-drawer');
+            // If they hit back while the drawer is open, just close the drawer!
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
+            }
+        });
+
+        
+        loadHubData();
     </script>
 </body>
 </html>
