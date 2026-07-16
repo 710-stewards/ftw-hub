@@ -17,16 +17,17 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+        
+        /* Adjusted padding for the new double-decker header */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
 
-        /* RESPONSIVE HEADER & NAVIGATION */
+        /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
+            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
+        
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -36,6 +37,45 @@
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
         .hamburger-btn:active { transform: scale(0.9); }
+
+        /* CLEAN FULL-WIDTH SEARCH BAR */
+        .search-input {
+            width: 100%; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 15px; outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .search-input:focus { border-color: var(--accent); }
+
+        /* 3-DOT MENU STYLES */
+        .menu-filter-select {
+            width: 100%; height: 42px; background: #222; color: white; border: 1px solid #444; 
+            border-radius: 6px; padding: 0 10px; font-size: 14px; font-weight: bold; cursor: pointer; outline: none;
+        }
+        .settings-dropdown {
+            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
+
+        /* FLOATING ACTION BUTTON (FAB) */
+        .fab-add-btn {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--accent-green); color: #111;
+            font-size: 32px; font-weight: bold; border: none;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); cursor: pointer;
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s;
+        }
+        .fab-add-btn:active { transform: scale(0.9); }
 
         /* MAIN NAV DRAWER */
         .main-nav-drawer {
@@ -55,36 +95,28 @@
         .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
         .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* FILTER BUBBLES */
-        .filter-bubbles-container {
-            display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; 
-            padding-bottom: 5px; scrollbar-width: none;
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
         }
-        .filter-bubbles-container::-webkit-scrollbar { display: none; }
-        
-        .filter-bubble {
-            background: #222; border: 1px solid #444; color: #bbb; padding: 8px 18px;
-            border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer;
-            white-space: nowrap; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .drawer-header { background: #f8f9fa; }
+        body.light-mode .nav-item { color: #333; }
+        body.light-mode .nav-item:hover { background: #f0f2f5; }
+        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode .hamburger-btn { color: #121212; } 
+        body.light-mode .data-table th { background: #f8f9fa; border-bottom-color: #d1d5db; color: #b37700; }
+        body.light-mode .data-table td { border-bottom-color: #e5e7eb; color: #111; }
+        body.light-mode .data-table tbody tr:hover { background: #f9fafb; }
+        body.light-mode .search-input, body.light-mode .menu-filter-select, body.light-mode .custom-modal input, body.light-mode .custom-modal select {
+            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
         }
-        .filter-bubble:hover { background: #333; color: white; }
-        .filter-bubble.active { 
-            background: var(--accent); color: #111; 
-            border-color: var(--accent); box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); 
-        }
-        
-        /* SEARCH BANNER */
-        .search-banner {
-            background: #161616; padding: 15px; border-radius: 8px; border: 1px solid var(--border);
-            margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center;
-        }
-        .search-input {
-            flex: 1; min-width: 250px; height: 45px; background: #262626; border: 1px solid #444;
-            color: white; border-radius: 6px; padding: 0 15px; font-size: 16px; outline: none;
-        }
-        .search-input:focus { border-color: var(--accent); }
 
         /* MODAL INPUT STYLES */
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
@@ -110,11 +142,18 @@
         .pill { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid #555; }
         .pill-yes { background: rgba(46, 204, 113, 0.1); color: var(--accent-green); border-color: var(--accent-green); }
         .pill-no { background: rgba(255, 51, 51, 0.1); color: var(--danger); border-color: var(--danger); }
-        .monospace { font-family: monospace; font-size: 13px; color: #bbb; }
+        .monospace { font-family: monospace; font-size: 13px; font-weight: bold; color: var(--accent); }
 
     </style>
 </head>
 <body>
+
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
@@ -124,42 +163,52 @@
                 <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; padding-right: 20px;">✕</button>
             </h3>
         </div>
-        
-        <div id="dynamic-nav-container">
-            </div>
-        
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+        <div id="dynamic-nav-container"></div>
     </div>
 
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Local 710 Seniority Master</div>
-                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+                <div>
+                    <div class="header-title">Seniority Master</div>
+                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+                </div>
+            </div>
+            
+            <div style="position: relative;">
+                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+                
+                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+                
+                <div id="settings-dropdown" class="settings-dropdown">
+                    
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Filter Work Group
+                    </div>
+                    <div style="padding: 10px 15px; border-bottom: 1px solid var(--border);">
+                        <select id="hub-filter-select" class="menu-filter-select" onchange="setHubFilter(this.value); toggleSettingsMenu();">
+                            <option value="ALL">All Work Groups</option>
+                            <option value="EAST">East</option>
+                            <option value="WEST">West</option>
+                            <option value="PART-TIME">Part-Time</option>
+                            <option value="FT-COMBO">FT-Combo</option>
+                            <option value="UNASSIGNED">Unassigned</option>
+                        </select>
+                    </div>
+
+                    <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div style="margin-bottom: 20px;">
-        <div class="filter-bubbles-container">
-            <button class="filter-bubble active" onclick="setHubFilter('ALL', this)">ALL</button>
-            <button class="filter-bubble" onclick="setHubFilter('EAST', this)">EAST</button>
-            <button class="filter-bubble" onclick="setHubFilter('WEST', this)">WEST</button>
-            <button class="filter-bubble" onclick="setHubFilter('PART-TIME', this)">PART-TIME</button>
-            <button class="filter-bubble" onclick="setHubFilter('FT-COMBO', this)">FT-COMBO</button>
-            <button class="filter-bubble" onclick="setHubFilter('UNASSIGNED', this)">UNASSIGNED</button>
-        </div>
-
-        <div class="search-banner" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 0;">
-            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Name, Emp ID, Phone, Center, or Job Class..." style="flex: 1; min-width: 250px;">
-            
-            <button onclick="openMemberModal()" style="height: 45px; padding: 0 20px; border-radius: 6px; background: var(--accent-green); color: #111; font-weight: bold; border: none; cursor: pointer; white-space: nowrap; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                ➕ Add New Member
-            </button>
+        <div style="width: 100%;">
+            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="🔍 Search Name, Emp ID, Phone, Center...">
         </div>
     </div>
+
+    <button class="fab-add-btn" onclick="openMemberModal()" title="Add New Member">➕</button>
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
@@ -186,14 +235,14 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    </tbody>
+                </tbody>
             </table>
         </div>
     </div>
 
     <div id="member-modal-overlay" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); z-index: 4000; align-items: center; justify-content: center;">
-        <div class="custom-modal" style="background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); text-align: left;">
-            <h3 id="modal-form-title" style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed #333; padding-bottom: 10px;">Add / Edit Member</h3>
+        <div class="custom-modal" style="background: var(--bg-card); border: 1px solid var(--accent); border-radius: 8px; width: 95%; max-width: 600px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); text-align: left; max-height: 85vh; overflow-y: auto;">
+            <h3 id="modal-form-title" style="color: var(--accent); margin-bottom: 15px; font-size: 18px; border-bottom: 1px dashed var(--border); padding-bottom: 10px;">Add / Edit Member</h3>
             
             <input type="hidden" id="edit-sys-id" value="">
             
@@ -225,7 +274,7 @@
                 <div class="input-wrapper">
                     <span class="input-label">Work Group</span>
                     <select id="edit-workgroup" style="width: 100%; height: 40px; background: #262626; border: 1px solid #444; color: white; border-radius: 4px; padding: 0 10px;">
-                        </select>
+                    </select>
                 </div>
                 <div class="input-wrapper">
                     <span class="input-label">FT/PT</span>
@@ -255,7 +304,7 @@
                 </div>
             </div>
 
-                        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
                 <button id="btn-delete-member" onclick="deleteMember()" style="width: 55px; height: 42px; background: #333; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; font-weight: bold; cursor: pointer; display: none;" title="Delete Member">🗑️</button>
                 <button onclick="closeMemberModal()" style="flex: 1; height: 42px; background: #333; color: white; border: 1px solid #555; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
                 <button id="btn-save-member" onclick="saveMemberData()" style="flex: 1; height: 42px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">💾 Save Profile</button>
@@ -268,13 +317,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
         
-        // The ORIGINAL flow for loading data (Reader)
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
-        
-        // The NEW flow for saving data (Writer)
-        // ** PASTE YOUR FULL URL HERE WITH THE &sig= AT THE END! **
         const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
-
         
         let masterSeniority = [];
         let masterStewardRoster = [];
@@ -282,43 +326,34 @@
         let currentHubFilter = 'ALL';
 
         function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
             let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+            if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
             fetch('steward-nav.json')
                 .then(res => res.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('dynamic-nav-container');
                     let navHtml = '';
 
-                    // 3. Loop through the JSON and build the menu
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
                             navHtml += `<div class="nav-section-title">${item.title}</div>`;
                         } 
                         else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
                             if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
                                 navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
                             } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
                                 navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                             }
                         }
                     });
-
-                    // Drop the finished HTML into the drawer
                     navContainer.innerHTML = navHtml;
                 })
                 .catch(err => console.error("Menu failed to load:", err));
         }
 
-        // Fire the function to build the menu
         buildDynamicNav();
+
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return '------';
             const parts = isoString.split('T')[0].split('-');
@@ -345,6 +380,34 @@
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
+
+        // --- 3-DOT MENU & THEME LOGIC ---
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settings-dropdown');
+            const overlay = document.getElementById('settings-overlay');
+            
+            dropdown.classList.toggle('open');
+            
+            if (dropdown.classList.contains('open')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            toggleSettingsMenu(); 
+        }
+
+        function clearToken() {
+            if(confirm("Are you sure you want to log out and clear your security token?")) {
+                localStorage.removeItem('saved_steward_token');
+                window.location.reload();
+            }
+        }
         
         function loadSeniorityData() {
             if (!stewardGUID) {
@@ -362,7 +425,6 @@
                 masterSeniority = bundle.seniorityList || [];
                 masterStewardRoster = bundle.stewardRoster || [];
 
-                // STRICT SECURITY VERIFICATION
                 const myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
                 if (!myProfileData) {
@@ -375,8 +437,6 @@
                 document.getElementById('table-container').style.display = 'block';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Verified Roster Access`;
 
-                // --- NEW: DYNAMIC WORK GROUP DROPDOWN BUILDER ---
-                // Start with your core buckets so they always exist
                 const wgSet = new Set(['EAST', 'WEST', 'PART-TIME', 'FT-COMBO', 'UNASSIGNED']); 
                 masterSeniority.forEach(p => {
                     let wgRaw = p.HubBucket || p['Hub Bucket'] || '';
@@ -391,7 +451,6 @@
                     wgHtml += `<option value="${group}">${group}</option>`;
                 });
                 document.getElementById('edit-workgroup').innerHTML = wgHtml;
-                // ------------------------------------------------
 
                 applyFilters();
             }).catch(err => {
@@ -400,16 +459,9 @@
             });
         }
 
-        function setHubFilter(bucketName, btnElem) {
+        // Updated for the Dropdown menu instead of pills
+        function setHubFilter(bucketName) {
             currentHubFilter = bucketName;
-            
-            // Strip the active class from all bubbles
-            document.querySelectorAll('.filter-bubble').forEach(btn => btn.classList.remove('active'));
-            
-            // Add the gold active class to the one you just tapped
-            btnElem.classList.add('active');
-            
-            // Immediately run the filters to update the table
             applyFilters();
         }
         
@@ -417,8 +469,6 @@
             const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
 
             let filteredArray = masterSeniority.filter(item => {
-                
-                // --- 1. WORK GROUP (BUBBLE) FILTER ---
                 let workGroupRaw = item.HubBucket || item['Hub Bucket'] || 'UNASSIGNED';
                 if (typeof workGroupRaw === 'object' && workGroupRaw.Value) workGroupRaw = workGroupRaw.Value;
                 const workGroup = (workGroupRaw === '---' || !workGroupRaw) ? 'UNASSIGNED' : workGroupRaw.toUpperCase();
@@ -427,7 +477,6 @@
                     if (workGroup !== currentHubFilter) return false;
                 }
 
-                // --- 2. SEARCH BAR FILTER ---
                 if (searchText !== '') {
                     const searchTarget = `
                         ${item.Title || ''} 
@@ -444,7 +493,6 @@
                 return true;
             });
 
-            // Sort Alphabetically by Last Name, then First Name
             filteredArray.sort((a, b) => {
                 const lnA = (a.LastName || '').toLowerCase();
                 const lnB = (b.LastName || '').toLowerCase();
@@ -476,7 +524,6 @@
                 const center = p.Center || '---';
                 const jobClass = p.JobClass || '---';
                 
-                // Safely extract Work Group (Hub Bucket) from SharePoint object
                 let workGroupRaw = p.HubBucket || p['Hub Bucket'] || '---';
                 if (typeof workGroupRaw === 'object' && workGroupRaw.Value) workGroupRaw = workGroupRaw.Value;
                 const workGroup = workGroupRaw;
@@ -504,9 +551,9 @@
 
                 rowsHtml += `
                     <tr>
-                        <td class="monospace" style="color: var(--accent); font-weight: bold;">${empId}</td>
-                        <td style="font-weight: bold; color: white;">${fName}</td>
-                        <td style="font-weight: bold; color: white;">${lName}</td>
+                        <td class="monospace">${empId}</td>
+                        <td style="font-weight: bold;">${fName}</td>
+                        <td style="font-weight: bold;">${lName}</td>
                         <td>${phone}</td>
                         <td>${center}</td>
                         <td>${jobClass}</td>
@@ -546,7 +593,6 @@
                     document.getElementById('edit-center').value = record.Center || '';
                     document.getElementById('edit-job').value = record.JobClass || '';
                     
-                    // Safely extract Work Group object for the modal
                     let wgRaw = record.HubBucket || record['Hub Bucket'] || '';
                     if (typeof wgRaw === 'object' && wgRaw.Value) wgRaw = wgRaw.Value;
                     document.getElementById('edit-workgroup').value = wgRaw ? wgRaw.toUpperCase() : 'UNASSIGNED';
@@ -579,18 +625,15 @@
                 document.getElementById('edit-active').value = 'YES';
             }
             
-            // Shows the trash can if editing, hides it if adding a new member
             document.getElementById('btn-delete-member').style.display = recordId ? 'block' : 'none';
-
-            
             modal.style.display = 'flex';
         }
 
         function closeMemberModal() {
             document.getElementById('member-modal-overlay').style.display = 'none';
         }
+
         function saveMemberData() {
-            // Strict Validation Check
             const checkFname = document.getElementById('edit-fname').value.trim();
             const checkLname = document.getElementById('edit-lname').value.trim();
             const checkEmpId = document.getElementById('edit-empid').value.trim();
@@ -604,7 +647,6 @@
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
 
-            // Custom audit trail stamp locked to local ET
             const timeOpts = { timeZone: 'America/Indiana/Indianapolis', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' };
             const updateStamp = currentStewardName + " - " + new Date().toLocaleString('en-US', timeOpts);
             const payload = {
@@ -618,19 +660,14 @@
                 PhoneNumber: document.getElementById('edit-phone').value,
                 Center: document.getElementById('edit-center').value,
                 JobClass: document.getElementById('edit-job').value,
-                
-                // ADD || null TO THESE THREE LINES:
                 HireDate: document.getElementById('edit-hire').value || null,
                 PTSeniorityDate: document.getElementById('edit-ptdate').value || null,
                 FTSeniorityDate: document.getElementById('edit-ftdate').value || null,
-                
                 FTPT: document.getElementById('edit-ftpt').value,
                 Active: document.getElementById('edit-active').value,
                 ModifiedByStamp: updateStamp
             };
 
-
-            // Notice we are sending this to saveFlowUrl now!
             fetch(saveFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -649,7 +686,6 @@
                         document.getElementById('table-container').style.display = 'none';
                         document.getElementById('loading').style.display = 'block';
                         
-                        // This still uses the original flowUrl to pull fresh data!
                         loadSeniorityData(); 
                     }, 1500);
                 } else {
@@ -664,12 +700,10 @@
             });
         }
 
-
-                function deleteMember() {
+        function deleteMember() {
             const recordId = document.getElementById('edit-sys-id').value;
-            if (recordId === "NEW") return; // Failsafe
+            if (recordId === "NEW") return; 
 
-            // Hard confirmation check
             if (!confirm("🚨 WARNING: Are you sure you want to permanently delete this member? This action cannot be undone.")) {
                 return;
             }
@@ -680,7 +714,7 @@
 
             const payload = {
                 stewardGuid: stewardGUID,
-                action: "delete_member", // New action trigger!
+                action: "delete_member", 
                 recordId: recordId
             };
 
@@ -694,9 +728,8 @@
                     closeMemberModal();
                     document.getElementById('table-container').style.display = 'none';
                     document.getElementById('loading').style.display = 'block';
-                    loadSeniorityData(); // Pull fresh data
+                    loadSeniorityData(); 
                     
-                    // Reset the button icon
                     setTimeout(() => {
                         deleteBtn.innerText = '🗑️';
                         deleteBtn.style.pointerEvents = 'auto';
@@ -713,8 +746,6 @@
                 deleteBtn.style.pointerEvents = 'auto';
             });
         }
-
-
 
         loadSeniorityData();
     </script>
