@@ -220,10 +220,26 @@
                 
                 <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
                 
-                <div id="settings-dropdown" class="settings-dropdown">
+                                <div id="settings-dropdown" class="settings-dropdown">
+                    
+                    <!-- NEW SORT SECTION -->
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Sort Vault
+                    </div>
+                    <div style="padding: 10px 15px; border-bottom: 1px solid var(--border);">
+                        <select id="sort-dropdown" onchange="applyFilters(); toggleSettingsMenu();" style="width: 100%; height: 42px; border-radius: 6px; padding: 0 10px; font-size: 14px; font-weight: bold; cursor: pointer;">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="settled_date">Settled (New)</option>
+                            <option value="az">Name (A-Z)</option>
+                            <option value="payout">Highest Payout</option>
+                        </select>
+                    </div>
+
                     <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
                         Display Options
                     </div>
+
                     
                     <label class="settings-item" style="justify-content: space-between;">
                         Hide Pending Cases
@@ -249,17 +265,10 @@
             </div>
         </div>
 
-        <div class="search-bar-row">
-            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="🔍 Search Name, ID, Amount...">
-            <select id="sort-dropdown" class="sort-select" onchange="applyFilters()">
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="settled_date">Settled (New)</option>
-                <option value="az">Name (A-Z)</option>
-                <option value="payout">Highest Payout</option>
-            </select>
+                <!-- ROW 2: Full-Width Sticky Search Bar -->
+        <div style="width: 100%;">
+            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="🔍 Search Name, ID, Amount, Date..." style="width: 100%;">
         </div>
-    </div>
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
