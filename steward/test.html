@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Processing Hub</title>
+    <title>Local 710 Archive Vault</title>
     <style>
         :root {
             --bg-main: #121212;
@@ -17,8 +17,8 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* PUSHED CONTENT DOWN TO MAKE ROOM FOR THE NEW TALLER HEADER */
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 145px; }
+        /* Pushed content down to make room for the new two-story sticky header */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 140px; }
 
         /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
@@ -26,7 +26,7 @@
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
             padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-
+        
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -37,21 +37,21 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
-        /* MOBILE OVERLAP & DATE WRAP FIX */
-        .local-dates-box { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; position: relative; min-width: 220px; }
-        .dates-text-wrap { text-align: right; display: flex; flex-direction: column; justify-content: center; }
-        
-        @media (max-width: 650px) {
-            body { padding-top: 140px; } 
-            .local-dates-box { 
-                justify-content: space-between; 
-                min-width: 100%; 
-                padding-top: 10px; border-top: 1px dashed #333; 
-            }
-            .dates-text-wrap { text-align: left; }
+        /* NEW DOUBLE DECKER SEARCH ROW */
+        .search-bar-row { display: flex; gap: 10px; width: 100%; align-items: center; }
+        .search-input {
+            flex: 1; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 14px; outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
+        .sort-select {
+            width: 135px; height: 45px; background: #262626; border: 1px solid #444; flex-shrink: 0;
+            color: white; border-radius: 6px; padding: 0 10px; font-size: 12px; outline: none; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .search-input:focus, .sort-select:focus { border-color: var(--accent); }
 
-        /* MAIN NAV DRAWER (LEFT SIDE) */
+        /* MAIN NAV DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: var(--bg-main); border-right: 2px solid var(--accent);
@@ -75,19 +75,9 @@
         .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-        /* OVERHEAD KPI STATS BAR */
-        .stats-banner {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px; margin-bottom: 25px; background: #161616; padding: 12px;
-            border-radius: 8px; border: 1px solid var(--border);
-        }
-        .stat-box { text-align: center; padding: 6px; }
-        .stat-val { font-size: 16px; font-weight: bold; color: var(--accent); }
-        .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-top: 2px; }
-
         /* 3-DOT SETTINGS DROPDOWN */
         .settings-dropdown {
-            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
+            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
             display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
         }
@@ -99,15 +89,6 @@
         }
         .settings-item:last-child { border-bottom: none; }
         .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
-                /* SEARCH BAR FIX */
-        .search-bar {
-            width: 100%; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px;
-            border-radius: 8px; background: #161616; border: 1px solid var(--accent);
-            color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); outline: none;
-        }
-        body.light-mode .search-bar {
-            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
-        }
 
         /* LIGHT MODE OVERRIDES */
         body.light-mode {
@@ -123,73 +104,55 @@
         body.light-mode .nav-item { color: #333; }
         body.light-mode .nav-item:hover { background: #f0f2f5; }
         body.light-mode .nav-item.active { background: #fffbe6; }
-        body.light-mode input, body.light-mode select, body.light-mode textarea { background: #ffffff; color: #111; }
-        body.light-mode .sys-id-display-box { border-color: #ccc; }
-        body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
         body.light-mode .hamburger-btn { color: #121212; } 
-        body.light-mode .stats-banner { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .status-terminal { background: #f8f9fa; border-color: #d1d5db; }
+        body.light-mode .sb-value { color: #111; }
         
+        /* Light Mode Search & Sort Bar */
+        body.light-mode .search-input, body.light-mode .sort-select {
+            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
+        }
+
         /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
         body.light-mode .header-sub,
         body.light-mode .ctr-meta,
-        body.light-mode .name-error-banner,
-        body.light-mode .id-error-banner,
-        body.light-mode .group-header-title,
-        body.light-mode .stat-val,
-        body.light-mode .local-dates-label {
+        body.light-mode .sb-label,
+        body.light-mode .group-header-title {
             color: #b37700 !important; 
             -webkit-text-stroke: 0 !important; 
             text-shadow: none !important;
             font-weight: 900;
         }
 
-
         /* CARD ARCHITECTURE */
         .record-card {
             background-color: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; padding: 16px; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid #555;
         }
-        .card-split-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 16px; margin-top: 10px; align-items: flex-start;
-        }
-
-        /* HIGH-SPEED HEADER CSS */
         .card-top-row {
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;
         }
         .ctr-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
-        .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
+        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
         .ctr-meta {
             display: flex; color: var(--accent); font-size: 14px;
             font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
             flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
         }
         @media (min-width: 650px) {
-            .ctr-meta { 
-                flex: 1; order: 0; margin-top: 0; 
-                justify-content: center; gap: 20px; 
-            }
+            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
         }
 
-        /* INPUT WRAPPERS */
-        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
-        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
-        
-        input, select, textarea {
-            width: 100%; height: 42px; background: #262626; border: 1px solid #444;
-            color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
+        /* READ ONLY BADGES */
+        .status-terminal {
+            background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444;
+            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 12px;
         }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-        
-        input.status-select::-webkit-calendar-picker-indicator { display: none !important; }
-
-        .hold-reason-input {
-            background: #201a00; border-color: #665200; color: #fff;
-            margin-top: 8px; transition: all 0.2s ease;
-        }
+        .status-block { display: flex; flex-direction: column; gap: 4px; }
+        .sb-label { font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sb-value { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; }
 
         /* BUTTONS */
         .btn-3d {
@@ -198,13 +161,12 @@
             letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
         }
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
-        .btn-settle { background-color: var(--accent-green); color: #111; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
             position: fixed; top: 0; right: 0; bottom: 0; width: 100%; 
-            background: #161616; border-left: 2px solid var(--accent);
+            background: var(--bg-main); border-left: 2px solid var(--accent);
             z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
@@ -214,43 +176,11 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-        
         .pdf-frame { 
             width: 100%; height: calc(100vh - 220px); min-height: 800px; 
             border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
         }
 
-        /* CUSTOM MODAL OVERLAY */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(3px);
-            z-index: 4000; display: none; align-items: center; justify-content: center;
-        }
-        .custom-modal {
-            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
-            width: 90%; max-width: 400px; padding: 25px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
-        .modal-text { font-size: 13px; color: #bbb; margin-bottom: 20px; line-height: 1.5; }
-        .modal-btn-row { display: flex; gap: 12px; }
-        .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    
-        /* --- PRINT SPREADSHEET MODE --- */
-        @media print {
-            @page { size: landscape; margin: 0.5in; } 
-            body { background: white !important; color: black !important; padding: 0 !important; }
-            .top-navbar, .main-nav-drawer, .nav-overlay, .stats-banner, #data-display, #side-drawer, .modal-overlay, #search-print-row {
-                display: none !important;
-            }
-            #print-section { display: block !important; width: 100%; }
-            .print-table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 11px; margin-top: 15px; table-layout: fixed; }
-            .print-table th, .print-table td { border: 1px solid #000; padding: 8px 6px; text-align: left; vertical-align: top; word-wrap: break-word; }
-            .print-table th { background-color: #ddd !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-transform: uppercase; font-size: 10px; }
-            .print-header { text-align: center; font-size: 20px; font-weight: bold; color: black; }
-            .print-meta { text-align: center; font-size: 12px; color: #333; margin-bottom: 10px; }
-        }
     </style>
 </head>
 <body>
@@ -262,8 +192,6 @@
         }
     </script>
 
-    <datalist id="global-disposition-list"></datalist>
-
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
@@ -273,15 +201,16 @@
             </div>
             <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
-        <div id="dynamic-nav-container"></div>      
+        
+        <div id="dynamic-nav-container"></div>
     </div>
 
-           <div class="top-navbar">
+    <div class="top-navbar">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
                 <div>
-                    <div class="header-title">Local 710 Processing Hub</div>
+                    <div class="header-title">Archive Vault</div>
                     <div id="steward-info" class="header-sub">Connecting Security Token...</div>
                 </div>
             </div>
@@ -292,20 +221,18 @@
                 <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
                 
                 <div id="settings-dropdown" class="settings-dropdown">
-                    <button class="settings-item" onclick="generatePrintLayout()" style="border-bottom: 1px solid var(--border); color: var(--accent-green);">🖨️ Print Active Board</button>
-
                     <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
                         Display Options
                     </div>
                     
                     <label class="settings-item" style="justify-content: space-between;">
-                        Hide Settled Cases
-                        <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                        Hide Pending Cases
+                        <input type="checkbox" id="toggle-hide-pending" onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
                     </label>
 
                     <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
                         Group by Steward
-                        <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                        <input type="checkbox" id="toggle-group-steward" onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
                     </label>
 
                     <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
@@ -322,43 +249,21 @@
             </div>
         </div>
 
-        <div style="width: 100%;">
-            <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()" style="height: 45px;">
+        <div class="search-bar-row">
+            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="🔍 Search Name, ID, Amount...">
+            <select id="sort-dropdown" class="sort-select" onchange="applyFilters()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="settled_date">Settled (New)</option>
+                <option value="az">Name (A-Z)</option>
+                <option value="payout">Highest Payout</option>
+            </select>
         </div>
     </div>
-
-    <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
-        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
-            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Last Local:</span> <span id="display-last-local">Fetching...</span>
-        </div>
-        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
-            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Next Local:</span> <span id="display-next-local">None Scheduled</span>
-        </div>
-    </div>
-    
-    <div class="stats-banner">
-        <div class="stat-box">
-            <div id="metric-open-cases" class="stat-val">0</div>
-            <div class="stat-lbl">Pending Cases</div>
-        </div>
-        <div class="stat-box">
-            <div id="metric-liability" class="stat-val">$0.00</div>
-            <div class="stat-lbl">Pending Amount</div>
-        </div>
-        <div class="stat-box" style="border-left: 1px dashed var(--border);">
-            <div id="metric-today-count" class="stat-val" style="color: var(--accent-green);">0</div>
-            <div class="stat-lbl">Settled Cases</div>
-        </div>
-        <div class="stat-box">
-            <div id="metric-today-paid" class="stat-val" style="color: var(--accent-green);">$0.00</div>
-            <div class="stat-lbl">Total Paid Out</div>
-        </div>
-    </div>
-
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
-            ↻ Fetching Verified Grievance Logs...
+            ↻ Accessing Deep Archive Logs...
         </div>
     </div>
 
@@ -371,53 +276,12 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <div id="note-modal-overlay" class="modal-overlay">
-        <div class="custom-modal">
-            <div class="modal-title">Missing Settlement Notes</div>
-            <div class="modal-text">
-                Are you sure you want to save without adding a note?
-            </div>
-            <div class="modal-btn-row">
-                <button id="btn-note-no" class="btn-modal-no">No, Go Back</button>
-                <button id="btn-note-yes" class="btn-modal-yes">Yes, Save Anyway</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="disp-modal-overlay" class="modal-overlay">
-        <div class="custom-modal">
-            <div class="modal-title">New Disposition Detected</div>
-            <div class="modal-text">
-                You entered <b id="new-disp-text" style="color: var(--accent);"></b>.<br>
-                Would you like to save this to the global dropdown list for all stewards to use?
-            </div>
-            
-            <div style="text-align: left; margin-bottom: 22px;">
-                <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase;">How should this action behave?</label>
-                <select id="modal-action-type" style="margin-top: 6px; background: #222; border: 1px solid #444; border-radius: 6px; padding: 10px; width: 100%; color: white; font-size: 13px; cursor: pointer;">
-                    <option value="Settlement">Negotiated Settlement (Locks file, requires notes)</option>
-                    <option value="Final">Standard Closure (Locks file, no notes required)</option>
-                    <option value="Note">Active Hold / Update (Keeps file open, logs a note)</option>
-                </select>
-            </div>
-
-            <div class="modal-btn-row">
-                <button id="btn-save-disp-no" class="btn-modal-no">No, Just Use Once</button>
-                <button id="btn-save-disp-yes" class="btn-modal-yes">Yes, Save Globally</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="print-section" style="display: none;"></div>
-    
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
         
         let masterGrievanceCache = []; 
-        let verifiedCacheArray = [];   
-        let masterDropdownOptionsArray = [];
         let masterStewardRoster = [];
         let myProfileData = {};
         let currentStewardName = '';
@@ -450,7 +314,6 @@
         }
 
         buildDynamicNav();
-        const getTodayString = () => new Date().toISOString().split('T')[0];
 
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return 'N/A';
@@ -495,34 +358,8 @@
                 window.location.reload();
             }
         }
-
-        function unlockCard(recordId, btnElem) {
-            const card = document.getElementById(`hub-card-${recordId}`);
-            card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
-            card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
-                elem.style.pointerEvents = 'auto';
-            });
-            
-            card.style.background = 'var(--bg-card)';
-            card.style.borderColor = 'var(--border)';
-            btnElem.innerText = 'Submit Box';
-            btnElem.style.backgroundColor = 'var(--accent-green)';
-            btnElem.onclick = function() { executeSettlementCommit(recordId); };
-        }
-
-        function toggleSettledVisibility() {
-            const hideSettled = document.getElementById('toggle-hide-settled').checked;
-            document.querySelectorAll('.record-card').forEach(card => {
-                const isLocked = card.querySelector('.status-select').disabled;
-                if (isLocked) {
-                    card.style.display = hideSettled ? 'none' : 'block';
-                    card.style.opacity = '1'; 
-                    card.style.transform = 'translateX(0)'; 
-                }
-            });
-        }
         
-        function loadHubData() {
+        function loadArchiveData() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
@@ -531,13 +368,12 @@
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_hub" })
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_archive" })
             })
             .then(res => res.json())
             .then(bundle => {
                 masterGrievanceCache = bundle.pendingGrievances || [];
                 masterStewardRoster = bundle.stewardRoster || [];
-                masterDropdownOptionsArray = bundle.dropdownOptions || [];
 
                 myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
@@ -548,7 +384,7 @@
 
                 currentStewardName = myProfileData.StewardName;
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
+                document.getElementById('steward-info').innerText = `${currentStewardName} | Authorized Viewer`;
 
                 const coverageContainer = document.getElementById('coverage-checkboxes');
                 coverageContainer.innerHTML = '';
@@ -557,130 +393,106 @@
 
                 sortedRoster.forEach(st => {
                     if (st.StewardName && st.StewardID) {
-                        const isMe = st.StewardID === myProfileData.StewardID;
                         coverageContainer.innerHTML += `
                             <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; padding: 6px 0;">
-                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyCoverageFilter()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                                ${st.StewardName} ${isMe ? '(Me)' : ''}
+                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" checked onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                                ${st.StewardName}
                             </label>
                         `;
                     }
                 });
 
-                const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
-                let datalistHtml = '';
-                dispRows.forEach(opt => {
-                    const val = opt.OptionValue || opt.Value || '';
-                    if (val) {
-                        datalistHtml += `<option value="${val}">`;
-                    }
-                });
-                document.getElementById('global-disposition-list').innerHTML = datalistHtml;
-
-                const localScheduleArray = bundle.localLevelSchedule || [];
-                let nextLocalRaw = null;
-                let lastLocalRaw = null;
-
-                if (localScheduleArray.length > 0) {
-                    localScheduleArray.sort((a, b) => new Date(b.LocalLevel) - new Date(a.LocalLevel));
-
-                    const date1 = localScheduleArray[0].LocalLevel;
-                    const date1String = date1.split('T')[0];
-                    const todayString = getTodayString();
-
-                    if (date1String >= todayString) {
-                        nextLocalRaw = date1;
-                        if (localScheduleArray.length > 1) {
-                            lastLocalRaw = localScheduleArray[1].LocalLevel;
-                        }
-                    } else {
-                        lastLocalRaw = date1;
-                    }
-                }
-
-                const formatMeetingDate = (rawDate) => {
-                    if (!rawDate) return null;
-                    return new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
-                };
-
-                document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
-                document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
-
-                applyCoverageFilter();
+                applyFilters();
             }).catch(err => {
-                document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
+                document.getElementById('loading').innerText = "Interface parsing failure on Archive handshake.";
                 console.error(err);
             });
         }
 
-        function applyCoverageFilter() {
+        function applyFilters() {
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-            const searchTerm = (document.getElementById('global-search-input').value || '').toLowerCase().trim();
-            
-            verifiedCacheArray = masterGrievanceCache.filter(item => {
+            const isGrouped = document.getElementById('toggle-group-steward').checked;
+            const hidePending = document.getElementById('toggle-hide-pending').checked;
+            const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
+            const sortMode = document.getElementById('sort-dropdown').value;
+
+            let filteredArray = masterGrievanceCache.filter(item => {
                 const st = (item.StewardOfRecord || '').trim();
-                const matchesSteward = checkedBoxes.includes(st);
-                
-                if (!matchesSteward) return false;
-                if (!searchTerm) return true; 
+                if (!checkedBoxes.includes(st)) return false;
 
-                const searchableData = `
-                    ${item.FirstName || ''} ${item.LastName || ''}
-                    ${item.RawOCRName || ''}
-                    ${item.EmployeeID || ''}
-                    ${item.Title || ''}
-                    ${item.ViolationType || ''}
-                    ${item.ViolationSubType || ''}
-                    ${item.NotesA || ''}
-                    ${item.NotesB || ''}
-                    ${(item.Disposition && item.Disposition.Value) ? item.Disposition.Value : (item.Disposition || '')}
-                `.toLowerCase();
+                const disp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                const isPending = !disp || disp.toUpperCase() === 'PENDING';
+                if (hidePending && isPending) return false;
 
-                return searchableData.includes(searchTerm);
+                if (searchText !== '') {
+                    const searchTarget = `
+                        ${item.FirstName || ''} ${item.LastName || ''} 
+                        ${item.RawOCRName || ''} 
+                        ${item.EmployeeID || ''} 
+                        ${item.Title || ''} 
+                        ${item.ViolationType || ''} 
+                        ${item.ViolationSubType || ''}
+                        ${item.ViolationAmount || ''}
+                        ${item.SettledAmount || ''}
+                        ${formatToUsDate(item.ViolationDate ? item.ViolationDate.split('T')[0] : '')}
+                        ${formatToUsDate(item.FileDate ? item.FileDate.split('T')[0] : '')}
+                        ${formatToUsDate(item.SettledDate ? item.SettledDate.split('T')[0] : '')}
+                        ${item.StewardOfRecord || ''}
+                        ${disp || ''}
+                    `.toLowerCase();
+                    
+                    if (!searchTarget.includes(searchText)) return false;
+                }
+
+                return true;
             });
 
-            calculateMetrics();
-            renderHubCards();
-        }
-
-        function calculateMetrics() {
-            let openCount = 0;
-            let openLiability = 0;
-            let closedCount = 0;
-            let closedPayout = 0;
-
-            verifiedCacheArray.forEach(item => {
-                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                
-                if (currentDisp) {
-                    closedCount++;
-                    closedPayout += parseFloat(item.SettledAmount || 0);
+            filteredArray.sort((a, b) => {
+                if (sortMode === 'newest') {
+                    return new Date(b.ViolationDate || 0) - new Date(a.ViolationDate || 0);
+                } else if (sortMode === 'oldest') {
+                    return new Date(a.ViolationDate || 0) - new Date(b.ViolationDate || 0);
+                } else if (sortMode === 'settled_date') {
+                    return new Date(b.SettledDate || 0) - new Date(a.SettledDate || 0);
+                } else if (sortMode === 'payout') {
+                    const payA = parseFloat(a.SettledAmount || 0);
+                    const payB = parseFloat(b.SettledAmount || 0);
+                    return payB - payA; 
+                } else if (sortMode === 'first_name') {
+                    const fnA = (a.FirstName || '').toLowerCase();
+                    const fnB = (b.FirstName || '').toLowerCase();
+                    if (fnA < fnB) return -1;
+                    if (fnA > fnB) return 1;
+                    return 0;
                 } else {
-                    openCount++;
-                    openLiability += parseFloat(item.ViolationAmount || 0);
+                    const lnA = (a.LastName || '').toLowerCase();
+                    const lnB = (b.LastName || '').toLowerCase();
+                    if (lnA < lnB) return -1;
+                    if (lnA > lnB) return 1;
+                    const fnA = (a.FirstName || '').toLowerCase();
+                    const fnB = (b.FirstName || '').toLowerCase();
+                    if (fnA < fnB) return -1;
+                    if (fnA > fnB) return 1;
+                    return 0;
                 }
             });
 
-            document.getElementById('metric-open-cases').innerText = openCount;
-            document.getElementById('metric-liability').innerText = `$${openLiability.toFixed(2)}`;
-            document.getElementById('metric-today-count').innerText = closedCount;
-            document.getElementById('metric-today-paid').innerText = `$${closedPayout.toFixed(2)}`;
+            renderArchiveCards(filteredArray, isGrouped);
         }
 
-       function renderHubCards() {
+        function renderArchiveCards(filteredData, isGrouped) {
             const display = document.getElementById('data-display');
             display.style.paddingBottom = '120px';
 
-            if (verifiedCacheArray.length === 0) {
-                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">✓ Settlement Board Clear. No unpushed verified records found for this view.</div>';
+            if (filteredData.length === 0) {
+                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No records matched your search or filter criteria.</div>';
                 return;
             }
 
-            const isGrouped = document.getElementById('toggle-group-steward').checked;
             const grouped = {};
             
             if (isGrouped) {
-                verifiedCacheArray.forEach(item => {
+                filteredData.forEach(item => {
                     const stID = (item.StewardOfRecord || '').trim();
                     let stName = stID;
                     
@@ -692,7 +504,7 @@
                     grouped[stName].push(item);
                 });
             } else {
-                grouped['All Selected Files'] = [...verifiedCacheArray];
+                grouped['Search Results'] = filteredData;
             }
 
             let html = '';
@@ -701,30 +513,10 @@
             for (const groupName of sortedGroupNames) {
                 const items = grouped[groupName]; 
 
-                items.sort((a, b) => {
-                    let lastA = (a.LastName || '').trim();
-                    let lastB = (b.LastName || '').trim();
-                    if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
-                    if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
-                    let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
-                    if (lastCompare !== 0) return lastCompare;
-
-                    let firstA = (a.FirstName || '').trim();
-                    let firstB = (b.FirstName || '').trim();
-                    if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
-                    if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
-                    let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
-                    if (firstCompare !== 0) return firstCompare;
-
-                    let dateA = a.ViolationDate || '9999-12-31';
-                    let dateB = b.ViolationDate || '9999-12-31';
-                    return dateA.localeCompare(dateB);
-                });
-
                 html += `
                     <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
-                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} TOTAL CASE${items.length > 1 ? 'S' : ''}  </span>
+                        <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Files for: ' + groupName : groupName}</span>
+                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} FOUND</span>
                     </div>
                 `;
 
@@ -746,32 +538,40 @@
                     
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
-                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #333; font-size: 12px; color: #b3b3b3; line-height: 1.5;">
+                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: #b3b3b3; line-height: 1.5;">
                             <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Case Timeline History:</b>
                             <div style="white-space: pre-wrap;">${rawHistory}</div>
                         </div>
                     ` : '';
 
-                    const currentWorksheetNotes = item.NotesB || '';
-                    const internalHistoryHtml = currentWorksheetNotes ? `
-                        <div class="internal-history-box" style="margin-top: 10px; padding: 10px; background: #1a1a1a; border: 1px dashed #555; border-radius: 6px; font-size: 12px; color: #ccc; line-height: 1.5;">
-                            <b style="color: #ff9900; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">🔒 Private Ledger History:</b>
-                            <div style="white-space: pre-wrap;">${currentWorksheetNotes}</div>
+                    const rawNotesB = item.NotesB || '';
+                    const stewardsNotesHtml = rawNotesB ? `
+                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: #b3b3b3; line-height: 1.5;">
+                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Stewards Meeting Notes:</b>
+                            <div style="white-space: pre-wrap;">${rawNotesB}</div>
                         </div>
                     ` : '';
-                    
-                    const isBofpi = !!item.BOFPITIC;
-                    const isNps = !!item.NPS;
 
                     let itemStewardName = (item.StewardOfRecord || '').trim();
                     const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
                     if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
                     else if (!itemStewardName) itemStewardName = 'Unassigned Roster';
+                    const stewardBadgeHtml = `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>`;
 
-                    const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+                    const dispTextRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
+                    const dispText = dispTextRaw ? dispTextRaw : 'PENDING';
+                    const isPending = dispText === 'PENDING' || dispText === 'Note' || !dispTextRaw;
+                    const statusColor = isPending ? 'var(--accent)' : 'var(--accent-green)';
+                    const cardBorderColor = isPending ? '#555' : 'var(--accent-green)';
+                    
+                    const settledDateDisplay = item.SettledDate ? formatToUsDate(item.SettledDate.split('T')[0]) : '------';
+                    const settledAmtDisplay = parseFloat(item.SettledAmount || 0).toFixed(2);
+                    
+                    const bofpiPill = item.BOFPITIC ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">BOFPITIC</span>` : '';
+                    const npsPill = item.NPS ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">NPS</span>` : '';
 
                     html += `
-                        <div class="record-card" id="hub-card-${sysId}" data-orig-amt="${originalAmt}" style="border-left: 5px solid var(--accent); transition: all 0.2s ease;">
+                        <div class="record-card" style="border-left: 5px solid ${cardBorderColor}; transition: all 0.2s ease;">
                             
                             <div class="card-top-row">
                                 <h4 class="ctr-name">${empName}</h4>
@@ -779,329 +579,44 @@
                                     <span>${vDate}</span>
                                     <span>${cleanMetaType}</span>
                                 </div>
-                                <div class="ctr-amt">$${originalAmt}</div>
+                                <div class="ctr-amt" style="color: #888; font-size: 16px;">Orig: $${originalAmt}</div>
                             </div>
 
-                            <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
                                 ${stewardBadgeHtml}
                                 <span>Driver ID: <span style="color: #bbb;">${empId}</span></span>
                                 <span>Sys ID: <span style="color: #bbb;">${sysId}</span></span>
                                 <span>File Date: <span style="color: #bbb;">${fDate}</span></span>
+                                <div style="display: flex; gap: 6px; margin-left: auto;">${bofpiPill}${npsPill}</div>
                             </div>
 
-                            <div class="card-split-grid" onclick="event.stopPropagation()">
-                                <div class="input-wrapper">
-                                    <span class="input-label">Action / Disposition</span>
-                                    <input type="text" list="global-disposition-list" class="status-select" placeholder="Select or type..." oninput="handleStatusLogic('${sysId}', this)">
-                                    <input type="text" class="hold-reason-input" style="display: none;" placeholder="Type notes..." maxlength="150">
-                                    
-                                    <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 10px; font-weight: bold; color: var(--text-muted);">
-                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                            <input type="checkbox" class="chk-bofpi" ${isBofpi ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> B.O.F.P.I.T.I.C.
-                                        </label>
-                                        <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
-                                            <input type="checkbox" class="chk-nps" ${isNps ? 'checked' : ''} style="width: 13px; height: 13px; accent-color: var(--accent);"> N.P.S.
-                                        </label>
-                                    </div>
+                            <div class="status-terminal">
+                                <div class="status-block">
+                                    <span class="sb-label">Disposition</span>
+                                    <span class="sb-value" style="color: ${statusColor};">${dispText}</span>
                                 </div>
-                                
-                                <div class="input-wrapper settlement-fields">
-                                    <span class="input-label">Date Settled</span>
-                                    <input type="date" class="settled-date-input" value="">
+                                <div class="status-block">
+                                    <span class="sb-label">Date Settled</span>
+                                    <span class="sb-value">${settledDateDisplay}</span>
                                 </div>
-                                
-                                <div class="input-wrapper settlement-fields">
-                                    <span class="input-label">Final Paid Amt ($)</span>
-                                    <input type="number" step="0.01" class="final-amt-input" value="">
-                                </div>
-                                
-                                <div class="input-wrapper">
-                                    <span class="input-label">&nbsp;</span>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="btn-3d btn-review" style="flex: 1;" onclick="openHubDrawer('${sysId}')">View File</button>
-                                        <button class="btn-3d btn-settle" style="flex: 1.5;" onclick="executeSettlementCommit('${sysId}')">Submit Box</button>
-                                    </div>
+                                <div class="status-block" style="text-align: right;">
+                                    <span class="sb-label">Final Payout</span>
+                                    <span class="sb-value" style="color: var(--accent-green); font-size: 16px;">$${settledAmtDisplay}</span>
                                 </div>
                             </div>
 
-                            <div class="input-wrapper" style="margin-top: 14px;" onclick="event.stopPropagation()">
-                                <span class="input-label">Steward Notes (Not Visible to Member)</span>
-                                <div style="display: flex; gap: 8px; margin-top: 4px;">
-                                    <input type="text" class="worksheet-notes-input" value="" placeholder="Type a new private note here..." style="flex: 1; margin: 0;">
-                                    <button class="btn-3d btn-save-note" style="width: 48px; flex-shrink: 0; background: #333; color: var(--accent); border: 1px solid #555; font-size: 18px;" onclick="saveQuickNote('${sysId}', this)">
-                                        💾
-                                    </button>
-                                </div>
-                               ${internalHistoryHtml}
-                            </div>
+                            ${stewardsNotesHtml}
                             ${existingHistoryHtml}
+
+                            <div style="margin-top: 14px;">
+                                <button class="btn-3d btn-review" onclick="openHubDrawer('${sysId}')">View PDF Evidence</button>
+                            </div>
                         </div>
                     `;
                 });
             }
 
             display.innerHTML = html;
-
-            verifiedCacheArray.forEach(item => {
-                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                
-                if (currentDisp) {
-                    const card = document.getElementById(`hub-card-${item.Title}`);
-                    if (card) {
-                        card.querySelector('.status-select').value = currentDisp;
-                        card.querySelector('.final-amt-input').value = item.SettledAmount || '0.00';
-                        if (item.SettledDate) {
-                            card.querySelector('.settled-date-input').value = item.SettledDate.split('T')[0];
-                        }
-                        
-                        card.querySelector('.chk-bofpi').checked = !!item.BOFPITIC;
-                        card.querySelector('.chk-nps').checked = !!item.NPS;
-                        
-                        card.style.background = 'var(--bg-card)';
-                        card.style.borderColor = 'var(--accent-green)';
-                        card.style.borderLeftColor = 'var(--accent-green)';
-                        
-                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
-                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
-                            elem.style.pointerEvents = 'none';
-                        });
-
-                        card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
-
-                        if (document.getElementById('toggle-hide-settled').checked) {
-                            card.style.display = 'none';
-                        }
-                        
-                        const actionBtn = card.querySelector('.btn-settle');
-                        actionBtn.innerText = 'Edit / Unlock';
-                        actionBtn.style.backgroundColor = 'var(--accent)';
-                        actionBtn.onclick = function() { unlockCard(item.Title, this); };
-                    }
-                }
-            });
-        }
-        
-        function handleStatusLogic(recordId, inputElem) {
-            const card = document.getElementById(`hub-card-${recordId}`);
-            const selectedText = inputElem.value.trim();
-            const origAmt = card.getAttribute('data-orig-amt');
-            
-            const finalAmtInput = card.querySelector('.final-amt-input');
-            const settledDateInput = card.querySelector('.settled-date-input');
-            const holdReasonInput = card.querySelector('.hold-reason-input');
-            const settlementFields = card.querySelectorAll('.settlement-fields');
-
-            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedText);
-            
-            let mode = 'Settlement'; 
-            if (chosenOption) {
-                mode = chosenOption.ActionType || 'Final';
-                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
-            }
-
-            if (selectedText) {
-                settlementFields.forEach(field => field.style.display = 'flex');
-                if (!settledDateInput.value) settledDateInput.value = getTodayString();
-            } else {
-                settlementFields.forEach(field => field.style.display = 'none');
-            }
-
-            if (mode === 'Note') {
-                holdReasonInput.style.display = 'block';
-                holdReasonInput.placeholder = "Type reason for hold (case stays active)...";
-                finalAmtInput.value = "";
-            } 
-            else if (mode === 'Settlement') {
-                holdReasonInput.style.display = 'block';
-                holdReasonInput.placeholder = "REQUIRED: Type final settlement terms...";
-                finalAmtInput.value = ''; 
-            } 
-            else {
-                holdReasonInput.style.display = 'none';
-                holdReasonInput.value = '';
-                
-                if (selectedText === 'Claim Allowed') {
-                    finalAmtInput.value = origAmt; 
-                } else if (selectedText) {
-                    finalAmtInput.value = '0.00';
-                }
-            }
-        }
-
-        function executeSettlementCommit(recordId) {
-            const card = document.getElementById(`hub-card-${recordId}`);
-            const selectedStatus = card.querySelector('.status-select').value.trim();
-            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
-
-            if (!selectedStatus) {
-                alert("Validation Blocked: Please type or select an action/disposition first.");
-                return;
-            }
-
-            const chosenOption = masterDropdownOptionsArray.find(opt => opt.OptionValue === selectedStatus);
-            let mode = 'Settlement';
-            if (chosenOption) {
-                mode = chosenOption.ActionType || 'Final';
-                if (typeof mode === 'object' && mode.Value) mode = mode.Value;
-            }
-
-            if (mode === 'Settlement' && !customHoldReason) {
-                const noteModal = document.getElementById('note-modal-overlay');
-                noteModal.style.display = 'flex';
-
-                document.getElementById('btn-note-yes').onclick = function() {
-                    noteModal.style.display = 'none';
-                    processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
-                };
-                
-                document.getElementById('btn-note-no').onclick = function() {
-                    noteModal.style.display = 'none';
-                    return; 
-                };
-            } else {
-                processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
-            }
-        }
-
-        function processDispositionIntercept(recordId, selectedStatus, mode, chosenOption) {
-            if (!chosenOption) {
-                document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
-                const modal = document.getElementById('disp-modal-overlay');
-                const actionSelect = document.getElementById('modal-action-type');
-                
-                actionSelect.value = "Settlement";
-                modal.style.display = 'flex';
-
-                document.getElementById('btn-save-disp-yes').onclick = function() {
-                    modal.style.display = 'none';
-                    const chosenBehavior = actionSelect.value;
-                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "Yes"); 
-                };
-
-                document.getElementById('btn-save-disp-no').onclick = function() {
-                    modal.style.display = 'none';
-                    const chosenBehavior = actionSelect.value; 
-                    finalizeCommit(recordId, selectedStatus, chosenBehavior, "No"); 
-                };
-            } else {
-                finalizeCommit(recordId, selectedStatus, mode, "No");
-            }
-        }
-
-        function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
-            const card = document.getElementById(`hub-card-${recordId}`);
-            const targetDate = card.querySelector('.settled-date-input').value;
-            let finalPayout = card.querySelector('.final-amt-input').value;
-            const customHoldReason = card.querySelector('.hold-reason-input').value.trim();
-            const activeWorksheetNotes = card.querySelector('.worksheet-notes-input').value.trim();
-            const bofpiFlag = card.querySelector('.chk-bofpi').checked ? 1 : 0;
-            const npsFlag = card.querySelector('.chk-nps').checked ? 1 : 0;
-
-            if (finalPayout === '') finalPayout = '0.00';
-
-            const dateParts = targetDate.split('-');
-            const displayDate = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}` : targetDate;
-            const timeStamp = new Date().toLocaleString('en-US');
-            const auditSignature = `${currentStewardName} - ${timeStamp}`;
-            
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "stewardGuid": stewardGUID,
-                    "action": "process_hub_item",
-                    "titleId": recordId,
-                    "SelectedStatus": selectedStatus,
-                    "ActionType": mode,
-                    "TargetDate": targetDate,
-                    "DisplayDate": displayDate,
-                    "FinalPayoutAmount": finalPayout,
-                    "HoldReason": customHoldReason,
-                    "WorksheetNotes": activeWorksheetNotes,
-                    "BOFPITIC": bofpiFlag,
-                    "NPS": npsFlag,
-                    "UpdatedByStamp": auditSignature,
-                    "SaveGlobalDisposition": saveGlobalFlag
-                })
-            })
-            .then(res => {
-               if (res.ok) {
-                    const hideSettledActive = document.getElementById('toggle-hide-settled').checked;
-
-                    if (mode === 'Note') {
-                        card.style.borderColor = 'var(--accent-green)';
-                        card.style.borderLeftColor = 'var(--accent-green)';
-                        setTimeout(() => {
-                            card.style.borderColor = 'var(--border)';
-                            card.style.borderLeftColor = 'var(--accent)';
-                            card.querySelector('.hold-reason-input').value = '';
-                        }, 1200);
-                        alert(`Note appended successfully: Case remains active.`);
-                    } 
-                    else {
-                        card.style.transition = 'all 0.3s ease';
-                        card.style.background = 'var(--bg-card)'; 
-                        card.style.borderColor = 'var(--accent-green)';
-                        card.style.borderLeftColor = 'var(--accent-green)';
-                        
-                        card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = true);
-                        card.querySelectorAll('input[type="checkbox"]').forEach(elem => {
-                            elem.style.pointerEvents = 'none';
-                        });
-                        
-                        const actionBtn = card.querySelector('.btn-settle');
-                        actionBtn.innerText = 'Edit / Unlock';
-                        actionBtn.style.backgroundColor = 'var(--accent)';
-                        actionBtn.onclick = function() { unlockCard(recordId, this); };
-                        
-                        if (hideSettledActive) {
-                            card.style.opacity = '0';
-                            card.style.transform = 'translateX(100px)';
-                            setTimeout(() => {
-                                card.style.display = 'none';
-                            }, 300);
-                        }
-                    }
-                } else {
-                    alert(`Cloud sync failed! HTTP Status Code: ${res.status}`);
-                }
-            });
-        }
-
-        function saveQuickNote(recordId, btnElem) {
-            const card = document.getElementById(`hub-card-${recordId}`);
-            const noteValue = card.querySelector('.worksheet-notes-input').value.trim();
-            
-            const originalHtml = btnElem.innerHTML;
-            btnElem.innerHTML = '⏳';
-            btnElem.style.pointerEvents = 'none';
-
-            fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "stewardGuid": stewardGUID,
-                    "action": "quick_save_note",
-                    "titleId": recordId,
-                    "WorksheetNotes": noteValue
-                })
-            })
-            .then(res => {
-                if (res.ok) {
-                    card.querySelector('.worksheet-notes-input').value = '';
-                    btnElem.innerHTML = '✅';
-                    btnElem.style.borderColor = 'var(--accent-green)';
-                    setTimeout(() => {
-                        btnElem.innerHTML = originalHtml;
-                        btnElem.style.borderColor = '#555';
-                        btnElem.style.pointerEvents = 'auto';
-                    }, 2000);
-                } else {
-                    alert("Failed to save note. Check connection.");
-                    btnElem.innerHTML = '⚠️';
-                    btnElem.style.pointerEvents = 'auto';
-                }
-            });
         }
 
         function openHubDrawer(recordId) {
@@ -1133,7 +648,6 @@
 
         function closeDrawer() { 
             document.getElementById('side-drawer').classList.remove('open'); 
-            
             if (window.location.hash === '#file-viewer') {
                 history.back();
             }
@@ -1160,104 +674,6 @@
             document.removeEventListener('touchmove', resizeDrawer);
         }
 
-        function generatePrintLayout() {
-            if (verifiedCacheArray.length === 0) {
-                alert("Nothing to print! The list is currently empty.");
-                return;
-            }
-
-            const hideSettled = document.getElementById('toggle-hide-settled').checked;
-            
-            let printData = [...verifiedCacheArray].filter(item => {
-                if (hideSettled) {
-                    const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                    if (currentDisp) return false; 
-                }
-                return true;
-            }).sort((a, b) => {
-                let lastA = (a.LastName || '').trim(); let lastB = (b.LastName || '').trim();
-                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
-                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
-                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
-                if (lastCompare !== 0) return lastCompare;
-                
-                let firstA = (a.FirstName || '').trim(); let firstB = (b.FirstName || '').trim();
-                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
-                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
-                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
-                if (firstCompare !== 0) return firstCompare;
-
-                let dateA = a.ViolationDate || '9999-12-31'; let dateB = b.ViolationDate || '9999-12-31';
-                return dateA.localeCompare(dateB);
-            });
-
-            if (printData.length === 0) {
-                alert("All selected cases are hidden. Adjust your filters and try again.");
-                return;
-            }
-
-            let html = `
-                <div class="print-header">Local 710 Processing Hub - Active Board</div>
-                <div class="print-meta">Generated on: ${new Date().toLocaleString('en-US')} | Coverage: ${currentStewardName}</div>
-                <table class="print-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 15%;">Member Name</th>
-                            <th style="width: 9%;">File Date</th>
-                            <th style="width: 9%;">Viol. Date</th>
-                            <th style="width: 10%;">Violation Type</th>
-                            <th style="width: 9%;">Steward</th>
-                            <th style="width: 8%;">Claimed $</th>
-                            <th style="width: 40%;">Notes & Disposition</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            printData.forEach(item => {
-                const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown';
-                const fDate = item.FileDate ? formatToUsDate(item.FileDate.split('T')[0]) : 'N/A';
-                const vDate = item.ViolationDate ? formatToUsDate(item.ViolationDate.split('T')[0]) : 'N/A';
-                const violType = item.ViolationSubType ? `${item.ViolationType} - ${item.ViolationSubType}` : (item.ViolationType || 'Not Set');
-                const steward = item.StewardOfRecord || 'Unassigned';
-                const origAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
-                
-                const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                const sDate = item.SettledDate ? formatToUsDate(item.SettledDate.split('T')[0]) : '';
-                const settledAmt = parseFloat(item.SettledAmount || 0).toFixed(2);
-                
-                let dispHtml = '';
-                if (currentDisp) {
-                    dispHtml = `<strong>Status:</strong> ${currentDisp}`;
-                    if (sDate) dispHtml += ` (${sDate})`;
-                    dispHtml += ` $${settledAmt}<br><br>`;
-                }
-
-                const notesAHtml = item.NotesA ? `<strong>Timeline:</strong><br>${item.NotesA}<br><br>` : '';
-                const notesBHtml = item.NotesB ? `<strong>Private Ledger:</strong><br>${item.NotesB}` : '';
-                
-                let combinedNotes = `${dispHtml}${notesAHtml}${notesBHtml}`.trim();
-                combinedNotes = combinedNotes.replace(/(<br>)+$/, '');
-                
-                html += `
-                    <tr>
-                        <td><strong>${empName}</strong></td>
-                        <td>${fDate}</td>
-                        <td>${vDate}</td>
-                        <td>${violType}</td>
-                        <td>${steward}</td>
-                        <td><strong>$${origAmt}</strong></td>
-                        <td style="font-size: 10px; color: #444; white-space: pre-wrap; line-height: 1.3;">${combinedNotes}</td>
-                    </tr>
-                `;
-            });
-
-            html += `</tbody></table>`;
-            
-            document.getElementById('print-section').innerHTML = html;
-            window.print();
-        }
-
         window.addEventListener('popstate', function(event) {
             const drawer = document.getElementById('side-drawer');
             if (drawer.classList.contains('open')) {
@@ -1265,7 +681,7 @@
             }
         });
 
-        loadHubData();
+        loadArchiveData();
     </script>
 </body>
 </html>
