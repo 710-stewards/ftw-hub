@@ -240,6 +240,13 @@
 </head>
 <body>
 
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+    
     <div id="loading-overlay">
         <img src="steward.png" alt="TAGS System" class="loading-logo">
         <div class="parsing-text">↻ Parsing records...</div>
@@ -471,11 +478,7 @@
         toggleSettingsMenu(); // Auto-close menu after clicking
     }
 
-    // Check memory on page load to see if they prefer light mode
-    if (localStorage.getItem('tags_theme') === 'light') {
-        document.body.classList.add('light-mode');
-    }
-
+    
     function clearToken() {
         if(confirm("Are you sure you want to log out and clear your security token?")) {
             localStorage.removeItem('saved_steward_token');
