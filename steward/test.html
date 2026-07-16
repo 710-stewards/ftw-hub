@@ -426,7 +426,7 @@
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
         }
-        function closeNavMenu() {
+                function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
@@ -445,11 +445,17 @@
             }
         }
 
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
             const isLight = document.body.classList.contains('light-mode');
             localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
             toggleSettingsMenu(); // Auto-close menu after clicking
+        }
+
+        // Check memory on page load to see if they prefer light mode
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
         }
 
         function clearToken() {
@@ -458,6 +464,9 @@
                 window.location.reload();
             }
         }
+        });
+
+        
         function unlockCard(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
             card.querySelectorAll('input:not([type="checkbox"]), select').forEach(elem => elem.disabled = false);
