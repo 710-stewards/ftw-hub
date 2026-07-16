@@ -16,16 +16,17 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+        
+        /* PUSHED CONTENT DOWN TO MAKE ROOM FOR THE NEW TALLER HEADER */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 145px; }
 
-        /* RESPONSIVE HEADER & NAVIGATION */
+        /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
+            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
+
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -275,53 +276,55 @@
         <div id="dynamic-nav-container"></div>      
     </div>
 
-       <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Local 710 Processing Hub</div>
-                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+           <div class="top-navbar">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+                <div>
+                    <div class="header-title">Local 710 Processing Hub</div>
+                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+                </div>
+            </div>
+            
+            <div style="position: relative;">
+                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+                
+                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+                
+                <div id="settings-dropdown" class="settings-dropdown">
+                    <button class="settings-item" onclick="generatePrintLayout()" style="border-bottom: 1px solid var(--border); color: var(--accent-green);">🖨️ Print Active Board</button>
+
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Display Options
+                    </div>
+                    
+                    <label class="settings-item" style="justify-content: space-between;">
+                        Hide Settled Cases
+                        <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                    </label>
+
+                    <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
+                        Group by Steward
+                        <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                    </label>
+
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Coverage Roster
+                    </div>
+                    
+                    <div id="coverage-checkboxes" style="max-height: 250px; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
+                    </div>
+
+                    <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+                </div>
             </div>
         </div>
-        
-        <div style="position: relative;">
-            <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
-            
-            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
-            
-            <div id="settings-dropdown" class="settings-dropdown">
-                <button class="settings-item" onclick="generatePrintLayout()" style="border-bottom: 1px solid var(--border); color: var(--accent-green);">🖨️ Print Active Board</button>
 
-                <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                    Display Options
-                </div>
-                
-                <label class="settings-item" style="justify-content: space-between;">
-                    Hide Settled Cases
-                    <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                </label>
-
-                <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
-                    Group by Steward
-                    <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                </label>
-
-                <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                    Coverage Roster
-                </div>
-                
-                <div id="coverage-checkboxes" style="max-height: 250px; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border);">
-                    <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
-                </div>
-
-                <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
-                <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
-            </div>
+        <div style="width: 100%;">
+            <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()" style="height: 45px;">
         </div>
-    </div>
-
-    <div style="margin-bottom: 15px;">
-        <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()">
     </div>
 
     <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
