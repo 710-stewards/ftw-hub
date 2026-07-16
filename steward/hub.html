@@ -16,16 +16,17 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+        
+        /* PUSHED CONTENT DOWN TO MAKE ROOM FOR THE NEW TALLER HEADER */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 145px; }
 
-        /* RESPONSIVE HEADER & NAVIGATION */
+        /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
+            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
+
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -37,20 +38,23 @@
         .hamburger-btn:active { transform: scale(0.9); }
 
         /* MOBILE OVERLAP & DATE WRAP FIX */
-        .local-dates-box { flex: 1; text-align: right; min-width: 220px; }
+        .local-dates-box { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; position: relative; min-width: 220px; }
+        .dates-text-wrap { text-align: right; display: flex; flex-direction: column; justify-content: center; }
+        
         @media (max-width: 650px) {
             body { padding-top: 140px; } 
             .local-dates-box { 
-                text-align: center; 
+                justify-content: space-between; 
                 min-width: 100%; 
                 padding-top: 10px; border-top: 1px dashed #333; 
             }
+            .dates-text-wrap { text-align: left; }
         }
 
         /* MAIN NAV DRAWER (LEFT SIDE) */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: #161616; border-right: 2px solid var(--accent);
+            background: var(--bg-main); border-right: 2px solid var(--accent);
             z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
             box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
         }
@@ -62,16 +66,15 @@
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
         .nav-item {
-            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none;
             font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
         }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
         .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
 
-       
         /* OVERHEAD KPI STATS BAR */
         .stats-banner {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -81,6 +84,65 @@
         .stat-box { text-align: center; padding: 6px; }
         .stat-val { font-size: 16px; font-weight: bold; color: var(--accent); }
         .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; margin-top: 2px; }
+
+        /* 3-DOT SETTINGS DROPDOWN */
+        .settings-dropdown {
+            position: absolute; top: 60px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
+                /* SEARCH BAR FIX */
+        .search-bar {
+            width: 100%; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px;
+            border-radius: 8px; background: #161616; border: 1px solid var(--accent);
+            color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); outline: none;
+        }
+        body.light-mode .search-bar {
+            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
+        }
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .drawer-header { background: #f8f9fa; }
+        body.light-mode .nav-item { color: #333; }
+        body.light-mode .nav-item:hover { background: #f0f2f5; }
+        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode input, body.light-mode select, body.light-mode textarea { background: #ffffff; color: #111; }
+        body.light-mode .sys-id-display-box { border-color: #ccc; }
+        body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
+        body.light-mode .hamburger-btn { color: #121212; } 
+        body.light-mode .stats-banner { background: #ffffff; border-color: #d1d5db; }
+        
+        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
+        body.light-mode .header-sub,
+        body.light-mode .ctr-meta,
+        body.light-mode .name-error-banner,
+        body.light-mode .id-error-banner,
+        body.light-mode .group-header-title,
+        body.light-mode .stat-val,
+        body.light-mode .local-dates-label {
+            color: #b37700 !important; 
+            -webkit-text-stroke: 0 !important; 
+            text-shadow: none !important;
+            font-weight: 900;
+        }
+
 
         /* CARD ARCHITECTURE */
         .record-card {
@@ -93,12 +155,12 @@
             gap: 16px; margin-top: 10px; align-items: flex-start;
         }
 
-        /* NEW HIGH-SPEED HEADER CSS */
+        /* HIGH-SPEED HEADER CSS */
         .card-top-row {
             display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 14px;
+            flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;
         }
-        .ctr-name { font-size: 20px; font-weight: 900; color: white; margin: 0; }
+        .ctr-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
         .ctr-amt { font-size: 20px; font-weight: 900; color: #ff3333; margin: 0; }
         .ctr-meta {
             display: flex; color: var(--accent); font-size: 14px;
@@ -116,13 +178,12 @@
         .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
         .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
         
-        input, select {
+        input, select, textarea {
             width: 100%; height: 42px; background: #262626; border: 1px solid #444;
             color: #fff; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none;
         }
-        input:focus, select:focus { border-color: var(--accent); }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
         
-        /* Specialized COMBO BOX styling */
         input.status-select::-webkit-calendar-picker-indicator { display: none !important; }
 
         .hold-reason-input {
@@ -142,12 +203,11 @@
 
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; /* Stretches across the entire screen */
+            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; 
             background: #161616; border-left: 2px solid var(--accent);
             z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
-        
         .side-drawer.open { transform: translateX(0); }
         .drawer-header {
             padding: 20px; background: #222; border-bottom: 1px solid var(--border);
@@ -156,9 +216,7 @@
         .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
         
         .pdf-frame { 
-            width: 100%; 
-            height: calc(100vh - 220px); /* Dynamically fills the screen height */
-            min-height: 800px; /* Forces enough vertical space for an 8.5x11 document */
+            width: 100%; height: calc(100vh - 220px); min-height: 800px; 
             border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
         }
 
@@ -179,88 +237,103 @@
         .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     
-   /* --- PRINT SPREADSHEET MODE --- */
+        /* --- PRINT SPREADSHEET MODE --- */
         @media print {
-            @page { size: landscape; margin: 0.5in; } /* Forces Landscape orientation */
+            @page { size: landscape; margin: 0.5in; } 
             body { background: white !important; color: black !important; padding: 0 !important; }
             .top-navbar, .main-nav-drawer, .nav-overlay, .stats-banner, #data-display, #side-drawer, .modal-overlay, #search-print-row {
                 display: none !important;
             }
-            
             #print-section { display: block !important; width: 100%; }
-            
-            /* Spreadsheet Styling with Autofit Layout */
             .print-table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 11px; margin-top: 15px; table-layout: fixed; }
             .print-table th, .print-table td { border: 1px solid #000; padding: 8px 6px; text-align: left; vertical-align: top; word-wrap: break-word; }
             .print-table th { background-color: #ddd !important; font-weight: bold; border-bottom: 2px solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-transform: uppercase; font-size: 10px; }
             .print-header { text-align: center; font-size: 20px; font-weight: bold; color: black; }
             .print-meta { text-align: center; font-size: 12px; color: #333; margin-bottom: 10px; }
         }
-    
     </style>
 </head>
 <body>
+
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
 
     <datalist id="global-disposition-list"></datalist>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
-            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
-            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
-        
-        <div style="padding: 10px 20px 0px;">
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
-                HIDE SETTLED CASES
-                <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
-            </label>
-        </div>
-        
-        <div style="padding: 10px 20px 15px;">
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--accent); cursor: pointer; background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444; width: 100%; transition: all 0.2s;">
-                GROUP BY STEWARD
-                <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
-            </label>
-        </div>
-        
-        <div id="dynamic-nav-container">
-            </div>     
-        
-        <div class="nav-section-title">Coverage Mode</div>
-        <div id="coverage-checkboxes" style="padding: 10px 20px; display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
-            <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
-        </div>
-        
-        <div class="nav-section-title" style="margin-top: auto;">System Settings</div>
-        <a href="#" class="nav-item disabled" style="margin-bottom: 20px;">Appearance: Dark Theme</a>
+        <div id="dynamic-nav-container"></div>      
     </div>
 
-    <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Local 710 Processing Hub</div>
-                <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+           <div class="top-navbar">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+                <div>
+                    <div class="header-title">Local 710 Processing Hub</div>
+                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
+                </div>
+            </div>
+            
+            <div style="position: relative;">
+                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+                
+                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+                
+                <div id="settings-dropdown" class="settings-dropdown">
+                    <button class="settings-item" onclick="generatePrintLayout()" style="border-bottom: 1px solid var(--border); color: var(--accent-green);">🖨️ Print Active Board</button>
+
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Display Options
+                    </div>
+                    
+                    <label class="settings-item" style="justify-content: space-between;">
+                        Hide Settled Cases
+                        <input type="checkbox" id="toggle-hide-settled" onchange="toggleSettledVisibility()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                    </label>
+
+                    <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
+                        Group by Steward
+                        <input type="checkbox" id="toggle-group-steward" checked onchange="renderHubCards()" style="width: 18px; height: 18px; accent-color: var(--accent);">
+                    </label>
+
+                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
+                        Coverage Roster
+                    </div>
+                    
+                    <div id="coverage-checkboxes" style="max-height: 250px; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border);">
+                        <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
+                    </div>
+
+                    <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+                </div>
             </div>
         </div>
-        
-        <div class="local-dates-box">
-            <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
-                Last Local: <span id="display-last-local" style="color: white;">Fetching...</span>
-            </div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; text-transform: uppercase;">
-                Next Local: <span id="display-next-local">None Scheduled</span>
-            </div>
+
+        <div style="width: 100%;">
+            <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()" style="height: 45px;">
         </div>
     </div>
 
-<div id="search-print-row" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
-        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="flex: 1; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
-        
-        <button onclick="generatePrintLayout()" style="height: 50px; padding: 0 20px; border-radius: 8px; background: var(--accent); color: #111; font-weight: bold; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;">
-            🖨️ 
-        </button>
+    <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Last Local:</span> <span id="display-last-local">Fetching...</span>
+        </div>
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Next Local:</span> <span id="display-next-local">None Scheduled</span>
+        </div>
     </div>
     
     <div class="stats-banner">
@@ -272,7 +345,7 @@
             <div id="metric-liability" class="stat-val">$0.00</div>
             <div class="stat-lbl">Pending Amount</div>
         </div>
-        <div class="stat-box" style="border-left: 1px dashed #333;">
+        <div class="stat-box" style="border-left: 1px dashed var(--border);">
             <div id="metric-today-count" class="stat-val" style="color: var(--accent-green);">0</div>
             <div class="stat-lbl">Settled Cases</div>
         </div>
@@ -281,6 +354,7 @@
             <div class="stat-lbl">Total Paid Out</div>
         </div>
     </div>
+
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
@@ -341,54 +415,43 @@
         const stewardGUID = urlParams.get('steward');
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
         
-        let masterGrievanceCache = []; // SECURE VAULT
-        let verifiedCacheArray = [];   // ACTIVE DISPLAY FILTER
+        let masterGrievanceCache = []; 
+        let verifiedCacheArray = [];   
         let masterDropdownOptionsArray = [];
         let masterStewardRoster = [];
         let myProfileData = {};
         let currentStewardName = '';
 
         function buildDynamicNav() {
-            // 1. Figure out exactly what page the user is currently looking at
-            // Example: If the URL is "local710.com/stewards/hub.html?steward=123", this grabs "hub.html"
             let currentPage = window.location.pathname.split('/').pop();
-            if (currentPage === '') currentPage = 'index.html'; // Fixes issue if they are just at the root folder
+            if (currentPage === '') currentPage = 'index.html'; 
 
-            // 2. Fetch the central menu file
             fetch('steward-nav.json')
                 .then(res => res.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('dynamic-nav-container');
                     let navHtml = '';
 
-                    // 3. Loop through the JSON and build the menu
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
                             navHtml += `<div class="nav-section-title">${item.title}</div>`;
                         } 
                         else if (item.type === 'link') {
-                            // THE MAGIC: Check if the JSON link matches the page we are on
                             if (item.filename === currentPage) {
-                                // It matches! Lock it down and make it gold.
                                 navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
                             } else {
-                                // It doesn't match. Make it a normal link and append the secure token!
                                 navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
                             }
                         }
                     });
-
-                    // Drop the finished HTML into the drawer
                     navContainer.innerHTML = navHtml;
                 })
                 .catch(err => console.error("Menu failed to load:", err));
         }
 
-        // Fire the function to build the menu
         buildDynamicNav();
         const getTodayString = () => new Date().toISOString().split('T')[0];
 
-        // Format Date to MM/DD/YYYY securely
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return 'N/A';
             const parts = isoString.split('T')[0].split('-');
@@ -396,7 +459,6 @@
             return isoString;
         };
 
-        // Nav Drawer Controllers
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
@@ -404,6 +466,34 @@
         function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
+        }
+
+        // --- 3-DOT MENU & THEME LOGIC ---
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settings-dropdown');
+            const overlay = document.getElementById('settings-overlay');
+            
+            dropdown.classList.toggle('open');
+            
+            if (dropdown.classList.contains('open')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            toggleSettingsMenu(); 
+        }
+
+        function clearToken() {
+            if(confirm("Are you sure you want to log out and clear your security token?")) {
+                localStorage.removeItem('saved_steward_token');
+                window.location.reload();
+            }
         }
 
         function unlockCard(recordId, btnElem) {
@@ -449,38 +539,34 @@
                 masterStewardRoster = bundle.stewardRoster || [];
                 masterDropdownOptionsArray = bundle.dropdownOptions || [];
 
-                // STRICT SECURITY VERIFICATION CHECK
                 myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
                 
                 if (!myProfileData) {
                     document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
-                    return; // KILL SCRIPT
+                    return; 
                 }
 
                 currentStewardName = myProfileData.StewardName;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
-                // --- POPULATE COVERAGE CHECKBOXES ---
                 const coverageContainer = document.getElementById('coverage-checkboxes');
                 coverageContainer.innerHTML = '';
                 
-                // Sort roster alphabetically by name
                 const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
 
                 sortedRoster.forEach(st => {
                     if (st.StewardName && st.StewardID) {
                         const isMe = st.StewardID === myProfileData.StewardID;
                         coverageContainer.innerHTML += `
-                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ccc; cursor: pointer; padding: 4px 0;">
-                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyCoverageFilter()" style="width: 16px; height: 16px; accent-color: var(--accent);">
+                            <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; padding: 6px 0;">
+                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" ${isMe ? 'checked' : ''} onchange="applyCoverageFilter()" style="width: 18px; height: 18px; accent-color: var(--accent);">
                                 ${st.StewardName} ${isMe ? '(Me)' : ''}
                             </label>
                         `;
                     }
                 });
 
-                // --- BUILD GLOBAL DATALIST COMBOBOX ---
                 const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
                 let datalistHtml = '';
                 dispRows.forEach(opt => {
@@ -491,7 +577,6 @@
                 });
                 document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
-                // --- LAST & NEXT LOCAL DATE ENGINE ---
                 const localScheduleArray = bundle.localLevelSchedule || [];
                 let nextLocalRaw = null;
                 let lastLocalRaw = null;
@@ -521,7 +606,6 @@
                 document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
                 document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
 
-                // TRIGGER INITIAL SECURE FILTER RENDER
                 applyCoverageFilter();
             }).catch(err => {
                 document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
@@ -534,14 +618,12 @@
             const searchTerm = (document.getElementById('global-search-input').value || '').toLowerCase().trim();
             
             verifiedCacheArray = masterGrievanceCache.filter(item => {
-                // 1. Check Steward Coverage First
                 const st = (item.StewardOfRecord || '').trim();
                 const matchesSteward = checkedBoxes.includes(st);
                 
                 if (!matchesSteward) return false;
-                if (!searchTerm) return true; // If search box is empty, let it through
+                if (!searchTerm) return true; 
 
-                // 2. Build a giant hidden string of all the case data to search against
                 const searchableData = `
                     ${item.FirstName || ''} ${item.LastName || ''}
                     ${item.RawOCRName || ''}
@@ -554,7 +636,6 @@
                     ${(item.Disposition && item.Disposition.Value) ? item.Disposition.Value : (item.Disposition || '')}
                 `.toLowerCase();
 
-                // 3. Keep the card if the search term exists anywhere in that giant string
                 return searchableData.includes(searchTerm);
             });
 
@@ -599,7 +680,6 @@
             const grouped = {};
             
             if (isGrouped) {
-                // The array is already sorted by Power Automate. Push keeps that exact order!
                 verifiedCacheArray.forEach(item => {
                     const stID = (item.StewardOfRecord || '').trim();
                     let stName = stID;
@@ -612,49 +692,38 @@
                     grouped[stName].push(item);
                 });
             } else {
-                // If ungrouped, just pass the perfectly sorted array straight through
                 grouped['All Selected Files'] = [...verifiedCacheArray];
             }
 
             let html = '';
-
-            // This only sorts the Group Headers (the Steward Names) alphabetically
             const sortedGroupNames = Object.keys(grouped).sort();
 
             for (const groupName of sortedGroupNames) {
-                            const items = grouped[groupName]; // No JavaScript scrambling!
+                const items = grouped[groupName]; 
 
-                        // MULTI-LEVEL SORT: Last Name -> First Name -> Violation Date
-            items.sort((a, b) => {
-                // 1. Safe Last Name extraction
-                let lastA = (a.LastName || '').trim();
-                let lastB = (b.LastName || '').trim();
-                if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
-                if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
+                items.sort((a, b) => {
+                    let lastA = (a.LastName || '').trim();
+                    let lastB = (b.LastName || '').trim();
+                    if (!lastA && a.RawOCRName) lastA = a.RawOCRName.split(' ').pop();
+                    if (!lastB && b.RawOCRName) lastB = b.RawOCRName.split(' ').pop();
+                    let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
+                    if (lastCompare !== 0) return lastCompare;
 
-                let lastCompare = lastA.localeCompare(lastB, undefined, { sensitivity: 'base' });
-                if (lastCompare !== 0) return lastCompare;
+                    let firstA = (a.FirstName || '').trim();
+                    let firstB = (b.FirstName || '').trim();
+                    if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
+                    if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
+                    let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
+                    if (firstCompare !== 0) return firstCompare;
 
-                // 2. Safe First Name extraction (Fixed OCR Fallback)
-                let firstA = (a.FirstName || '').trim();
-                let firstB = (b.FirstName || '').trim();
-                if (!firstA && a.RawOCRName) firstA = a.RawOCRName.split(' ')[0];
-                if (!firstB && b.RawOCRName) firstB = b.RawOCRName.split(' ')[0];
-                
-                let firstCompare = firstA.localeCompare(firstB, undefined, { sensitivity: 'base' });
-                if (firstCompare !== 0) return firstCompare;
-
-                // 3. Bulletproof Date Sort (Oldest first)
-                let dateA = a.ViolationDate || '9999-12-31';
-                let dateB = b.ViolationDate || '9999-12-31';
-                
-                return dateA.localeCompare(dateB);
-            });
-
+                    let dateA = a.ViolationDate || '9999-12-31';
+                    let dateB = b.ViolationDate || '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                });
 
                 html += `
                     <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
+                        <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Verified By: ' + groupName : groupName}</span>
                         <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} TOTAL CASE${items.length > 1 ? 'S' : ''}  </span>
                     </div>
                 `;
@@ -685,11 +754,12 @@
 
                     const currentWorksheetNotes = item.NotesB || '';
                     const internalHistoryHtml = currentWorksheetNotes ? `
-    <div class="internal-history-box" style="margin-top: 10px; padding: 10px; background: #1a1a1a; border: 1px dashed #555; border-radius: 6px; font-size: 12px; color: #ccc; line-height: 1.5;">
-        <b style="color: #ff9900; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">🔒 Private Ledger History:</b>
-        <div style="white-space: pre-wrap;">${currentWorksheetNotes}</div>
-    </div>
-` : '';
+                        <div class="internal-history-box" style="margin-top: 10px; padding: 10px; background: #1a1a1a; border: 1px dashed #555; border-radius: 6px; font-size: 12px; color: #ccc; line-height: 1.5;">
+                            <b style="color: #ff9900; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">🔒 Private Ledger History:</b>
+                            <div style="white-space: pre-wrap;">${currentWorksheetNotes}</div>
+                        </div>
+                    ` : '';
+                    
                     const isBofpi = !!item.BOFPITIC;
                     const isNps = !!item.NPS;
 
@@ -875,7 +945,6 @@
                 if (typeof mode === 'object' && mode.Value) mode = mode.Value;
             }
 
-            // --- INTERCEPT 1: MISSING SETTLEMENT NOTE ---
             if (mode === 'Settlement' && !customHoldReason) {
                 const noteModal = document.getElementById('note-modal-overlay');
                 noteModal.style.display = 'flex';
@@ -887,17 +956,14 @@
                 
                 document.getElementById('btn-note-no').onclick = function() {
                     noteModal.style.display = 'none';
-                    // User opted to go back, so we do nothing and let them edit
                     return; 
                 };
             } else {
-                // Not missing a note (or note wasn't required), proceed to next check
                 processDispositionIntercept(recordId, selectedStatus, mode, chosenOption);
             }
         }
 
         function processDispositionIntercept(recordId, selectedStatus, mode, chosenOption) {
-            // --- INTERCEPT 2: NEW DISPOSITION DETECTED ---
             if (!chosenOption) {
                 document.getElementById('new-disp-text').innerText = `"${selectedStatus}"`;
                 const modal = document.getElementById('disp-modal-overlay');
@@ -918,12 +984,10 @@
                     finalizeCommit(recordId, selectedStatus, chosenBehavior, "No"); 
                 };
             } else {
-                // Standard flow: known disposition, skip the popup
                 finalizeCommit(recordId, selectedStatus, mode, "No");
             }
         }
 
-        // --- THE ACTUAL CLOUD PAYLOAD ENGINE ---
         function finalizeCommit(recordId, selectedStatus, mode, saveGlobalFlag) {
             const card = document.getElementById(`hub-card-${recordId}`);
             const targetDate = card.querySelector('.settled-date-input').value;
@@ -1004,11 +1068,10 @@
             });
         }
 
-                function saveQuickNote(recordId, btnElem) {
+        function saveQuickNote(recordId, btnElem) {
             const card = document.getElementById(`hub-card-${recordId}`);
             const noteValue = card.querySelector('.worksheet-notes-input').value.trim();
             
-            // Visual feedback so you know it's saving
             const originalHtml = btnElem.innerHTML;
             btnElem.innerHTML = '⏳';
             btnElem.style.pointerEvents = 'none';
@@ -1025,7 +1088,6 @@
             })
             .then(res => {
                 if (res.ok) {
-                    // Turn button green with a checkmark on success
                     card.querySelector('.worksheet-notes-input').value = '';
                     btnElem.innerHTML = '✅';
                     btnElem.style.borderColor = 'var(--accent-green)';
@@ -1041,7 +1103,6 @@
                 }
             });
         }
-
 
         function openHubDrawer(recordId) {
             const record = masterGrievanceCache.find(r => r.Title === recordId);
@@ -1066,17 +1127,13 @@
                 ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
 
-                        document.getElementById('side-drawer').classList.add('open');
-            
-            // NEW: Trick the browser into thinking we opened a new page
+            document.getElementById('side-drawer').classList.add('open');
             history.pushState({ drawerOpen: true }, "", "#file-viewer");
         }
 
-
-                function closeDrawer() { 
+        function closeDrawer() { 
             document.getElementById('side-drawer').classList.remove('open'); 
             
-            // NEW: Clean up the history if they use the UI 'X' button
             if (window.location.hash === '#file-viewer') {
                 history.back();
             }
@@ -1103,16 +1160,14 @@
             document.removeEventListener('touchmove', resizeDrawer);
         }
 
-    function generatePrintLayout() {
+        function generatePrintLayout() {
             if (verifiedCacheArray.length === 0) {
                 alert("Nothing to print! The list is currently empty.");
                 return;
             }
 
-            // Check if user is hiding settled cases
             const hideSettled = document.getElementById('toggle-hide-settled').checked;
             
-            // Filter and sort the data for the printer
             let printData = [...verifiedCacheArray].filter(item => {
                 if (hideSettled) {
                     const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
@@ -1141,7 +1196,6 @@
                 return;
             }
 
-            // Build the HTML Table
             let html = `
                 <div class="print-header">Local 710 Processing Hub - Active Board</div>
                 <div class="print-meta">Generated on: ${new Date().toLocaleString('en-US')} | Coverage: ${currentStewardName}</div>
@@ -1168,7 +1222,6 @@
                 const steward = item.StewardOfRecord || 'Unassigned';
                 const origAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                 
-                // --- COMPILE THE NOTES COLUMN ---
                 const currentDisp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
                 const sDate = item.SettledDate ? formatToUsDate(item.SettledDate.split('T')[0]) : '';
                 const settledAmt = parseFloat(item.SettledAmount || 0).toFixed(2);
@@ -1177,8 +1230,6 @@
                 if (currentDisp) {
                     dispHtml = `<strong>Status:</strong> ${currentDisp}`;
                     if (sDate) dispHtml += ` (${sDate})`;
-                    
-                    // Condenses to a single line: Status: Claim Allowed (06/22/2026) $341.00
                     dispHtml += ` $${settledAmt}<br><br>`;
                 }
 
@@ -1186,8 +1237,6 @@
                 const notesBHtml = item.NotesB ? `<strong>Private Ledger:</strong><br>${item.NotesB}` : '';
                 
                 let combinedNotes = `${dispHtml}${notesAHtml}${notesBHtml}`.trim();
-                
-                // Strips off any empty line breaks at the very end of the cell so it stays compact
                 combinedNotes = combinedNotes.replace(/(<br>)+$/, '');
                 
                 html += `
@@ -1205,21 +1254,17 @@
 
             html += `</tbody></table>`;
             
-            // Drop it into the invisible container and trigger the print screen
             document.getElementById('print-section').innerHTML = html;
             window.print();
         }
 
-                // NEW: Intercept the Android/Hardware Back Button
         window.addEventListener('popstate', function(event) {
             const drawer = document.getElementById('side-drawer');
-            // If they hit back while the drawer is open, just close the drawer!
             if (drawer.classList.contains('open')) {
                 drawer.classList.remove('open');
             }
         });
 
-        
         loadHubData();
     </script>
 </body>
