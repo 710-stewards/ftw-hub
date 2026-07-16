@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local 710 Proposal Hub</title>
     <style>
-        /* CORE CONFIGURATION - MATCHES YOUR HUB STYLE */
         :root {
             --bg-main: #121212;
             --bg-card: #1e1e1e;
@@ -18,15 +17,17 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
+        
+        /* Adjusted padding for the new double-decker header */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
 
+        /* RESPONSIVE TWO-STORY STICKY HEADER */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            position: fixed; top: 0; left: 0; right: 0;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            flex-wrap: wrap; gap: 15px;
+            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
+        
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -35,27 +36,35 @@
             font-size: 28px; cursor: pointer; transition: transform 0.2s;
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
+        .hamburger-btn:active { transform: scale(0.9); }
 
-                /* MOBILE OVERLAP FIX FOR PORTRAIT MODE */
-        @media (max-width: 650px) {
-            body { padding-top: 150px !important; } 
-            .top-navbar { padding-bottom: 12px !important; }
-            .header-search-container { 
-                flex: 1 1 100% !important; 
-                margin-top: 10px !important; 
-            }
-            #global-search-input { 
-                max-width: 100% !important; 
-                float: none !important; 
-            }
+        /* CLEAN FULL-WIDTH SEARCH BAR */
+        .search-input {
+            width: 100%; height: 45px; background: #262626; border: 1px solid #444;
+            color: white; border-radius: 6px; padding: 0 15px; font-size: 15px; outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
+        .search-input:focus { border-color: var(--accent); }
 
-
+        /* 3-DOT MENU STYLES */
+        .settings-dropdown {
+            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1001;
+            display: none; flex-direction: column; overflow: hidden; min-width: 250px; max-width: 90vw;
+        }
+        .settings-dropdown.open { display: flex; }
+        .settings-item {
+            padding: 14px 20px; background: transparent; border: none; color: var(--text-main);
+            text-align: left; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border);
+        }
+        .settings-item:last-child { border-bottom: none; }
+        .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
 
         /* NAVIGATION DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: #161616; border-right: 2px solid var(--accent);
+            background: var(--bg-main); border-right: 2px solid var(--accent);
             z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
             box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
         }
@@ -66,15 +75,15 @@
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
 
         /* FILTER BUBBLES */
         .filter-bubbles-container {
             display: flex; gap: 10px; margin-bottom: 15px; overflow-x: auto; 
-            padding-bottom: 5px; scrollbar-width: none;
+            padding-bottom: 5px; scrollbar-width: none; margin-top: 10px;
         }
         .filter-bubbles-container::-webkit-scrollbar { display: none; }
         .filter-bubble {
@@ -92,7 +101,7 @@
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
         }
         .card-meta { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 200px; }
-        .submitter-name { font-size: 18px; font-weight: 900; color: white; }
+        .submitter-name { font-size: 18px; font-weight: 900; color: var(--text-main); }
         .proposal-category { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
         .proposal-snippet { color: var(--text-muted); font-size: 13px; line-height: 1.4; max-width: 500px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
@@ -108,7 +117,7 @@
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
             position: fixed; top: 0; right: 0; bottom: 0; width: 100%; max-width: 550px;
-            background: #161616; border-left: 2px solid var(--accent);
+            background: var(--bg-main); border-left: 2px solid var(--accent);
             z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
             box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
         }
@@ -117,36 +126,83 @@
         .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
         .drawer-handle { position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent; }
 
-        .drawer-text-block { background: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px dashed #444; color: #ddd; font-size: 14px; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap; }
-        .drawer-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-main: #f0f2f5;
+            --bg-card: #ffffff;
+            --text-main: #121212;
+            --text-muted: #555;
+            --border: #d1d5db;
+            --accent: #cca300; 
+        }
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .drawer-header { background: #f8f9fa; border-color: #d1d5db; }
+        body.light-mode .nav-item { color: #333; }
+        body.light-mode .nav-item:hover { background: #f0f2f5; }
+        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode .hamburger-btn { color: #121212; } 
+        body.light-mode .search-input { background: #ffffff !important; color: #111 !important; border-color: #ccc !important; }
+        body.light-mode .filter-bubble { background: #ffffff; border-color: #ccc; color: #555; }
+        body.light-mode .filter-bubble:hover { background: #f0f2f5; color: #111; }
+        body.light-mode .filter-bubble.active { background: #fffbe6; color: #b37700; border-color: #cca300; box-shadow: 0 0 10px rgba(204, 163, 0, 0.2); }
+        body.light-mode .drawer-text-block { background: #ffffff; border-color: #ccc; color: #111; }
+        body.light-mode .btn-3d { background-color: #f0f2f5; color: #111; border-color: #ccc; }
         
+        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
+        body.light-mode .header-sub, body.light-mode .proposal-category, body.light-mode #drawer-title {
+            color: #b37700 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-weight: 900;
+        }
+
     </style>
 </head>
 <body>
 
+    <script>
+        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
+        if (localStorage.getItem('tags_theme') === 'light') {
+            document.body.classList.add('light-mode');
+        }
+    </script>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="border-bottom: none; padding-bottom: 10px;">
-            <h3 style="color: white; font-size: 18px;">Navigation Panel</h3>
-            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
         <div id="dynamic-nav-container"></div>      
     </div>
 
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
-            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-            <div>
-                <div class="header-title">Contract Proposals</div>
-                <div id="steward-info" class="header-sub">Member Submission Queue</div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+                <div>
+                    <div class="header-title">Contract Proposals</div>
+                    <div id="steward-info" class="header-sub">Member Submission Queue</div>
+                </div>
+            </div>
+            
+            <div style="position: relative;">
+                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+                
+                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+                
+                <div id="settings-dropdown" class="settings-dropdown">
+                    <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
+                </div>
             </div>
         </div>
-        <div class="header-search-container" style="text-align: right; flex: 1;">
-            <input type="text" id="global-search-input" placeholder="🔍 Search proposals..." style="height: 40px; padding: 0 15px; border-radius: 20px; background: #222; border: 1px solid #444; color: white; outline: none; width: 100%; max-width: 250px; float: right;" oninput="applyFilters()">
+
+        <div style="width: 100%;">
+            <input type="text" id="global-search-input" class="search-input" placeholder="🔍 Search proposals..." oninput="applyFilters()">
         </div>
     </div>
 
-    <!-- SYNCHRONIZED MEMBER CATEGORIES -->
     <div class="filter-bubbles-container">
         <button class="filter-bubble active" onclick="setFilter('ALL', this)">ALL PROPOSALS</button>
         <button class="filter-bubble" onclick="setFilter('WAGES', this)">WAGES & PREMIUMS</button>
@@ -163,7 +219,6 @@
         </div>
     </div>
 
-    <!-- RIGHT SIDE DEEP DIVE DRAWER -->
     <div id="side-drawer" class="side-drawer">
         <div id="drawerHandle" class="drawer-handle"></div>
         <div class="drawer-header">
@@ -174,8 +229,7 @@
             <button class="btn-3d" onclick="closeDrawer()" style="height: 32px; padding: 0 10px; font-size: 11px;">✕ Close</button>
         </div>
         <div id="drawer-main-content" class="drawer-body">
-            <!-- Populated via Javascript -->
-        </div>
+            </div>
     </div>
 
     <script>
@@ -183,7 +237,6 @@
         let stewardGUID = urlParams.get('steward') || localStorage.getItem('saved_steward_token');
         if (stewardGUID) localStorage.setItem('saved_steward_token', stewardGUID);
 
-        // --- SINGLE DUAL-PURPOSE URL ---
         const proposalsFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/230151223e8443f6bb1095abe6245ede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=K45FpawXiqM8I24ONJ4HnhKZeghVrI_rGFaq4yhr4HQ";
         
         let masterProposalsCache = [];
@@ -224,7 +277,35 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-                function loadProposals() {
+        // --- 3-DOT MENU & THEME LOGIC ---
+        function toggleSettingsMenu() {
+            const dropdown = document.getElementById('settings-dropdown');
+            const overlay = document.getElementById('settings-overlay');
+            
+            dropdown.classList.toggle('open');
+            
+            if (dropdown.classList.contains('open')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            toggleSettingsMenu(); 
+        }
+
+        function clearToken() {
+            if(confirm("Are you sure you want to log out and clear your security token?")) {
+                localStorage.removeItem('saved_steward_token');
+                window.location.reload();
+            }
+        }
+
+        function loadProposals() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No token provided.";
                 return;
@@ -242,7 +323,6 @@
             .then(bundle => {
                 masterProposalsCache = bundle.proposals || bundle || [];
                 
-                // --- THE FIX: Stamp a unique barcode on every item ---
                 masterProposalsCache.forEach((item, index) => {
                     item.tempUID = 'prop_' + index;
                 });
@@ -268,7 +348,6 @@
             const filteredArray = masterProposalsCache.filter(item => {
                 const category = (item.Category || 'OTHER').toUpperCase();
                 
-                // 1. Bubble Filter Logic - Updated to match Member Categories
                 if (currentFilter !== 'ALL') {
                     if (currentFilter === 'WAGES' && !category.includes('WAGE') && !category.includes('PREMIUM')) return false;
                     if (currentFilter === 'HEALTHCARE' && !category.includes('HEALTHCARE') && !category.includes('PENSION')) return false;
@@ -276,7 +355,6 @@
                     if (currentFilter === 'SAFETY' && !category.includes('SAFETY') && !category.includes('EQUIPMENT')) return false;
                     if (currentFilter === 'SENIORITY' && !category.includes('SENIORITY') && !category.includes('BIDDING')) return false;
                     
-                    // The 'Other' bucket catches anything that doesn't trigger the major keywords above
                     if (currentFilter === 'OTHER' && (
                         category.includes('WAGE') || category.includes('PREMIUM') || 
                         category.includes('HEALTHCARE') || category.includes('PENSION') || 
@@ -286,7 +364,6 @@
                     )) return false;
                 }
                 
-                // 2. Search Filter
                 if (searchTerm) {
                     const searchData = `
                         ${item.SubmitterName || ''} 
@@ -299,12 +376,11 @@
                 return true;
             });
 
-            // Sort newest first
             filteredArray.sort((a, b) => new Date(b.SubmittedDate || 0) - new Date(a.SubmittedDate || 0));
             renderCards(filteredArray);
         }
 
-                        function renderCards(dataArray) {
+        function renderCards(dataArray) {
             const display = document.getElementById('data-display');
             if (dataArray.length === 0) {
                 display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No proposals found for this filter.</div>';
@@ -313,7 +389,7 @@
 
             let html = '';
             dataArray.forEach(item => {
-                const uniqueBarcode = item.tempUID; // Uses our new unique ID
+                const uniqueBarcode = item.tempUID; 
                 const name = item.SubmitterName || 'Anonymous Member';
                 const category = item.Category || 'General';
                 const snippet = item.ProposalText || 'No text provided.';
@@ -342,15 +418,13 @@
             display.innerHTML = html;
         }
 
-                                function openDrawer(uniqueBarcode) {
-            // Search the database using the unique barcode
+        function openDrawer(uniqueBarcode) {
             const record = masterProposalsCache.find(r => r.tempUID === uniqueBarcode);
             if (!record) return;
             
             const fullDate = record.SubmittedDate ? new Date(record.SubmittedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown Date';
 
             const submitterName = record.SubmitterName || 'Anonymous';
-            // Safely pull the actual Employee ID from the SharePoint Title column
             const empId = record.Title || 'Unknown'; 
 
             document.getElementById('drawer-title').innerText = `Submitted By: ${submitterName}`;
@@ -362,25 +436,25 @@
             const container = document.getElementById('drawer-main-content');
             
             container.innerHTML = `
-                <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 16px; margin-bottom: 25px; border-left: 4px solid var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 25px; border-left: 4px solid var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Category</div>
-                    <div style="color: var(--accent); font-size: 16px; font-weight: 900; text-transform: uppercase; margin-bottom: 14px;">
+                    <div class="proposal-category" style="font-size: 16px; font-weight: 900; margin-bottom: 14px;">
                         ${record.Category || 'N/A'}
                     </div>
                     
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Target Article</div>
-                    <div style="color: #fff; font-size: 14px; font-weight: 500;">
+                    <div style="color: var(--text-main); font-size: 14px; font-weight: 500;">
                         ${record.Article || 'None Specified'}
                     </div>
                 </div>
 
                 <span style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;">Member's Proposal Details</span>
-                <div style="background: #222; border: 1px solid #444; border-radius: 8px; padding: 20px; color: #e0e0e0; font-size: 15px; line-height: 1.6; white-space: pre-wrap; text-align: left; box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);">
+                <div class="drawer-text-block" style="background: #222; border: 1px solid #444; border-radius: 8px; padding: 20px; font-size: 15px; line-height: 1.6; white-space: pre-wrap; text-align: left; box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);">
 ${record.ProposalText || 'No details provided.'}
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px; padding: 15px; border-top: 1px solid #333;">
-                    <span style="color: #666; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <div style="text-align: center; margin-top: 30px; padding: 15px; border-top: 1px solid var(--border);">
+                    <span style="color: var(--text-muted); font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
                         🔒 Secure, Read-Only Record
                     </span>
                 </div>
@@ -390,14 +464,11 @@ ${record.ProposalText || 'No details provided.'}
             history.pushState({ drawerOpen: true }, "", "#proposal-viewer");
         }
 
-
-
         function closeDrawer() {
             document.getElementById('side-drawer').classList.remove('open');
             if (window.location.hash === '#proposal-viewer') history.back();
         }
 
-        // Drawer resizing logic
         const drawer = document.getElementById('side-drawer');
         const handle = document.getElementById('drawerHandle');
         handle.addEventListener('mousedown', initResize);
