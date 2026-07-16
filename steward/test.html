@@ -19,11 +19,13 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
+        
+        /* Padding to accommodate the double-stacked sticky header and steward controls */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 145px; }
 
         /* HEADER & NAVIGATION */
         .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0; min-height: 70px;
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
             background: #1a1a1a; border-bottom: 2px solid var(--accent);
             display: flex; align-items: center; justify-content: space-between;
             padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -67,25 +69,90 @@
         .nav-overlay.open { display: block; }
         
         .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
-        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; transition: all 0.2s; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
 
-        /* STEWARD CONTROLS */
+        /* STEWARD CONTROLS (Sticky directly under the header) */
         .steward-controls {
-            background: #222; border: 1px solid var(--border); padding: 10px 20px;
-            display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 20px;
+            position: fixed; top: 75px; left: 0; right: 0; background: #222;
+            border-bottom: 1px solid var(--border); padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 900;
         }
+        
         .center-toggle { display: flex; background: #111; border-radius: 6px; border: 1px solid #444; overflow: hidden; }
         .toggle-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
         .toggle-btn.active { background: var(--accent); color: #111; }
-        .admin-switch-container { display: flex; align-items: center; gap: 10px; font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
-        .toggle-switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+
+        .admin-switch-container { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--accent-red); }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        /* LOADING OVERLAY */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* MODAL STYLING */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); z-index: 3000; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(3px);
+        }
+        .modal-card {
+            background: var(--bg-card); width: 90%; max-width: 400px;
+            border-radius: 8px; border: 1px solid var(--border); padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-title { color: var(--accent); font-size: 18px; margin-bottom: 15px; font-weight: bold; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; background: #111; color: white;
+            border: 1px solid #444; border-radius: 4px; font-size: 14px;
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-full { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #444; color: white; }
+        .btn-submit { background: var(--accent); color: black; }
+
+        /* BOARD SPECIFIC STYLING */
+        .zone-header { background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px; border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+        .driver-row {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; transition: all 0.2s;
+        }
+        .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
+        .driver-info { display: flex; flex-direction: column; min-width: 150px; }
+        .driver-name { font-size: 16px; font-weight: bold; color: white; }
+        
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn-board { padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
+        .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+        
+        .btn-off { background-color: var(--accent-green); color: #111; }
+        .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
+        .btn-clear { background-color: #666; color: #fff; }
+        .btn-move { background-color: var(--accent-blue); color: #fff; }
+        .btn-delete { background-color: var(--accent-red); color: #fff; }
+        .btn-add { background-color: var(--accent); color: #111; width: 100%; margin-bottom: 20px; font-size: 14px; padding: 12px; display: none; }
+
+        /* Admin Mode Toggles */
+        .dispatch-ui { display: flex; gap: 8px; }
+        .admin-ui { display: none; gap: 8px; }
+        body.admin-mode .dispatch-ui { display: none; }
+        body.admin-mode .admin-ui { display: flex; }
+        body.admin-mode .btn-add { display: block; }
 
         /* LIGHT MODE OVERRIDES */
         body.light-mode { --bg-main: #f0f2f5; --bg-card: #ffffff; --text-main: #121212; --text-muted: #555; --border: #d1d5db; --accent: #cca300; }
@@ -94,106 +161,437 @@
         body.light-mode .driver-name { color: #111; }
         body.light-mode .nav-item { color: #333; }
         body.light-mode .hamburger-btn { color: #121212; } 
-        body.light-mode .center-toggle { background: #f0f2f5; }
-
-        /* BOARD SPECIFIC */
-        .zone-header { background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px; border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
-        .driver-row { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; }
-        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .btn-board { padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
-        .btn-off { background-color: var(--accent-green); color: #111; }
-        .btn-stay { background-color: #444; color: #fff; }
-        .btn-move { background-color: var(--accent-blue); color: #fff; }
-        .btn-delete { background-color: var(--accent-red); color: #fff; }
-        .btn-add { background-color: var(--accent); color: #111; width: 100%; margin-bottom: 20px; font-size: 14px; padding: 12px; display: none; }
-        body.admin-mode .admin-ui { display: flex; }
-        body.admin-mode .btn-add { display: block; }
+        body.light-mode .center-toggle { background: #f0f2f5; border-color: #ccc; }
+        body.light-mode .toggle-btn { color: #555; }
+        body.light-mode .toggle-btn.active { background: #cca300; color: #111; }
+        body.light-mode .zone-header { background: #f8f9fa; color: #b37700; border-color: #d1d5db; border-left-color: #cca300; }
+        body.light-mode .driver-row.highlight { background: #fffbe6; border-color: #cca300; box-shadow: 0 0 10px rgba(204, 163, 0, 0.2); }
+        body.light-mode .modal-card { background: #ffffff; border-color: #ccc; }
+        body.light-mode .modal-title { color: #b37700; }
+        body.light-mode .form-group input, body.light-mode .form-group select { background: #ffffff; color: #111; border-color: #ccc; }
+        body.light-mode .header-sub { color: #b37700 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <script>
+        // INSTANT MEMORY CHECK
         if (localStorage.getItem('tags_theme') === 'light') document.body.classList.add('light-mode');
     </script>
 
+    <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div style="padding: 20px; border-bottom: 1px solid var(--border);">
-            <img src="steward.png" style="height: 50px; margin-bottom: 10px;">
-            <button onclick="closeNavMenu()" style="background: none; border: none; color: white; float: right; cursor: pointer;">✕</button>
+        <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
+                <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
+                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
+            </div>
+            <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
         <div id="dynamic-nav-container"></div>      
     </div>
 
+    <div id="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Add New Driver</div>
+            <div class="form-group">
+                <label>DRIVER FULL NAME *</label>
+                <input type="text" id="newDriverName" placeholder="e.g. John Doe" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>ASSIGN TO GROUP *</label>
+                <select id="newDriverGroup">
+                    <option value="" disabled selected>Select a group...</option>
+                    <option value="Bid">Bid Driver</option>
+                    <option value="Coverage">Coverage Driver</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>SENIORITY (INSERT DIRECTLY AFTER)</label>
+                <select id="insertAfterSelect">
+                    <option value="TOP">-- Place at very top of list --</option>
+                </select>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-full btn-cancel" onclick="closeModal()">CANCEL</button>
+                <button class="btn-full btn-submit" onclick="submitNewDriver()">SAVE DRIVER</button>
+            </div>
+        </div>
+    </div>
+
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
             <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
-                <div class="header-title">Steward Admin</div>
-                <div class="header-sub">Manage Roster</div>
+                <div class="header-title" id="page-title">Steward Admin Board</div>
+                <div id="driver-info" class="header-sub">Manage Roster & Days Off</div>
             </div>
         </div>
         <div style="position: relative;">
-            <button class="hamburger-btn" onclick="toggleSettingsMenu()">⋮</button>
+            <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
+            
+            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
+            
             <div id="settings-dropdown" class="settings-dropdown">
-                <button class="settings-item" onclick="toggleTheme()">🌗 Day/Night Mode</button>
+                <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
                 <button class="settings-item" onclick="clearToken()" style="color: var(--accent-red);">🚪 Log Out</button>
             </div>
         </div>
     </div>
 
-    <div style="max-width: 800px; margin: 0 auto;">
-        <div class="steward-controls">
-            <div class="center-toggle">
-                <button id="btn-west" class="toggle-btn active" onclick="switchCenter('West')">WEST</button>
-                <button id="btn-east" class="toggle-btn" onclick="switchCenter('East')">EAST</button>
-            </div>
-            <div class="admin-switch-container">
-                ADMIN
-                <label class="toggle-switch"><input type="checkbox" id="adminToggle" onchange="toggleAdminMode()"><span class="slider"></span></label>
-            </div>
+    <div class="steward-controls">
+        <div class="center-toggle">
+            <button id="btn-west" class="toggle-btn active" onclick="switchCenter('West')">WEST</button>
+            <button id="btn-east" class="toggle-btn" onclick="switchCenter('East')">EAST</button>
         </div>
-        <div id="board-container">
-            <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER</button>
-            <div class="zone-header">Bid Drivers</div>
-            <div id="zone-1-list"></div>
-            <div class="zone-header">Coverage Drivers</div>
-            <div id="zone-3-list"></div>
+        <div class="admin-switch-container">
+            Admin Mode
+            <label class="toggle-switch">
+                <input type="checkbox" id="adminToggle" onchange="toggleAdminMode()">
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
+    <div id="board-container" style="max-width: 800px; margin: 0 auto; margin-top: 20px;">
+        <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER TO DATABASE</button>
+        <div class="zone-header">Bid Drivers (Round 1)</div>
+        <div id="zone-1-list"></div>
+        <div class="zone-header">Bid Drivers (Round 2)</div>
+        <div id="zone-2-list"></div>
+        <div class="zone-header">Coverage Drivers</div>
+        <div id="zone-3-list"></div>
+    </div>
+
     <script>
+        // 1. Security & Auth
         const urlParams = new URLSearchParams(window.location.search);
-        let stewardGUID = urlParams.get('steward') || localStorage.getItem('saved_steward_token');
-        if (stewardGUID) localStorage.setItem('saved_steward_token', stewardGUID);
-        
+        let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Steward Admin";
+
+        // 2. THE MEMORY LOGIC
         let currentCenter = localStorage.getItem('steward_center') || 'West';
+        
+        // 3. Power Automate URL
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
 
+        function initUI() {
+            document.getElementById('page-title').innerText = `${currentCenter} Center - Steward Admin`;
+            document.getElementById('btn-west').classList.toggle('active', currentCenter === 'West');
+            document.getElementById('btn-east').classList.toggle('active', currentCenter === 'East');
+        }
+
+        function switchCenter(centerName) {
+            currentCenter = centerName;
+            localStorage.setItem('steward_center', centerName);
+            initUI();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            loadBoardData();
+        }
+
+        function toggleAdminMode() {
+            document.body.classList.toggle('admin-mode', document.getElementById('adminToggle').checked);
+        }
+
+        // --- NAVIGATION CONTROLLERS ---
         function openNavMenu() { document.getElementById('main-nav-menu').classList.add('open'); document.getElementById('nav-overlay').classList.add('open'); }
         function closeNavMenu() { document.getElementById('main-nav-menu').classList.remove('open'); document.getElementById('nav-overlay').classList.remove('open'); }
-        function toggleSettingsMenu() { document.getElementById('settings-dropdown').classList.toggle('open'); }
+        function toggleSettingsMenu() { document.getElementById('settings-dropdown').classList.toggle('open'); document.getElementById('settings-overlay').style.display = document.getElementById('settings-dropdown').classList.contains('open') ? 'block' : 'none'; }
         function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); toggleSettingsMenu(); }
         function clearToken() { localStorage.removeItem('saved_steward_token'); window.location.reload(); }
-        function toggleAdminMode() { document.body.classList.toggle('admin-mode'); }
-        
-        function switchCenter(c) { currentCenter = c; localStorage.setItem('steward_center', c); location.reload(); }
-        
-        // Navigation builder remains the same as your other pages
+
         function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
-            fetch('steward-nav.json').then(res => res.json()).then(items => {
-                const nav = document.getElementById('dynamic-nav-container');
-                items.forEach(i => {
-                    if (i.type === 'link') nav.innerHTML += `<a href="${i.filename}?steward=${stewardGUID}" class="nav-item ${i.filename == currentPage ? 'active' : ''}">→ ${i.name}</a>`;
-                });
+            if (currentPage === '') currentPage = 'index.html'; 
+
+            let secureQueryString = `?name=${encodeURIComponent(activeDispatcher)}`;
+
+            fetch('steward-nav.json', { cache: 'no-store' })
+                .then(res => res.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('dynamic-nav-container');
+                    let navHtml = '';
+                    
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            navHtml += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            if (item.filename === currentPage) {
+                                navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
+                            } else {
+                                navHtml += `<a href="${item.filename}${secureQueryString}" class="nav-item">→ ${item.name}</a>`;
+                            }
+                        }
+                    });
+                    navContainer.innerHTML = navHtml;
+                })
+                .catch(err => console.error("Menu failed to load:", err));
+        }
+
+        // --- Modal Controls ---
+        function openModal() {
+            document.getElementById('newDriverName').value = "";
+            document.getElementById('newDriverGroup').value = "";
+            document.getElementById('modal-overlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        // The Universal Click Action
+        function stampDriver(driverName, status, zone, group) {
+            event.target.innerText = "...";
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+
+            const payload = { 
+                "DriverName": driverName, 
+                "NewStatus": status, 
+                "Timestamp": todayStr, 
+                "Zone": parseInt(zone), 
+                "Center": currentCenter, 
+                "Route": currentCenter + "Post", 
+                "UpdatedBy": activeDispatcher, 
+                "Group": group 
+            };
+
+            fetch(flowUrl, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => alert("Error saving to database."));
+        }
+
+        // --- ADMIN FUNCTIONS ---
+        function sendAdminPayload(driverName, routeString, extraData) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            const payload = {
+                "DriverName": driverName,
+                "Center": currentCenter,
+                "Route": routeString, 
+                "UpdatedBy": activeDispatcher,
+                ...extraData 
+            };
+
+            fetch(flowUrl, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => { 
+                if(res.ok) {
+                    setTimeout(() => { loadBoardData(); }, 1500); 
+                } else {
+                    document.getElementById('loading-overlay').style.display = 'none'; 
+                    alert("Backend Error: Power Automate failed to process the request.");
+                }
+            })
+            .catch(err => { 
+                document.getElementById('loading-overlay').style.display = 'none'; 
+                alert("Network Error: Could not reach the database."); 
             });
         }
+
+        function adminClearStatus(driverName, currentGroup, currentZone) {
+            if(confirm(`Are you sure you want to clear today's status for ${driverName}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: "", Timestamp: "", Zone: parseInt(currentZone) || 0, Group: currentGroup 
+                });
+            }
+        }
+
+        function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
+            if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup 
+                });
+            }
+        }
+
+        function adminDeleteDriver(driverName) {
+            if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Delete", {});
+            }
+        }
+
+        function submitNewDriver() {
+            const name = document.getElementById('newDriverName').value.trim();
+            const group = document.getElementById('newDriverGroup').value;
+            const insertAfter = document.getElementById('insertAfterSelect').value;
+            
+            if (!name || !group) { alert("You must enter a Name and select a Group."); return; }
+            
+            let targetZone = (group === 'Bid') ? 1 : 3;
+            let finalSortOrder = 1;
+
+            let groupList = window.masterDriverList.filter(d => d.Group === group);
+            
+            if (groupList.length > 0) {
+                if (insertAfter === "TOP") {
+                    finalSortOrder = (groupList[0].SortOrder || 1) - 1; 
+                } else {
+                    let targetIndex = groupList.findIndex(d => d.Title === insertAfter);
+                    if (targetIndex !== -1) {
+                        let driverA_Sort = groupList[targetIndex].SortOrder || 0;
+                        if (targetIndex + 1 < groupList.length) {
+                            let driverB_Sort = groupList[targetIndex + 1].SortOrder || 0;
+                            finalSortOrder = (driverA_Sort + driverB_Sort) / 2;
+                        } else {
+                            finalSortOrder = driverA_Sort + 1;
+                        }
+                    }
+                }
+            }
+
+            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "" });
+            closeModal();
+        }
+
+        // --- GLOBAL ROTATION MATH ---
+        function calculateGlobalHighlight(bidList, coverList) {
+            let virtualBoard = [];
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
+            coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
+
+            let mostRecentTime = 0; let mostRecentDateStr = "";
+            virtualBoard.forEach(d => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp) {
+                    let ts = new Date(d.Timestamp).getTime();
+                    if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
+                }
+            });
+            if (mostRecentDateStr === "") return 0; 
+
+            let lastOffIndex = -1; let firstStayAfterOff = -1;
+            virtualBoard.forEach((d, i) => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
+            });
+            
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
+            for (let i = startIndex; i < virtualBoard.length; i++) {
+                if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
+                    firstStayAfterOff = i; break; 
+                }
+            }
+
+            if (firstStayAfterOff !== -1) return firstStayAfterOff;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
+            else return 0; 
+        }
+
+        // Rendering the Rows
+        function buildRowHtml(driver, zoneContext, isHighlighted = false) {
+            let displayStatus = "PENDING"; let statusColor = "var(--text-muted)"; 
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+            const isToday = (driver.Timestamp === todayStr);
+            const isRecentPast = (driver.Timestamp === window.recentPastDay);
+            const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
+
+            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+                if (driver.CurrentStatus.toLowerCase() === 'off') {
+                    if (isToday) statusColor = "var(--accent-green)"; 
+                    else if (isRecentPast) statusColor = "var(--accent)"; 
+                    else statusColor = "var(--text-muted)"; 
+                } else { statusColor = "var(--accent-red)"; }
+            }
+
+            let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
+
+            let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
+                ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
+                : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
+
+            let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
+            let adminBtn = `
+                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
+                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}', ${driver.ZoneTag})">CLEAR</button>
+                <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
+            `;
+
+            let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
+
+            return `
+                <div class="${rowClass}">
+                    <div class="driver-info">
+                        <span class="driver-name">${driver.Title}</span>
+                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                        ${auditTrailHtml}
+                    </div>
+                    <div class="action-btns">
+                        <div class="dispatch-ui">${dispatchBtn}</div>
+                        <div class="admin-ui">${adminBtn}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fetching and Displaying the Data
+        function loadBoardData() {
+            fetch(flowUrl, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "Route": currentCenter + "Get" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                const d = new Date();
+                const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+                
+                let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
+                pastDates.sort((a, b) => new Date(b) - new Date(a));
+                window.recentPastDay = pastDates[0] || null; 
+                
+                window.masterDriverList = data; 
+                
+                const bidDrivers = data.filter(d => d.Group === 'Bid');
+                const coverDrivers = data.filter(d => d.Group === 'Coverage');
+
+                const allNames = data.map(d => `<option value="${d.Title}">${d.Title}</option>`).join('');
+                document.getElementById('insertAfterSelect').innerHTML = `<option value="TOP">-- Place at very top of list --</option>` + allNames;
+
+                const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
+                let runningIndex = 0;
+
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 1, isWinner);
+                }).join('');
+
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 2, isWinner);
+                }).join('');
+
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 3, isWinner);
+                }).join('');
+
+                setTimeout(() => {
+                    const activeRow = document.querySelector('.driver-row.highlight');
+                    if (activeRow) {
+                        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+
+            })
+            .catch(error => {
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+                console.error("Fetch error:", error);
+            });
+        }
+
+        // Initialize Page
+        initUI();
         buildDynamicNav();
-        
-        // Fetch and Render logic omitted for brevity, keep your original loadBoardData and render logic here.
-        // It will work seamlessly with the new standardized UI!
+        loadBoardData();
     </script>
 </body>
 </html>
