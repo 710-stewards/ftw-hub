@@ -98,6 +98,15 @@
         }
         .settings-item:last-child { border-bottom: none; }
         .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
+                /* SEARCH BAR FIX */
+        .search-bar {
+            width: 100%; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px;
+            border-radius: 8px; background: #161616; border: 1px solid var(--accent);
+            color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); outline: none;
+        }
+        body.light-mode .search-bar {
+            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
+        }
 
         /* LIGHT MODE OVERRIDES */
         body.light-mode {
@@ -124,12 +133,15 @@
         body.light-mode .ctr-meta,
         body.light-mode .name-error-banner,
         body.light-mode .id-error-banner,
-        body.light-mode .group-header-title {
+        body.light-mode .group-header-title,
+        body.light-mode .stat-val,
+        body.light-mode .local-dates-label {
             color: #b37700 !important; 
             -webkit-text-stroke: 0 !important; 
             text-shadow: none !important;
             font-weight: 900;
         }
+
 
         /* CARD ARCHITECTURE */
         .record-card {
@@ -263,7 +275,7 @@
         <div id="dynamic-nav-container"></div>      
     </div>
 
-    <div class="top-navbar">
+       <div class="top-navbar">
         <div style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 260px;">
             <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
             <div>
@@ -272,21 +284,14 @@
             </div>
         </div>
         
-        <div class="local-dates-box">
-            <div class="dates-text-wrap">
-                <div style="font-size: 13px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
-                    Last Local: <span id="display-last-local" style="color: var(--text-main);">Fetching...</span>
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: bold; text-transform: uppercase;">
-                    Next Local: <span id="display-next-local">None Scheduled</span>
-                </div>
-            </div>
-            
+        <div style="position: relative;">
             <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
             
             <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
             
             <div id="settings-dropdown" class="settings-dropdown">
+                <button class="settings-item" onclick="generatePrintLayout()" style="border-bottom: 1px solid var(--border); color: var(--accent-green);">🖨️ Print Active Board</button>
+
                 <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
                     Display Options
                 </div>
@@ -309,18 +314,23 @@
                     <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
                 </div>
 
-                <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
                 <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
             </div>
         </div>
     </div>
 
-    <div id="search-print-row" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
-        <input type="text" id="global-search-input" placeholder="🔍 Search names, driver IDs, violation types, notes, or statuses..." style="flex: 1; height: 50px; padding: 10px 16px 10px 20px; font-size: 15px; border-radius: 8px; background: #161616; border: 1px solid var(--accent); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.4);" oninput="applyCoverageFilter()">
-        
-        <button onclick="generatePrintLayout()" style="height: 50px; padding: 0 20px; border-radius: 8px; background: var(--accent); color: #111; font-weight: bold; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;">
-            🖨️ 
-        </button>
+    <div style="margin-bottom: 15px;">
+        <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()">
+    </div>
+
+    <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Last Local:</span> <span id="display-last-local">Fetching...</span>
+        </div>
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span class="local-dates-label" style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Next Local:</span> <span id="display-next-local">None Scheduled</span>
+        </div>
     </div>
     
     <div class="stats-banner">
@@ -341,6 +351,7 @@
             <div class="stat-lbl">Total Paid Out</div>
         </div>
     </div>
+
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
