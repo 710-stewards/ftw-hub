@@ -376,9 +376,9 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <!-- NEW EDIT/DELETE MODAL -->
+    <!-- UPGRADED EDIT/DELETE MODAL (Mirrors index.html verification logic) -->
     <div id="edit-modal-overlay" class="modal-overlay">
-        <div class="custom-modal" style="text-align: left;">
+        <div class="custom-modal" style="text-align: left; max-height: 90vh; overflow-y: auto;">
             <h3 class="modal-title" style="border-bottom: 1px dashed var(--border); padding-bottom: 10px;">Edit Grievance Record</h3>
             <input type="hidden" id="edit-record-id">
             
@@ -393,7 +393,7 @@
                 </div>
                 <div class="input-wrapper">
                     <span class="input-label">Driver ID</span>
-                    <input type="text" id="edit-gr-empid">
+                    <input type="text" id="edit-gr-empid" style="font-family: monospace; font-weight: bold;">
                 </div>
                 <div class="input-wrapper">
                     <span class="input-label">Claim Amount ($)</span>
@@ -406,6 +406,15 @@
                 <div class="input-wrapper">
                     <span class="input-label">File Date</span>
                     <input type="date" id="edit-gr-fdate">
+                </div>
+                
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Violation Type</span>
+                    <select id="edit-gr-vtype"></select>
+                </div>
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Sub Violation</span>
+                    <select id="edit-gr-subtype"></select>
                 </div>
             </div>
             
@@ -458,8 +467,13 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
+        
+        // The standard Processing Hub Reader/Writer Flow
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
         
+        // The Intake Hub 'Verify' Flow (We hijack this specifically for the Edit Modal!)
+        const intakeVerifyFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+
         let masterGrievanceCache = []; 
         let verifiedCacheArray = [];   
         let masterDropdownOptionsArray = [];
@@ -513,24 +527,16 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // --- 3-DOT MENU & THEME LOGIC ---
         function toggleSettingsMenu() {
             const dropdown = document.getElementById('settings-dropdown');
             const overlay = document.getElementById('settings-overlay');
-            
             dropdown.classList.toggle('open');
-            
-            if (dropdown.classList.contains('open')) {
-                overlay.style.display = 'block';
-            } else {
-                overlay.style.display = 'none';
-            }
+            overlay.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
         }
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
             toggleSettingsMenu(); 
         }
 
@@ -567,7 +573,7 @@
             });
         }
 
-        // --- NEW: EDIT/DELETE MODAL LOGIC ---
+        // --- NEW: EDIT/DELETE MODAL LOGIC (Tied to Intake Flow) ---
         function openEditModal(recordId) {
             const record = masterGrievanceCache.find(r => r.Title === recordId);
             if (!record) return;
@@ -579,6 +585,10 @@
             document.getElementById('edit-gr-amount').value = record.ViolationAmount || '';
             document.getElementById('edit-gr-vdate').value = record.ViolationDate ? record.ViolationDate.split('T')[0] : '';
             document.getElementById('edit-gr-fdate').value = record.FileDate ? record.FileDate.split('T')[0] : '';
+            
+            // Set the dropdowns safely
+            document.getElementById('edit-gr-vtype').value = record.ViolationType || '';
+            document.getElementById('edit-gr-subtype').value = record.ViolationSubType || '';
 
             document.getElementById('edit-modal-overlay').style.display = 'flex';
         }
@@ -595,17 +605,25 @@
             const amount = document.getElementById('edit-gr-amount').value.trim();
             const vdate = document.getElementById('edit-gr-vdate').value;
             const fdate = document.getElementById('edit-gr-fdate').value;
+            const vtype = document.getElementById('edit-gr-vtype').value;
+            const vsubtype = document.getElementById('edit-gr-subtype').value;
+
+            if (!empid || !fname || !lname) {
+                alert("Action Blocked: First Name, Last Name, and Driver ID are mandatory.");
+                return;
+            }
 
             const saveBtn = document.getElementById('btn-save-gr');
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
 
-            fetch(flowUrl, {
+            // Notice we are using the intakeVerifyFlowUrl and "action: verify" here!
+            fetch(intakeVerifyFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     stewardGuid: stewardGUID,
-                    action: "edit_record", // ADD THIS TO YOUR POWER AUTOMATE SWITCH
+                    action: "verify", 
                     titleId: recordId,
                     FirstName: fname,
                     LastName: lname,
@@ -613,7 +631,8 @@
                     ViolationAmount: amount,
                     ViolationDate: vdate,
                     FileDate: fdate,
-                    UpdatedByStamp: `${currentStewardName} - ${new Date().toLocaleString('en-US')}`
+                    ViolationType: vtype,
+                    ViolationSubType: vsubtype
                 })
             }).then(res => {
                 if (res.ok) {
@@ -622,7 +641,7 @@
                         closeEditModal();
                         saveBtn.innerText = '💾 Save';
                         saveBtn.style.pointerEvents = 'auto';
-                        loadHubData(); 
+                        loadHubData(); // Refresh the board
                     }, 1000);
                 } else {
                     alert("Cloud sync failed. The record was not updated.");
@@ -644,12 +663,13 @@
             delBtn.innerText = '⏳';
             delBtn.style.pointerEvents = 'none';
 
+            // This one points to the standard Hub Flow because Delete doesn't exist in the Intake logic
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     stewardGuid: stewardGUID,
-                    action: "delete_record", // ADD THIS TO YOUR POWER AUTOMATE SWITCH
+                    action: "delete_record", // -> ADD THIS TO YOUR PROCESSING HUB POWER AUTOMATE SWITCH
                     titleId: recordId
                 })
             }).then(res => {
@@ -713,6 +733,7 @@
                     }
                 });
 
+                // Generate Options for Main UI Dispositions
                 const dispRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'Disposition');
                 let datalistHtml = '';
                 dispRows.forEach(opt => {
@@ -723,6 +744,25 @@
                 });
                 document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
+                // Generate Options for the Edit Modal Type/Subtype Matchers
+                const violTypeRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationType');
+                const subViolRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationSubType');
+                
+                let typeHtml = '';
+                violTypeRows.forEach(opt => {
+                    const val = opt.OptionValue || opt.Value || '';
+                    if(val) typeHtml += `<option value="${val}">${val}</option>`;
+                });
+                document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
+
+                let subTypeHtml = '';
+                subViolRows.forEach(opt => {
+                    const val = opt.OptionValue || opt.Value || '';
+                    if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
+                });
+                document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
+
+                // Local Meeting Dates
                 const localScheduleArray = bundle.localLevelSchedule || [];
                 let nextLocalRaw = null;
                 let lastLocalRaw = null;
@@ -1017,7 +1057,6 @@
 
                         card.querySelectorAll('.settlement-fields').forEach(f => f.style.display = 'flex');
                         
-                        // Disable the edit button once a case is settled (unless unlocked)
                         const editBtn = card.querySelector('.edit-btn');
                         if (editBtn) editBtn.style.display = 'none';
 
@@ -1202,7 +1241,6 @@
                             elem.style.pointerEvents = 'none';
                         });
                         
-                        // Hide edit button on settlement
                         const editBtn = card.querySelector('.edit-btn');
                         if (editBtn) editBtn.style.display = 'none';
 
