@@ -267,6 +267,7 @@
     </script>
 
     <datalist id="global-disposition-list"></datalist>
+    <datalist id="edit-roster-list"></datalist>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
@@ -376,21 +377,18 @@
         <div id="drawer-main-content" class="drawer-body"></div>
     </div>
 
-    <!-- UPGRADED EDIT/DELETE MODAL (Mirrors index.html verification logic) -->
+    <!-- UPGRADED EDIT/DELETE MODAL (Mirrors index.html UX) -->
     <div id="edit-modal-overlay" class="modal-overlay">
         <div class="custom-modal" style="text-align: left; max-height: 90vh; overflow-y: auto;">
             <h3 class="modal-title" style="border-bottom: 1px dashed var(--border); padding-bottom: 10px;">Edit Grievance Record</h3>
             <input type="hidden" id="edit-record-id">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px;">
-                <div class="input-wrapper">
-                    <span class="input-label">First Name</span>
-                    <input type="text" id="edit-gr-fname">
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Member Name</span>
+                    <input type="text" id="edit-gr-fullname" list="edit-roster-list" oninput="handleEditRosterSelection(this)">
                 </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Last Name</span>
-                    <input type="text" id="edit-gr-lname">
-                </div>
+                
                 <div class="input-wrapper">
                     <span class="input-label">Driver ID</span>
                     <input type="text" id="edit-gr-empid" style="font-family: monospace; font-weight: bold;">
@@ -399,6 +397,7 @@
                     <span class="input-label">Claim Amount ($)</span>
                     <input type="number" step="0.01" id="edit-gr-amount">
                 </div>
+                
                 <div class="input-wrapper">
                     <span class="input-label">Violation Date</span>
                     <input type="date" id="edit-gr-vdate">
@@ -414,7 +413,8 @@
                 </div>
                 <div class="input-wrapper" style="grid-column: span 2;">
                     <span class="input-label">Sub Violation</span>
-                    <select id="edit-gr-subtype"></select>
+                    <select id="edit-gr-subtype" onchange="handleEditSubViolChange(this)"></select>
+                    <input type="text" id="edit-gr-custom-subtype" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
                 </div>
             </div>
             
@@ -478,6 +478,7 @@
         let verifiedCacheArray = [];   
         let masterDropdownOptionsArray = [];
         let masterStewardRoster = [];
+        let masterSeniorityArray = []; // Quietly fetched for Edit Modal Autofill
         let myProfileData = {};
         let currentStewardName = '';
 
@@ -579,18 +580,70 @@
             if (!record) return;
 
             document.getElementById('edit-record-id').value = recordId;
-            document.getElementById('edit-gr-fname').value = record.FirstName || '';
-            document.getElementById('edit-gr-lname').value = record.LastName || '';
+            
+            // Build the single Full Name string for the UX you requested
+            const fName = record.FirstName || '';
+            const lName = record.LastName || '';
+            const fullName = `${fName} ${lName}`.trim() || record.RawOCRName || '';
+            
+            document.getElementById('edit-gr-fullname').value = fullName;
             document.getElementById('edit-gr-empid').value = record.EmployeeID || '';
             document.getElementById('edit-gr-amount').value = record.ViolationAmount || '';
             document.getElementById('edit-gr-vdate').value = record.ViolationDate ? record.ViolationDate.split('T')[0] : '';
             document.getElementById('edit-gr-fdate').value = record.FileDate ? record.FileDate.split('T')[0] : '';
             
-            // Set the dropdowns safely
-            document.getElementById('edit-gr-vtype').value = record.ViolationType || '';
-            document.getElementById('edit-gr-subtype').value = record.ViolationSubType || '';
+            // Set the Violation Type safely, adding it to the list if it's somehow missing
+            const vTypeSelect = document.getElementById('edit-gr-vtype');
+            if (vTypeSelect.querySelector(`option[value="${record.ViolationType}"]`)) {
+                vTypeSelect.value = record.ViolationType;
+            } else if (record.ViolationType) {
+                vTypeSelect.innerHTML += `<option value="${record.ViolationType}">${record.ViolationType}</option>`;
+                vTypeSelect.value = record.ViolationType;
+            }
+
+            // Set the Sub Violation safely, triggering the custom box if needed
+            const subTypeSelect = document.getElementById('edit-gr-subtype');
+            const customInput = document.getElementById('edit-gr-custom-subtype');
+            
+            let isStandardSub = Array.from(subTypeSelect.options).some(opt => opt.value === record.ViolationSubType);
+            
+            if (record.ViolationSubType && !isStandardSub) {
+                subTypeSelect.value = 'CUSTOM_OTHER';
+                customInput.style.display = 'block';
+                customInput.value = record.ViolationSubType;
+            } else {
+                subTypeSelect.value = record.ViolationSubType || '';
+                customInput.style.display = 'none';
+                customInput.value = '';
+            }
 
             document.getElementById('edit-modal-overlay').style.display = 'flex';
+        }
+
+        function handleEditRosterSelection(inputElem) {
+            const typedName = inputElem.value.trim().toLowerCase();
+            const idInput = document.getElementById('edit-gr-empid');
+            
+            const match = masterSeniorityArray.find(p => {
+                const fn = p.FirstName || p['First Name'] || '';
+                const ln = p.LastName || p['Last Name'] || '';
+                return `${fn} ${ln}`.trim().toLowerCase() === typedName;
+            });
+
+            if (match) {
+                idInput.value = match.Title || match['Title'] || '';
+            }
+        }
+
+        function handleEditSubViolChange(selectElem) {
+            const customInput = document.getElementById('edit-gr-custom-subtype');
+            if (selectElem.value === 'CUSTOM_OTHER') {
+                customInput.style.display = 'block';
+                customInput.value = '';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
         }
 
         function closeEditModal() {
@@ -599,25 +652,33 @@
 
         function saveGrievanceEdits() {
             const recordId = document.getElementById('edit-record-id').value;
-            const fname = document.getElementById('edit-gr-fname').value.trim();
-            const lname = document.getElementById('edit-gr-lname').value.trim();
+            const fullName = document.getElementById('edit-gr-fullname').value.trim();
             const empid = document.getElementById('edit-gr-empid').value.trim();
             const amount = document.getElementById('edit-gr-amount').value.trim();
             const vdate = document.getElementById('edit-gr-vdate').value;
             const fdate = document.getElementById('edit-gr-fdate').value;
             const vtype = document.getElementById('edit-gr-vtype').value;
-            const vsubtype = document.getElementById('edit-gr-subtype').value;
+            
+            let vsubtype = document.getElementById('edit-gr-subtype').value;
+            if (vsubtype === 'CUSTOM_OTHER') {
+                vsubtype = document.getElementById('edit-gr-custom-subtype').value.trim();
+            }
 
-            if (!empid || !fname || !lname) {
-                alert("Action Blocked: First Name, Last Name, and Driver ID are mandatory.");
+            if (!empid || !fullName) {
+                alert("Action Blocked: Member Name and Driver ID are mandatory.");
                 return;
             }
+
+            // Slice the Full Name back into First/Last perfectly
+            const nameParts = fullName.split(' ');
+            const fname = nameParts[0] || '';
+            const lname = nameParts.slice(1).join(' ') || '';
 
             const saveBtn = document.getElementById('btn-save-gr');
             saveBtn.innerText = '⏳ Saving...';
             saveBtn.style.pointerEvents = 'none';
 
-            // Notice we are using the intakeVerifyFlowUrl and "action: verify" here!
+            // Notice we are using the intakeVerifyFlowUrl and "action: verify" here to keep the backend perfectly clean!
             fetch(intakeVerifyFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -744,23 +805,34 @@
                 });
                 document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
-                // Generate Options for the Edit Modal Type/Subtype Matchers
+                // Build Edit Modal Dropdowns with Fallbacks
                 const violTypeRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationType');
                 const subViolRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationSubType');
                 
-                let typeHtml = '';
-                violTypeRows.forEach(opt => {
-                    const val = opt.OptionValue || opt.Value || '';
-                    if(val) typeHtml += `<option value="${val}">${val}</option>`;
-                });
+                let typeHtml = `<option value="" hidden>Select...</option>
+                                <option value="Discharge">Discharge</option>
+                                <option value="Suspension">Suspension</option>
+                                <option value="Pay Claim">Pay Claim</option>
+                                <option value="Protest">Protest</option>
+                                <option value="Other">Other</option>`;
+                
+                if (violTypeRows.length > 0) {
+                    typeHtml = '<option value="" hidden>Select...</option>';
+                    violTypeRows.forEach(opt => {
+                        const val = opt.OptionValue || opt.Value || '';
+                        if(val) typeHtml += `<option value="${val}">${val}</option>`;
+                    });
+                }
                 document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
 
-                let subTypeHtml = '';
+                let subTypeHtml = '<option value="" hidden>Select...</option>';
                 subViolRows.forEach(opt => {
                     const val = opt.OptionValue || opt.Value || '';
                     if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
                 });
+                subTypeHtml += `<option value="CUSTOM_OTHER">✍️ Type Custom...</option>`;
                 document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
+
 
                 // Local Meeting Dates
                 const localScheduleArray = bundle.localLevelSchedule || [];
@@ -793,6 +865,27 @@
                 document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
 
                 applyCoverageFilter();
+                
+                // Silently fetch Seniority Roster for Modal Autofill without disrupting the main load
+                fetch(intakeVerifyFlowUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.seniorityList) {
+                        masterSeniorityArray = data.seniorityList;
+                        let opts = '';
+                        masterSeniorityArray.forEach(p => {
+                            const fn = p.FirstName || p['First Name'] || '';
+                            const ln = p.LastName || p['Last Name'] || '';
+                            if (fn || ln) opts += `<option value="${fn} ${ln}"></option>`;
+                        });
+                        document.getElementById('edit-roster-list').innerHTML = opts;
+                    }
+                }).catch(e => console.log("Silent roster fetch failed."));
+
             }).catch(err => {
                 document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
                 console.error(err);
