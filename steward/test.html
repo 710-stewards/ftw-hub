@@ -409,11 +409,21 @@
                 
                 <div class="input-wrapper" style="grid-column: span 2;">
                     <span class="input-label">Violation Type</span>
-                    <select id="edit-gr-vtype"></select>
+                    <select id="edit-gr-vtype">
+                        <option value="" hidden>Select...</option>
+                        <option value="Discharge">Discharge</option>
+                        <option value="Suspension">Suspension</option>
+                        <option value="Pay Claim">Pay Claim</option>
+                        <option value="Protest">Protest</option>
+                        <option value="Other">Other</option>
+                    </select>
                 </div>
                 <div class="input-wrapper" style="grid-column: span 2;">
                     <span class="input-label">Sub Violation</span>
-                    <select id="edit-gr-subtype" onchange="handleEditSubViolChange(this)"></select>
+                    <select id="edit-gr-subtype" onchange="handleEditSubViolChange(this)">
+                        <option value="" hidden>Select...</option>
+                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                    </select>
                     <input type="text" id="edit-gr-custom-subtype" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
                 </div>
             </div>
@@ -592,14 +602,13 @@
             document.getElementById('edit-gr-vdate').value = record.ViolationDate ? record.ViolationDate.split('T')[0] : '';
             document.getElementById('edit-gr-fdate').value = record.FileDate ? record.FileDate.split('T')[0] : '';
             
-            // Set the Violation Type safely, adding it to the list if it's somehow missing
+            // Set the Violation Type safely
             const vTypeSelect = document.getElementById('edit-gr-vtype');
-            if (vTypeSelect.querySelector(`option[value="${record.ViolationType}"]`)) {
-                vTypeSelect.value = record.ViolationType;
-            } else if (record.ViolationType) {
+            let isTypeMatch = Array.from(vTypeSelect.options).some(opt => opt.value === record.ViolationType);
+            if (record.ViolationType && !isTypeMatch) {
                 vTypeSelect.innerHTML += `<option value="${record.ViolationType}">${record.ViolationType}</option>`;
-                vTypeSelect.value = record.ViolationType;
             }
+            vTypeSelect.value = record.ViolationType || '';
 
             // Set the Sub Violation safely, triggering the custom box if needed
             const subTypeSelect = document.getElementById('edit-gr-subtype');
@@ -755,6 +764,53 @@
                 return;
             }
 
+            // Silently fetch Intake data to arm the Edit Modal
+            fetch(intakeVerifyFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const roster = data.seniorityList || data.stewardRoster || []; 
+                if (roster.length > 0) {
+                    masterSeniorityArray = roster;
+                    let opts = '';
+                    masterSeniorityArray.forEach(p => {
+                        const fn = p.FirstName || p['First Name'] || '';
+                        const ln = p.LastName || p['Last Name'] || '';
+                        if (fn || ln) opts += `<option value="${fn} ${ln}"></option>`;
+                    });
+                    document.getElementById('edit-roster-list').innerHTML = opts;
+                }
+                
+                const drops = data.dropdownOptions || [];
+                if (drops.length > 0) {
+                    const violTypeRows = drops.filter(opt => opt.Title === 'ViolationType');
+                    const subViolRows = drops.filter(opt => opt.Title === 'ViolationSubType');
+                    
+                    if (violTypeRows.length > 0) {
+                        let typeHtml = '<option value="" hidden>Select...</option>';
+                        violTypeRows.forEach(opt => {
+                            const val = opt.OptionValue || opt.Value || '';
+                            if(val) typeHtml += `<option value="${val}">${val}</option>`;
+                        });
+                        document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
+                    }
+
+                    if (subViolRows.length > 0) {
+                        let subTypeHtml = '<option value="" hidden>Select...</option>';
+                        subViolRows.forEach(opt => {
+                            const val = opt.OptionValue || opt.Value || '';
+                            if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
+                        });
+                        subTypeHtml += `<option value="CUSTOM_OTHER">✍️ Type Custom...</option>`;
+                        document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
+                    }
+                }
+            }).catch(e => console.log("Silent fetch failed."));
+
+
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -805,35 +861,6 @@
                 });
                 document.getElementById('global-disposition-list').innerHTML = datalistHtml;
 
-                // Build Edit Modal Dropdowns with Fallbacks
-                const violTypeRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationType');
-                const subViolRows = masterDropdownOptionsArray.filter(opt => opt.Title === 'ViolationSubType');
-                
-                let typeHtml = `<option value="" hidden>Select...</option>
-                                <option value="Discharge">Discharge</option>
-                                <option value="Suspension">Suspension</option>
-                                <option value="Pay Claim">Pay Claim</option>
-                                <option value="Protest">Protest</option>
-                                <option value="Other">Other</option>`;
-                
-                if (violTypeRows.length > 0) {
-                    typeHtml = '<option value="" hidden>Select...</option>';
-                    violTypeRows.forEach(opt => {
-                        const val = opt.OptionValue || opt.Value || '';
-                        if(val) typeHtml += `<option value="${val}">${val}</option>`;
-                    });
-                }
-                document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
-
-                let subTypeHtml = '<option value="" hidden>Select...</option>';
-                subViolRows.forEach(opt => {
-                    const val = opt.OptionValue || opt.Value || '';
-                    if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
-                });
-                subTypeHtml += `<option value="CUSTOM_OTHER">✍️ Type Custom...</option>`;
-                document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
-
-
                 // Local Meeting Dates
                 const localScheduleArray = bundle.localLevelSchedule || [];
                 let nextLocalRaw = null;
@@ -866,26 +893,6 @@
 
                 applyCoverageFilter();
                 
-                // Silently fetch Seniority Roster for Modal Autofill without disrupting the main load
-                fetch(intakeVerifyFlowUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.seniorityList) {
-                        masterSeniorityArray = data.seniorityList;
-                        let opts = '';
-                        masterSeniorityArray.forEach(p => {
-                            const fn = p.FirstName || p['First Name'] || '';
-                            const ln = p.LastName || p['Last Name'] || '';
-                            if (fn || ln) opts += `<option value="${fn} ${ln}"></option>`;
-                        });
-                        document.getElementById('edit-roster-list').innerHTML = opts;
-                    }
-                }).catch(e => console.log("Silent roster fetch failed."));
-
             }).catch(err => {
                 document.getElementById('loading').innerText = "Interface parsing failure on Hub handshake.";
                 console.error(err);
