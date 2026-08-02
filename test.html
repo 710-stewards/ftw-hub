@@ -228,6 +228,30 @@
         </select>
     </div>
 
+        <div class="search-banner">
+        <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="Search Date, Type, Amount, or Status...">
+        <select id="sort-dropdown" class="sort-select" onchange="applyFilters()">
+            <option value="default">Sort: Default (Pending First)</option>
+            <option value="newest">Sort: Newest Violation Date</option>
+            <option value="oldest">Sort: Oldest Violation Date</option>
+            <option value="settled_date">Sort: Settled Date (Newest)</option>
+            <option value="payout">Sort: Highest Final Payout</option>
+        </select>
+    </div>
+
+    <!-- NEW LOCAL LEVEL BANNER -->
+    <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 10px;">
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Last Local:</span> <span id="display-last-local">Fetching...</span>
+        </div>
+        <div style="font-size: 13px; font-weight: bold; color: var(--text-main);">
+            <span style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">Next Local:</span> <span id="display-next-local">None Scheduled</span>
+        </div>
+    </div>
+
+    <div id="data-display"></div>
+
+    
     <div id="data-display"></div>
 
     <div id="side-drawer" class="side-drawer">
@@ -358,6 +382,53 @@
                 
                 const profile = data.profile || {};
                 const grievances = data.grievances || [];
+
+                            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "memberGuid": memberGuid })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                const profile = data.profile || {};
+                const grievances = data.grievances || [];
+                
+                // --- START LOCAL LEVEL DATE LOGIC ---
+                const localScheduleArray = data.localLevelSchedule || [];
+                let nextLocalRaw = null;
+                let lastLocalRaw = null;
+
+                if (localScheduleArray.length > 0) {
+                    localScheduleArray.sort((a, b) => new Date(b.LocalLevel) - new Date(a.LocalLevel));
+                    
+                    const getTodayString = () => new Date().toISOString().split('T')[0];
+                    const date1 = localScheduleArray[0].LocalLevel;
+                    const date1String = date1.split('T')[0];
+                    const todayString = getTodayString();
+
+                    if (date1String >= todayString) {
+                        nextLocalRaw = date1;
+                        if (localScheduleArray.length > 1) {
+                            lastLocalRaw = localScheduleArray[1].LocalLevel;
+                        }
+                    } else {
+                        lastLocalRaw = date1;
+                    }
+                }
+
+                const formatMeetingDate = (rawDate) => {
+                    if (!rawDate) return null;
+                    return new Date(rawDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+                };
+
+                document.getElementById('display-last-local').innerText = formatMeetingDate(lastLocalRaw) || "Unknown";
+                document.getElementById('display-next-local').innerText = formatMeetingDate(nextLocalRaw) || "None Scheduled";
+                // --- END LOCAL LEVEL DATE LOGIC ---
+
+                if (!profile.EmployeeID) {
+
                 
                 if (!profile.EmployeeID) {
                     document.getElementById('driver-info').innerText = "Authentication Failed";
