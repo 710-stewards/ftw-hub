@@ -106,6 +106,8 @@
         }
         #doc-title { font-size: 14px; color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
         iframe { flex: 1; width: 100%; border: none; background: #222; }
+    
+    
     </style>
 </head>
 <body>
@@ -132,10 +134,75 @@
         </div>
     </div>
 
-    <div id="library-view">
+        <div id="library-view">
+        
+        <!-- PWA INSTALL INSTRUCTIONS (MOVED TO TOP, BORDER FIXED) -->
+        <details class="accordion-section" style="margin-bottom: 15px;">
+            <summary>📱 Install App to Home Screen <span>▼</span></summary>
+            <div style="padding: 15px 20px; font-size: 14px; line-height: 1.6; color: #e0e0e0;">
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 15px;">🍎 Apple / iOS (Must use Safari)</h4>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Apple devices block apps from remembering your secure token. You must <b>copy your exact link</b> before installing, then paste it when the app asks for it.</p>
+                    
+                    <!-- THE COPY BOX -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                        <input type="text" id="ios-link-box" readonly value="Tap copy to grab secure link →" style="flex: 1; background: #262626; border: 1px solid #444; color: #ccc; padding: 10px; border-radius: 6px; font-size: 11px; outline: none; cursor: default;">
+                        <button onclick="copySecureLink(this)" style="background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; box-shadow: 0 4px 0 #b38f00; transition: all 0.1s;">📋 Copy</button>
+                    </div>
+
+                    <ol style="padding-left: 20px; margin-bottom: 0; font-size: 13px;">
+                        <li style="margin-bottom: 6px;">Tap the <b>Share</b> button at the bottom of Safari (the square with an up arrow).</li>
+                        <li style="margin-bottom: 6px;">Scroll down and tap <b>"Add to Home Screen"</b>.</li>
+                        <li>Open the new app from your home screen and <b>paste</b> your copied link.</li>
+                    </ol>
+                </div>
+                
+                <div style="padding-top: 15px; border-top: 1px dashed #444;">
+                    <h4 style="color: var(--accent-green); margin-bottom: 8px; font-size: 15px;">🤖 Android</h4>
+                    <ol style="padding-left: 20px; margin-bottom: 0; font-size: 13px;">
+                        <li style="margin-bottom: 6px;">Open this portal in <b>Chrome</b>.</li>
+                        <li style="margin-bottom: 6px;">Tap the <b>3-dot menu</b> in the top right corner.</li>
+                        <li>Tap <b>"Add to Home screen"</b> or <b>"Install App"</b>.</li>
+                    </ol>
+                </div>
+                
+            </div>
+        </details>
+
+        <!-- THE CLIPBOARD LOGIC -->
+        <script>
+            function copySecureLink(btn) {
+                const fullUrl = window.location.href;
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    const box = document.getElementById('ios-link-box');
+                    box.value = fullUrl; 
+                    box.style.borderColor = 'var(--accent-green)';
+                    box.style.color = '#fff';
+                    
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Copied!';
+                    btn.style.backgroundColor = 'var(--accent-green)';
+                    btn.style.boxShadow = '0 2px 0 #1e824c';
+                    btn.style.transform = 'translateY(2px)';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.backgroundColor = 'var(--accent)';
+                        btn.style.boxShadow = '0 4px 0 #b38f00';
+                        btn.style.transform = 'translateY(0)';
+                        box.style.borderColor = '#444';
+                    }, 3000);
+                }).catch(err => {
+                    alert("Failed to copy link automatically. Please tap the URL bar at the top of Safari and copy it manually.");
+                });
+            }
+        </script>
+
         <div id="stewards-container"></div>
         <div id="accordion-container"></div>
     </div>
+
 
     <div id="viewer-view">
         <div class="viewer-controls">
