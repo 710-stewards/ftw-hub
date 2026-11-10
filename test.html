@@ -134,20 +134,10 @@
         </div>
     </div>
 
-    <div id="library-view">
-        <div id="stewards-container"></div>
-        <div id="accordion-container"></div>
-    </div>
-
-    <div id="viewer-view">
-        <div class="viewer-controls">
-            <button class="back-btn" onclick="closeDocument()">← Back</button>
-            <span id="doc-title"></span>
-        </div>
-        <iframe id="pdf-viewer" src=""></iframe>
-    </div>
-        <!-- PWA INSTALL INSTRUCTIONS -->
-        <details class="accordion-section" style="margin-bottom: 25px; border-color: var(--accent);">
+        <div id="library-view">
+        
+        <!-- PWA INSTALL INSTRUCTIONS (MOVED TO TOP, BORDER FIXED) -->
+        <details class="accordion-section" style="margin-bottom: 15px;">
             <summary>📱 Install App to Home Screen <span>▼</span></summary>
             <div style="padding: 15px 20px; font-size: 14px; line-height: 1.6; color: #e0e0e0;">
                 
@@ -183,23 +173,19 @@
         <!-- THE CLIPBOARD LOGIC -->
         <script>
             function copySecureLink(btn) {
-                // Grab the fully built URL (which includes the ID, Name, Hub, etc.)
                 const fullUrl = window.location.href;
-                
                 navigator.clipboard.writeText(fullUrl).then(() => {
                     const box = document.getElementById('ios-link-box');
-                    box.value = fullUrl; // Show them what they copied!
+                    box.value = fullUrl; 
                     box.style.borderColor = 'var(--accent-green)';
                     box.style.color = '#fff';
                     
-                    // Button animation
                     const originalText = btn.innerHTML;
                     btn.innerHTML = '✅ Copied!';
                     btn.style.backgroundColor = 'var(--accent-green)';
                     btn.style.boxShadow = '0 2px 0 #1e824c';
                     btn.style.transform = 'translateY(2px)';
                     
-                    // Reset after 3 seconds
                     setTimeout(() => {
                         btn.innerHTML = originalText;
                         btn.style.backgroundColor = 'var(--accent)';
@@ -212,6 +198,19 @@
                 });
             }
         </script>
+
+        <div id="stewards-container"></div>
+        <div id="accordion-container"></div>
+    </div>
+
+
+    <div id="viewer-view">
+        <div class="viewer-controls">
+            <button class="back-btn" onclick="closeDocument()">← Back</button>
+            <span id="doc-title"></span>
+        </div>
+        <iframe id="pdf-viewer" src=""></iframe>
+    </div>
 
     <script>
        // --- 1. GLOBAL VARIABLES & URL PARAMS ---
