@@ -13,7 +13,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local 710 Intake Hub</title>
-        <style>
+    <style>
         /* CORE CONFIGURATION */
         :root {
             --bg-main: #121212;
@@ -110,10 +110,8 @@
         body.light-mode .nav-item.active { background: #fffbe6; }
         body.light-mode input, body.light-mode select, body.light-mode textarea { background: #ffffff; color: #111; }
         body.light-mode .sys-id-display-box { border-color: #ccc; }
-        body.light-mode .btn-review { background: #f0f2f5; color: #111; border-color: #ccc; }
+        body.light-mode .btn-delete { background: #ffe6e6; color: #cc0000; border-color: #cc0000; }
         body.light-mode .hamburger-btn { color: #121212; } 
-        
-        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
         body.light-mode .header-sub,
         body.light-mode .ctr-meta,
         body.light-mode .name-error-banner,
@@ -125,15 +123,36 @@
             font-weight: 900;
         }
 
-        /* CARD ARCHITECTURE */
+        /* NEW FLUID SIDE-BY-SIDE CARD ARCHITECTURE */
         .record-card {
             background-color: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            border-radius: 8px; padding: 16px; margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid var(--border);
         }
         .record-card.ai-match { border: 2px solid var(--accent-green); border-left: 6px solid var(--accent-green); }
         .record-card.ai-fail { border: 2px solid var(--danger); border-left: 6px solid var(--danger); }
         
+        .card-content-wrapper { display: flex; flex-direction: column; gap: 25px; }
+        .card-data-section { display: flex; flex-direction: column; }
+        .card-pdf-section { display: flex; flex-direction: column; }
+
+        .inline-pdf { width: 100%; height: 60vh; min-height: 500px; max-height: 800px; border-radius: 6px; border: 1px solid var(--border); background: #222; }
+        .missing-pdf-box { padding: 40px 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 6px; font-weight: bold; background: rgba(0,0,0,0.2); }
+
+                /* MAGIC RESPONSIVE SWITCH FOR PC/TABLET LANDSCAPE */
+        @media (min-width: 900px) {
+            .card-content-wrapper { flex-direction: row; }
+            
+            /* PDF goes on the left (order 1) with padding on the right */
+            .card-pdf-section { flex: 1; order: 1; padding-right: 25px; }
+            
+            /* Form goes on the right (order 2) with a dashed border on its left */
+            .card-data-section { flex: 1; max-width: 45%; order: 2; border-left: 1px dashed var(--border); padding-left: 25px; }
+            
+            .inline-pdf { height: 100%; min-height: 600px; }
+        }
+
+
         .card-split-grid {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; align-items: flex-start;
         }
@@ -179,26 +198,7 @@
         }
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
         .btn-approve { background-color: var(--accent-green); color: #111; }
-        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
-
-        /* RIGHT SIDE AUDIT DRAWER */
-        .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; 
-            width: 100%; max-width: 450px;
-            background: #161616; border-left: 2px solid var(--accent);
-            z-index: 2000; transform: translateX(100%); transition: transform 0.3s ease;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
-        }
-        .side-drawer.open { transform: translateX(0); }
-        .drawer-header {
-            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-        .pdf-frame { width: 100%; height: 350px; border-radius: 4px; border: 1px solid #333; margin-top: 10px; }
-        .drawer-handle {
-            position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; cursor: ew-resize; background: transparent;
-        }
+        .btn-delete { background-color: #330000; color: #ff3333; border: 1px solid #ff3333; }
 
         /* EMPTY QUEUE CENTERED LAYOUT */
         .empty-queue-wrapper {
@@ -241,7 +241,6 @@
 <body>
 
     <script>
-        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
         if (localStorage.getItem('tags_theme') === 'light') {
             document.body.classList.add('light-mode');
         }
@@ -255,7 +254,7 @@
     <div id="global-datalists" style="display: none;"></div>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
-            <div id="main-nav-menu" class="main-nav-drawer">
+    <div id="main-nav-menu" class="main-nav-drawer">
         <div class="drawer-header" style="flex-direction: column; align-items: flex-start; padding: 25px 20px 15px; border-bottom: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 15px;">
                 <img src="steward.png" alt="TAGS Logo" style="height: 50px; object-fit: contain;">
@@ -263,7 +262,6 @@
             </div>
             <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
-        
         <div id="dynamic-nav-container"></div>      
     </div>
 
@@ -276,10 +274,9 @@
             </div>
         </div>
         
-                <div class="local-dates-box">
+        <div class="local-dates-box">
             <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
             
-            <!-- INVISIBLE OVERLAY -->
             <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
             
             <div id="settings-dropdown" class="settings-dropdown">
@@ -378,15 +375,6 @@
         </div>
     </div>
 
-    <div id="side-drawer" class="side-drawer">
-        <div id="drawerHandle" class="drawer-handle"></div>
-        <div class="drawer-header">
-            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Deep Dive Evidence</h3>
-            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
-        </div>
-        <div id="drawer-main-content" class="drawer-body"></div>
-    </div>
-
     <script>
     const urlParams = new URLSearchParams(window.location.search);
     let stewardGUID = urlParams.get('steward');
@@ -402,6 +390,10 @@
 
     // WRITER FLOW
     const saveFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/781b49f33fe949a4a5214e31a9e19455/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GOy4FdsXJFDFOf9uwaHwp0Af-RHoAyQ-p35r_aw0ixU";
+
+    // PROCESSING HUB FLOW (FOR DELETE ACTION)
+    const processingHubFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
+
 
     function buildDynamicNav() {
         let currentPage = window.location.pathname.split('/').pop();
@@ -456,28 +448,18 @@
         document.getElementById('nav-overlay').classList.remove('open');
     }
 
-            // --- 3-DOT MENU & THEME LOGIC ---
     function toggleSettingsMenu() {
         const dropdown = document.getElementById('settings-dropdown');
         const overlay = document.getElementById('settings-overlay');
-        
         dropdown.classList.toggle('open');
-        
-        if (dropdown.classList.contains('open')) {
-            overlay.style.display = 'block';
-        } else {
-            overlay.style.display = 'none';
-        }
+        overlay.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
     }
-
 
     function toggleTheme() {
         document.body.classList.toggle('light-mode');
-        const isLight = document.body.classList.contains('light-mode');
-        localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
-        toggleSettingsMenu(); // Auto-close menu after clicking
+        localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+        toggleSettingsMenu(); 
     }
-
     
     function clearToken() {
         if(confirm("Are you sure you want to log out and clear your security token?")) {
@@ -485,7 +467,6 @@
             window.location.reload();
         }
     }
-
 
     function updateHeader(checkedBoxes) {
         let viewName = 'Multiple';
@@ -512,13 +493,10 @@
                 <div style="padding: 20px; max-width: 500px; margin: 0 auto; margin-top: 20px;">
                     <h3 style="color: #ff3333; margin-bottom: 5px; text-align: center;">Security Halt</h3>
                     <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 14px; text-align: center;">No secure routing token found in memory.</p>
-                    
                     <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
                         <h4 style="color: var(--accent); margin-bottom: 10px; text-transform: uppercase; font-size: 13px; letter-spacing: 1px;">iPhone / iOS Setup Required</h4>
                         <p style="color: #ccc; font-size: 13px; margin-bottom: 15px; line-height: 1.5;">Apple devices block apps from reading your Safari history. To securely link this app to your Steward profile, please copy your personal link and paste it below.</p>
-                        
                         <input type="text" id="manual-token-input" placeholder="Paste your secure link here..." style="width: 100%; height: 45px; padding: 0 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid #555; background: #262626; color: white; outline: none; font-size: 14px;">
-                        
                         <button onclick="saveManualToken()" style="width: 100%; height: 42px; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; text-transform: uppercase; background-color: var(--accent-green); color: #111; cursor: pointer; box-shadow: 0 4px 0 #000; transition: transform 0.1s;">Sync My Device</button>
                     </div>
                 </div>`;
@@ -594,7 +572,7 @@
             coverageContainer.innerHTML = '';
             const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
 
-                        sortedRoster.forEach(st => {
+            sortedRoster.forEach(st => {
                 if (st.StewardName && st.StewardID) {
                     const isMe = st.StewardID === currentStewardId;
                     coverageContainer.innerHTML += `
@@ -605,7 +583,6 @@
                     `;
                 }
             });
-
 
             filterRecords();
         }).catch(err => {
@@ -635,7 +612,7 @@
         const displayContainer = document.getElementById('data-display');
         displayContainer.style.paddingBottom = '120px';
 
-                if (recordsList.length === 0) {
+        if (recordsList.length === 0) {
             displayContainer.innerHTML = `
                 <div class="empty-queue-wrapper">
                     <div class="empty-text-msg">
@@ -649,7 +626,6 @@
             `;
             return;
         }
-
 
         const isGrouped = document.getElementById('toggle-group-steward').checked;
         const groupedRecords = {};
@@ -693,13 +669,12 @@
                 return dateA - dateB;
             });
 
-                htmlContent += `
+            htmlContent += `
                 <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
                     <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Intake For: ' + groupName : groupName}</span>
                     <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} PENDING</span>
                 </div>
             `;
-
 
             items.forEach((item) => {
                 const sysId = item['Title'] || '';
@@ -754,84 +729,110 @@
                 let itemStewardName = (item.StewardOfRecord || '').trim();
                 const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
                 if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
-                const stewardBadgeHtml = !isGrouped ? `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+                const stewardBadgeHtml = !isGrouped ? `<span style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>` : '';
+
+                // NEW: INLINE PDF LOGIC
+                let safeLink = item.PublicLink || item.field_9 || '';
+                let inlinePdfHtml = '';
+                if (safeLink.includes("drive.google.com")) {
+                    const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
+                    if (fileIdMatch && fileIdMatch[1]) {
+                        // Embedded preview URL
+                        inlinePdfHtml = `<iframe src="https://drive.google.com/file/d/${fileIdMatch[1]}/preview" class="inline-pdf" loading="lazy" frameborder="0"></iframe>`;
+                    }
+                }
+                if (!inlinePdfHtml) {
+                    inlinePdfHtml = `<div class="missing-pdf-box">No document attached</div>`;
+                }
 
                 htmlContent += `
                     <div class="record-card ${cardClass}" id="card-${sysId}" style="transition: all 0.2s ease;">
-                        
-                        <div class="card-top-row">
-                            <h4 class="ctr-name">${displayName.replace(' *', '')}</h4>
-                            <div class="ctr-meta">
-                                <span>${vDateDisplay}</span>
-                                <span>${violType} ${subType ? '— ' + subType : ''}</span>
-                            </div>
-                            <div class="ctr-amt">$${originalAmt}</div>
-                        </div>
+                        <div class="card-content-wrapper">
+                            
+                            <!-- LEFT COLUMN: FORM DATA -->
+                            <div class="card-data-section">
+                                <div class="card-top-row">
+                                    <h4 class="ctr-name">${displayName.replace(' *', '')}</h4>
+                                    <div class="ctr-meta">
+                                        <span>${vDateDisplay}</span>
+                                        <span>${violType} ${subType ? '— ' + subType : ''}</span>
+                                    </div>
+                                    <div class="ctr-amt">$${originalAmt}</div>
+                                </div>
+                                
+                                ${stewardBadgeHtml}
 
-                        <div style="display: flex; gap: 15px; margin-bottom: 14px;" onclick="event.stopPropagation()">
-                            <div class="input-wrapper" style="flex: 1;">
-                                <span class="input-label emp-label">Member Name</span>
-                                <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
-                                ${nameAlertHtml}
-                            </div>
-                            <div class="input-wrapper" style="width: 110px; flex-shrink: 0;">
-                                <span class="input-label emp-label">Emp ID</span>
-                                <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
-                                ${idAlertHtml}
-                            </div>
-                        </div>
+                                <div style="display: flex; gap: 15px; margin-bottom: 14px;" onclick="event.stopPropagation()">
+                                    <div class="input-wrapper" style="flex: 1;">
+                                        <span class="input-label emp-label">Member Name</span>
+                                        <input type="text" class="emp-input" value="${displayName}" style="${nameInputStyleOverride}" list="master-seniority-list" oninput="handleRosterSelection('${sysId}', this)">
+                                        ${nameAlertHtml}
+                                    </div>
+                                    <div class="input-wrapper" style="width: 110px; flex-shrink: 0;">
+                                        <span class="input-label emp-label">Emp ID</span>
+                                        <input type="text" class="id-input" value="${empId}" style="${idInputStyleOverride}" placeholder="-------" maxlength="7">
+                                        ${idAlertHtml}
+                                    </div>
+                                </div>
 
-                        ${stewardBadgeHtml ? `<div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px;">${stewardBadgeHtml}</div>` : ''}
+                                <div class="card-split-grid" onclick="event.stopPropagation()">
+                                    <div class="input-wrapper">
+                                        <span class="input-label">File Date</span>
+                                        <input type="date" class="file-date" value="${fileDate}">
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Violation Date</span>
+                                        <input type="date" class="violation-date" value="${violDate}">
+                                    </div>
+                                    
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Violation Type</span>
+                                        <select class="violtype-select">
+                                            <option value="${violType}" hidden>${violType || 'Select...'}</option>
+                                            ${violTypeOptionsHtml || `
+                                                <option value="Discharge">Discharge</option>
+                                                <option value="Suspension">Suspension</option>
+                                                <option value="Pay Claim">Pay Claim</option>
+                                                <option value="Protest">Protest</option>
+                                                <option value="Other">Other</option>
+                                            `}
+                                        </select>
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Sub Violation</span>
+                                        <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
+                                            <option value="${subType}" hidden>${subType || 'Select...'}</option>
+                                            ${subViolOptionsHtml}
+                                            <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                                        </select>
+                                        <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
+                                    </div>
 
-                        <div class="card-split-grid" onclick="event.stopPropagation()">
-                            <div class="input-wrapper">
-                                <span class="input-label">File Date</span>
-                                <input type="date" class="file-date" value="${fileDate}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Date</span>
-                                <input type="date" class="violation-date" value="${violDate}">
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Claim Amt ($)</span>
+                                        <input type="number" step="0.01" class="amt-input" value="${amt}">
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">Sys ID</span>
+                                        <div class="sys-id-display-box">${sysId}</div>
+                                    </div>
+
+                                    <!-- NEW DELETE BUTTON -->
+                                    <div class="input-wrapper">
+                                        <span class="input-label">&nbsp;</span>
+                                        <button class="btn-3d btn-delete" onclick="deleteGrievance('${sysId}', this)">🗑️ Delete</button>
+                                    </div>
+                                    <div class="input-wrapper">
+                                        <span class="input-label">&nbsp;</span>
+                                        <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <div class="input-wrapper">
-                                <span class="input-label">Violation Type</span>
-                                <select class="violtype-select">
-                                    <option value="${violType}" hidden>${violType || 'Select...'}</option>
-                                    ${violTypeOptionsHtml || `
-                                        <option value="Discharge">Discharge</option>
-                                        <option value="Suspension">Suspension</option>
-                                        <option value="Pay Claim">Pay Claim</option>
-                                        <option value="Protest">Protest</option>
-                                        <option value="Other">Other</option>
-                                    `}
-                                </select>
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sub Violation</span>
-                                <select class="subviol-select" onchange="handleSubViolChange('${sysId}', this)">
-                                    <option value="${subType}" hidden>${subType || 'Select...'}</option>
-                                    ${subViolOptionsHtml}
-                                    <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
-                                </select>
-                                <input type="text" class="subviol-custom-input" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
-                            </div>
-
-                            <div class="input-wrapper">
-                                <span class="input-label">Claim Amt ($)</span>
-                                <input type="number" step="0.01" class="amt-input" value="${amt}">
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">Sys ID</span>
-                                <div class="sys-id-display-box">${sysId}</div>
-                            </div>
-
-                            <div class="input-wrapper">
-                                <span class="input-label">&nbsp;</span>
-                                <button class="btn-3d btn-review" onclick="openDrawer('${sysId}')">Review PDF File</button>
-                            </div>
-                            <div class="input-wrapper">
-                                <span class="input-label">&nbsp;</span>
-                                <button class="btn-3d btn-approve" onclick="executeRowCommit('${sysId}')">Verify & Approve</button>
+                            <!-- RIGHT COLUMN: INLINE PDF -->
+                            <div class="card-pdf-section">
+                                <span class="input-label" style="display: block; margin-bottom: 8px;">Evidence Document</span>
+                                ${inlinePdfHtml}
                             </div>
                             
                         </div>
@@ -841,7 +842,6 @@
         }
         displayContainer.innerHTML = htmlContent;
 
-        // Force validation scan immediately after HTML injection
         document.querySelectorAll('.file-date, .violation-date').forEach(el => validateIntakeAlerts(el, 'date'));
         document.querySelectorAll('.amt-input').forEach(el => validateIntakeAlerts(el, 'amount'));
     }
@@ -889,7 +889,45 @@
         }
     }
 
-    // --- NEW: SELF-DIAGNOSING APPROVAL ENGINE ---
+    // DELETE GRIEVANCE LOGIC
+    function deleteGrievance(recordId, btnElem) {
+        if(!confirm("🚨 WARNING: Are you sure you want to permanently delete this grievance? This action cannot be undone.")) return;
+
+        const originalText = btnElem.innerHTML;
+        btnElem.innerText = '⏳';
+        btnElem.style.pointerEvents = 'none';
+
+        fetch(processingHubFlowUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                stewardGuid: stewardGUID,
+                action: "delete_record", 
+                titleId: recordId
+            })
+        }).then(res => {
+            if(res.ok) {
+                // Remove from cache and hide card
+                fullDataCache = fullDataCache.filter(r => r.Title !== recordId);
+                const card = document.getElementById(`card-${recordId}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => { card.remove(); }, 300);
+                }
+            } else {
+                alert("Cloud delete failed. Make sure the delete_record branch in Power Automate is updated.");
+                btnElem.innerHTML = originalText;
+                btnElem.style.pointerEvents = 'auto';
+            }
+        }).catch(err => {
+            alert("Network error.");
+            btnElem.innerHTML = originalText;
+            btnElem.style.pointerEvents = 'auto';
+        });
+    }
+
     function executeRowCommit(recordId) {
         try {
             const card = document.getElementById(`card-${recordId}`);
@@ -905,7 +943,6 @@
                 return;
             }
 
-            // ID INTERCEPTOR
             const isKnownId = masterSeniorityArray.some(p => (p.Title || '').toString().trim() === updatedEmpId);
             if (!isKnownId) {
                 if (typeof openNewMemberModal !== "function") {
@@ -1032,78 +1069,6 @@
         lastHiddenCardId = null;
     }
 
-    function openDrawer(recordId) {
-        const record = fullDataCache.find(r => r.Title === recordId);
-        document.getElementById('drawer-title').innerText = `Deep Dive: ${recordId}`;
-        const drawerContent = document.getElementById('drawer-main-content');
-        if (!record) {
-            drawerContent.innerHTML = `<p style="color: var(--text-muted);">Record context dropped.</p>`;
-            return;
-        }
-        let safeLink = record.PublicLink || '';
-        let downloadBtnHtml = '';
-        if (safeLink.includes("drive.google.com")) {
-            const fileIdMatch = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-            if (fileIdMatch && fileIdMatch[1]) {
-                const fileId = fileIdMatch[1];
-                safeLink = `https://drive.google.com/file/d/${fileId}/preview`;
-                downloadBtnHtml = `
-                    <div style="text-align: center; margin-top: 12px;">
-                        <a href="https://drive.google.com/uc?export=download&id=${fileId}" style="display: inline-block; background-color: #333; color: var(--accent); padding: 10px 20px; font-size: 13px; font-weight: bold; border-radius: 4px; text-decoration: none; border: 1px solid var(--accent);">
-                            📥 Download PDF Copy </a>
-                    </div>
-                `;
-            }
-        }
-        drawerContent.innerHTML = `
-            <div style="margin-bottom: 20px; background: #222; padding: 12px; border-radius: 4px; border: 1px solid var(--border);">
-                <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 14px;">Master Metadata Context</h4>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Raw Extracted Name:</b> ${record.RawOCRName || 'N/A'}</p>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
-                <p style="font-size: 13px; margin-bottom: 4px;"><b>Steward of Record:</b> ${record.StewardOfRecord || 'N/A'}</p>
-                <p style="font-size: 13px;"><b>AI Operational Match:</b> ${record.AIMatched === true || record.AIMatched === 'true' ? 'Verified Match' : 'Discrepancy Detected'}</p>
-            </div>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Steward Internal Notes</label>
-            <textarea rows="3" style="width: 100%; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; padding: 10px; margin-bottom: 15px; resize: vertical;" placeholder="Type notes here..."></textarea>
-            <label style="font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: block;">Evidence Document</label>
-            ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>${downloadBtnHtml}` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); margin-top: 10px;">No document attached</div>`}
-        `;
-        document.getElementById('side-drawer').classList.add('open');
-        history.pushState({ drawerOpen: true }, "", "#file-viewer");
-    }
-
-    function closeDrawer() {
-        document.getElementById('side-drawer').classList.remove('open');
-        if (window.location.hash === '#file-viewer') {
-            history.back();
-        }
-    }
-
-    const drawer = document.getElementById('side-drawer');
-    const handle = document.getElementById('drawerHandle');
-    handle.addEventListener('mousedown', initResize);
-    handle.addEventListener('touchstart', initResize, { passive: true });
-
-    function initResize(e) {
-        document.addEventListener('mousemove', resizeDrawer);
-        document.addEventListener('mouseup', stopResize);
-        document.addEventListener('touchmove', resizeDrawer, { passive: false });
-        document.addEventListener('touchend', stopResize);
-    }
-
-    function resizeDrawer(e) {
-        let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const newWidth = window.innerWidth - clientX;
-        if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) {
-            drawer.style.width = newWidth + 'px';
-        }
-    }
-
-    function stopResize() {
-        document.removeEventListener('mousemove', resizeDrawer);
-        document.removeEventListener('touchmove', resizeDrawer);
-    }
-
     function validateIntakeAlerts(inputElement, fieldType) {
         let value = inputElement.value.trim();
         if (fieldType === 'date') {
@@ -1131,13 +1096,6 @@
         }
     });
 
-    window.addEventListener('popstate', function(event) {
-        const drawer = document.getElementById('side-drawer');
-        if (drawer.classList.contains('open')) {
-            drawer.classList.remove('open');
-        }
-    });
-
     window.saveManualToken = function() {
         const inputVal = document.getElementById('manual-token-input').value.trim();
         if (!inputVal) return;
@@ -1149,7 +1107,7 @@
         window.location.reload();
     };
 
-    // --- MODAL ENGINE (Self-Diagnosing) ---
+    // --- MODAL ENGINE ---
     function openNewMemberModal(fullName, empId) {
         const modal = document.getElementById('new-member-modal-overlay');
         
