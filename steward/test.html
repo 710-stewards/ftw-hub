@@ -889,7 +889,7 @@
         }
     }
 
-    // DELETE GRIEVANCE LOGIC
+        // DELETE GRIEVANCE LOGIC
     function deleteGrievance(recordId, btnElem) {
         if(!confirm("🚨 WARNING: Are you sure you want to permanently delete this grievance? This action cannot be undone.")) return;
 
@@ -897,7 +897,7 @@
         btnElem.innerText = '⏳';
         btnElem.style.pointerEvents = 'none';
 
-        fetch(processingHubFlowUrl, {
+        fetch(flowUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -906,6 +906,7 @@
                 titleId: recordId
             })
         }).then(res => {
+
             if(res.ok) {
                 // Remove from cache and hide card
                 fullDataCache = fullDataCache.filter(r => r.Title !== recordId);
