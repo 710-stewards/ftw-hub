@@ -520,7 +520,16 @@
         }
 
         buildDynamicNav();
-        const getTodayString = () => new Date().toISOString().split('T')[0];
+                const getTodayString = () => {
+            const cutoff = new Date();
+            // Subtract 1 day so today's meeting stays "Next Local" until 11:59 PM tonight
+            cutoff.setDate(cutoff.getDate() - 1);
+            const year = cutoff.getFullYear();
+            const month = String(cutoff.getMonth() + 1).padStart(2, '0');
+            const day = String(cutoff.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
 
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return 'N/A';
