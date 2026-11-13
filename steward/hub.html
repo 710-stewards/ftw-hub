@@ -520,7 +520,16 @@
         }
 
         buildDynamicNav();
-        const getTodayString = () => new Date().toISOString().split('T')[0];
+                const getTodayString = () => {
+            const cutoff = new Date();
+            // Subtract 1 day so today's meeting stays "Next Local" until 11:59 PM tonight
+            cutoff.setDate(cutoff.getDate() - 1);
+            const year = cutoff.getFullYear();
+            const month = String(cutoff.getMonth() + 1).padStart(2, '0');
+            const day = String(cutoff.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
 
         const formatToUsDate = (isoString) => {
             if (!isoString || isoString === 'N/A') return 'N/A';
@@ -725,7 +734,7 @@
             });
         }
 
-        function deleteGrievance() {
+                        function deleteGrievance() {
             const recordId = document.getElementById('edit-record-id').value;
             if(!confirm("🚨 WARNING: Are you sure you want to permanently delete this grievance? This action cannot be undone.")) return;
 
@@ -733,19 +742,31 @@
             delBtn.innerText = '⏳';
             delBtn.style.pointerEvents = 'none';
 
-            // This one points to the standard Hub Flow because Delete doesn't exist in the Intake logic
-            fetch(flowUrl, {
+            fetch(intakeVerifyFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     stewardGuid: stewardGUID,
-                    action: "delete_record", // -> ADD THIS TO YOUR PROCESSING HUB POWER AUTOMATE SWITCH
+                    action: "delete_record", 
                     titleId: recordId
                 })
             }).then(res => {
                 if(res.ok) {
                     closeEditModal();
-                    loadHubData(); 
+
+                    // 1. Purge from local caches so it doesn't come back on filter/sort
+                    masterGrievanceCache = masterGrievanceCache.filter(r => r.Title !== recordId);
+                    verifiedCacheArray = verifiedCacheArray.filter(r => r.Title !== recordId);
+                    calculateMetrics();
+
+                    // 2. Smoothly hide & remove the card immediately
+                    const card = document.getElementById(`hub-card-${recordId}`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        setTimeout(() => { card.remove(); }, 250);
+                    }
                 } else {
                     alert("Cloud delete failed.");
                 }
@@ -757,6 +778,7 @@
                 delBtn.style.pointerEvents = 'auto';
             });
         }
+
         
         function loadHubData() {
             if (!stewardGUID) {
