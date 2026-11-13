@@ -368,9 +368,9 @@
                 <div class="search-wrap">
             <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search all... (or art:3, mgr:, body:, id:)" oninput="handleSmartSearchInput('global-search-input', 'hub-search-popover', applyCoverageFilter)">
             <button type="button" class="search-help-btn" onclick="toggleSearchLegend('hub-search-popover')" title="Search Specific Category">?</button>
-            <div id="hub-search-popover" class="search-popover"></div>
+                        <div id="hub-search-popover" class="search-popover"></div>
         </div>
-
+    </div>
 
     <!-- DATES ROW -->
     <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
@@ -820,13 +820,8 @@
             });
         }
 
-        
-        function loadHubData() {
+                function loadHubData() {
             if (!stewardGUID) {
-             currentStewardName = myProfileData.StewardName;
-             isHubLoaded = true;
-             document.getElementById('loading').style.display = 'none';
-
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
             }
@@ -877,7 +872,6 @@
                 }
             }).catch(e => console.log("Silent fetch failed."));
 
-
             fetch(flowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -897,6 +891,7 @@
                 }
 
                 currentStewardName = myProfileData.StewardName;
+                isHubLoaded = true;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Boardroom Panel Mode`;
 
@@ -965,6 +960,8 @@
                 console.error(err);
             });
         }
+
+        
 
                 const SMART_SEARCH_TAGS = [
             { tag: 'art:', label: 'Article #', triggers: ['art', 'article'] },
