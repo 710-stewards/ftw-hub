@@ -438,7 +438,7 @@
                 const isPending = !disp || disp.toUpperCase() === 'PENDING';
                 if (hidePending && isPending) return false;
 
-                if (searchText !== '') {
+                                if (searchText !== '') {
                     const searchTarget = `
                         ${item.FirstName || ''} ${item.LastName || ''} 
                         ${item.RawOCRName || ''} 
@@ -446,6 +446,11 @@
                         ${item.Title || ''} 
                         ${item.ViolationType || ''} 
                         ${item.ViolationSubType || ''}
+                        ${item.ArticleNumber || ''}
+                        ${item.Manager || ''}
+                        ${item.Complaint || ''}
+                        ${item.NotesA || ''}
+                        ${item.NotesB || ''}
                         ${item.ViolationAmount || ''}
                         ${item.SettledAmount || ''}
                         ${formatToUsDate(item.ViolationDate ? item.ViolationDate.split('T')[0] : '')}
@@ -457,6 +462,7 @@
                     
                     if (!searchTarget.includes(searchText)) return false;
                 }
+
 
                 return true;
             });
