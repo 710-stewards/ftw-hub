@@ -725,7 +725,7 @@
             });
         }
 
-                function deleteGrievance() {
+                        function deleteGrievance() {
             const recordId = document.getElementById('edit-record-id').value;
             if(!confirm("🚨 WARNING: Are you sure you want to permanently delete this grievance? This action cannot be undone.")) return;
 
@@ -733,7 +733,6 @@
             delBtn.innerText = '⏳';
             delBtn.style.pointerEvents = 'none';
 
-            // Routed to the active flow containing your delete_record Switch branch
             fetch(intakeVerifyFlowUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -743,10 +742,22 @@
                     titleId: recordId
                 })
             }).then(res => {
-
                 if(res.ok) {
                     closeEditModal();
-                    loadHubData(); 
+
+                    // 1. Purge from local caches so it doesn't come back on filter/sort
+                    masterGrievanceCache = masterGrievanceCache.filter(r => r.Title !== recordId);
+                    verifiedCacheArray = verifiedCacheArray.filter(r => r.Title !== recordId);
+                    calculateMetrics();
+
+                    // 2. Smoothly hide & remove the card immediately
+                    const card = document.getElementById(`hub-card-${recordId}`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        setTimeout(() => { card.remove(); }, 250);
+                    }
                 } else {
                     alert("Cloud delete failed.");
                 }
@@ -758,6 +769,7 @@
                 delBtn.style.pointerEvents = 'auto';
             });
         }
+
         
         function loadHubData() {
             if (!stewardGUID) {
