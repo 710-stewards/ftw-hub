@@ -295,6 +295,8 @@
         let masterStewardRoster = [];
         let myProfileData = {};
         let currentStewardName = '';
+        let isArchiveLoaded = false;
+
 
         function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
@@ -393,6 +395,7 @@
                 }
 
                 currentStewardName = myProfileData.StewardName;
+                isArchiveLoaded = true;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Authorized Viewer`;
 
@@ -420,6 +423,7 @@
         }
 
         function applyFilters() {
+            if (!isArchiveLoaded) return;
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
             const isGrouped = document.getElementById('toggle-group-steward').checked;
             const hidePending = document.getElementById('toggle-hide-pending').checked;
