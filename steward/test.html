@@ -42,6 +42,43 @@
         }
         .search-bar:focus { border-color: var(--accent); }
 
+                /* SMART SEARCH WRAPPER & POPOVER */
+        .search-wrap { position: relative; width: 100%; }
+        .search-bar { padding-right: 42px; }
+        .search-help-btn {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #333; border: 1px solid #555; color: var(--accent);
+            font-size: 13px; font-weight: 900; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .search-help-btn:hover { background: rgba(255, 204, 0, 0.15); border-color: var(--accent); }
+        .search-popover {
+            position: absolute; top: 52px; left: 0; right: 0;
+            background: var(--bg-card); border: 1px solid var(--accent);
+            border-radius: 8px; padding: 12px 14px; z-index: 1002;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.75); display: none;
+        }
+        .search-popover.open { display: block; }
+        .sp-header { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+        .sp-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #262626; border: 1px solid #3a3a3a; border-radius: 6px;
+            padding: 7px 10px; cursor: pointer; transition: border-color 0.15s;
+        }
+        .sp-row:hover { border-color: var(--accent); }
+        .sp-label { font-size: 12px; font-weight: 700; color: var(--text-main); }
+        .sp-pill {
+            background: rgba(255, 204, 0, 0.12); color: var(--accent);
+            border: 1px solid var(--accent); border-radius: 4px;
+            padding: 2px 7px; font-family: monospace; font-size: 12px; font-weight: bold;
+        }
+        body.light-mode .search-help-btn { background: #f0f2f5; border-color: #ccc; color: #b37700; }
+        body.light-mode .sp-row { background: #f8f9fa; border-color: #d1d5db; }
+        body.light-mode .sp-pill { color: #b37700; border-color: #b37700; }
+
+
         /* MOBILE OVERLAP & DATE WRAP FIX */
         .local-dates-box { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 15px; position: relative; min-width: 220px; }
         .dates-text-wrap { text-align: right; display: flex; flex-direction: column; justify-content: center; }
@@ -328,10 +365,12 @@
             </div>
         </div>
 
-        <div style="width: 100%;">
-            <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search names, driver IDs, violation types..." oninput="applyCoverageFilter()">
+                <div class="search-wrap">
+            <input type="text" id="global-search-input" class="search-bar" placeholder="🔍 Search all... (or art:3, mgr:, body:, id:)" oninput="handleSmartSearchInput('global-search-input', 'hub-search-popover', applyCoverageFilter)">
+            <button type="button" class="search-help-btn" onclick="toggleSearchLegend('hub-search-popover')" title="Search Specific Category">?</button>
+            <div id="hub-search-popover" class="search-popover"></div>
         </div>
-    </div>
+
 
     <!-- DATES ROW -->
     <div style="display: flex; justify-content: space-between; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); flex-wrap: wrap; gap: 10px;">
@@ -491,6 +530,8 @@
         let masterSeniorityArray = []; // Quietly fetched for Edit Modal Autofill
         let myProfileData = {};
         let currentStewardName = '';
+        let isHubLoaded = false;
+
 
         function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
@@ -782,6 +823,10 @@
         
         function loadHubData() {
             if (!stewardGUID) {
+             currentStewardName = myProfileData.StewardName;
+             isHubLoaded = true;
+             document.getElementById('loading').style.display = 'none';
+
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
             }
@@ -921,16 +966,129 @@
             });
         }
 
+                const SMART_SEARCH_TAGS = [
+            { tag: 'art:', label: 'Article #', triggers: ['art', 'article'] },
+            { tag: 'mgr:', label: 'Manager', triggers: ['mgr', 'man', 'manager', 'sup'] },
+            { tag: 'body:', label: 'Complaint', triggers: ['body', 'comp', 'complaint', 'griev'] },
+            { tag: 'id:', label: 'Emp / Sys ID', triggers: ['id', 'emp', 'sys'] }
+        ];
+
+        function renderSearchPopover(popoverId, inputId, tagsToShow, isAutofill, filterFnName) {
+            const pop = document.getElementById(popoverId);
+            if (!pop || tagsToShow.length === 0) {
+                if (pop) pop.classList.remove('open');
+                return;
+            }
+            const title = isAutofill ? 'Tap to Autofill Category:' : 'Search Specific Category:';
+            pop.innerHTML = `
+                <div class="sp-header">${title}</div>
+                <div class="sp-grid">
+                    ${tagsToShow.map(item => `
+                        <div class="sp-row" onmousedown="event.preventDefault(); insertSmartTag('${inputId}', '${popoverId}', '${item.tag}', ${isAutofill}, ${filterFnName})">
+                            <span class="sp-label">${item.label}</span>
+                            <span class="sp-pill">${item.tag}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            pop.classList.add('open');
+        }
+
+        function toggleSearchLegend(popoverId) {
+            const pop = document.getElementById(popoverId);
+            if (pop.classList.contains('open')) {
+                pop.classList.remove('open');
+            } else {
+                const inputId = popoverId === 'hub-search-popover' ? 'global-search-input' : 'live-search-box';
+                const filterFn = popoverId === 'hub-search-popover' ? applyCoverageFilter : applyFilters;
+                renderSearchPopover(popoverId, inputId, SMART_SEARCH_TAGS, false, filterFn);
+            }
+        }
+
+        function handleSmartSearchInput(inputId, popoverId, filterFn) {
+            const val = document.getElementById(inputId).value;
+            const lastChunk = val.split(/[\s,]+/).pop().toLowerCase();
+
+            if (lastChunk.length >= 2 && !lastChunk.includes(':')) {
+                const matches = SMART_SEARCH_TAGS.filter(t =>
+                    t.triggers.some(trig => trig.startsWith(lastChunk))
+                );
+                if (matches.length > 0) {
+                    renderSearchPopover(popoverId, inputId, matches, true, filterFn);
+                } else {
+                    document.getElementById(popoverId).classList.remove('open');
+                }
+            } else {
+                document.getElementById(popoverId).classList.remove('open');
+            }
+
+            filterFn();
+        }
+
+        function insertSmartTag(inputId, popoverId, tag, replaceLastWord, filterFn) {
+            const input = document.getElementById(inputId);
+            let val = input.value;
+
+            if (replaceLastWord) {
+                val = val.replace(/[^\s,]+$/, '') + tag;
+            } else {
+                const needsSpace = val.length > 0 && !/[\s,]$/.test(val);
+                val = val + (needsSpace ? ' ' : '') + tag;
+            }
+
+            input.value = val;
+            document.getElementById(popoverId).classList.remove('open');
+            input.focus();
+            filterFn();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrap')) {
+                document.querySelectorAll('.search-popover').forEach(p => p.classList.remove('open'));
+            }
+        });
+
+        function matchesSmartSearch(item, rawSearch, allFieldsText) {
+            if (!rawSearch) return true;
+            const cleaned = rawSearch.replace(/:\s+/g, ':').replace(/,/g, ' ');
+            const tokens = cleaned.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+
+            return tokens.every(token => {
+                const cleanToken = token.replace(/^"|"$/g, '').toLowerCase();
+                if (!cleanToken) return true;
+
+                if (cleanToken.startsWith('art:') || cleanToken.startsWith('article:')) {
+                    const val = cleanToken.replace(/^art(icle)?:/, '');
+                    return !val || `${item.ArticleNumber || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('mgr:') || cleanToken.startsWith('manager:')) {
+                    const val = cleanToken.replace(/^m(anage)?r:/, '');
+                    return !val || `${item.Manager || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('body:') || cleanToken.startsWith('complaint:')) {
+                    const val = cleanToken.replace(/^(body|complaint):/, '');
+                    return !val || `${item.Complaint || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('id:')) {
+                    const val = cleanToken.replace(/^id:/, '');
+                    return !val || `${item.EmployeeID || ''} ${item.Title || ''}`.toLowerCase().includes(val);
+                }
+
+                return allFieldsText.includes(cleanToken);
+            });
+        }
+
         function applyCoverageFilter() {
+            if (!isHubLoaded) return;
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-            const searchTerm = (document.getElementById('global-search-input').value || '').toLowerCase().trim();
+            const rawSearch = (document.getElementById('global-search-input').value || '').trim();
             
             verifiedCacheArray = masterGrievanceCache.filter(item => {
                 const st = (item.StewardOfRecord || '').trim();
                 const matchesSteward = checkedBoxes.includes(st);
                 
                 if (!matchesSteward) return false;
-                if (!searchTerm) return true; 
+                if (!rawSearch) return true; 
 
                 const searchableData = `
                     ${item.FirstName || ''} ${item.LastName || ''}
@@ -939,12 +1097,16 @@
                     ${item.Title || ''}
                     ${item.ViolationType || ''}
                     ${item.ViolationSubType || ''}
+                    ${item.ArticleNumber || ''}
+                    ${item.Manager || ''}
+                    ${item.Complaint || ''}
+                    ${item.StewardOfRecord || ''}
                     ${item.NotesA || ''}
                     ${item.NotesB || ''}
                     ${(item.Disposition && item.Disposition.Value) ? item.Disposition.Value : (item.Disposition || '')}
                 `.toLowerCase();
 
-                return searchableData.includes(searchTerm);
+                return matchesSmartSearch(item, rawSearch, searchableData);
             });
 
             calculateMetrics();
