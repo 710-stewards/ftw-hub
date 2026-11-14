@@ -262,26 +262,29 @@
                 .catch(err => console.log("Menu Error:", err));
         }
 
-        // Progressive Friction Click Handler (1st = Rules Modal, 2-11 = Warning, 12 = Final Warning, 13+ = Instant)
+                // Progressive Friction Click Handler (1st = Rules Modal + Confirm, 2-11 = Warning, 12 = Final Warning, 13+ = Instant)
         function stampDriver(btnElement, driverName, status, zone, group) {
             if (isUserAccessRevoked) return;
 
-            let clickCount = parseInt(localStorage.getItem('daysoff_click_count') || '0', 10);
+            const hasSeenRules = localStorage.getItem('daysoff_rules_ack') === 'true';
 
-            // Click #1: Full First-Time Rules modal
-            if (clickCount === 0) {
+            // Step 1: Informational Rules Modal (Shown once; does NOT write to the board by itself)
+            if (!hasSeenRules) {
                 openRulesModal(() => {
-                    localStorage.setItem('daysoff_click_count', '1');
-                    executeStampDriver(btnElement, driverName, status, zone, group);
+                    localStorage.setItem('daysoff_rules_ack', 'true');
+                    // Immediately flow into the confirmation prompt so they still have an exit ramp
+                    stampDriver(btnElement, driverName, status, zone, group);
                 });
                 return;
             }
+
+            let clickCount = parseInt(localStorage.getItem('daysoff_click_count') || '0', 10);
 
             const question = status === 'Off'
                 ? `Are you sure ${driverName} got the day off today?`
                 : `Are you sure ${driverName}'s day off was revoked today?`;
 
-            // Clicks #2 through #11: Standard confirmation check
+            // Clicks #1 through #11: Standard confirmation check
             if (clickCount < 11) {
                 if (!confirm(`⚠️ LIVE ROTATION WARNING:\n\n${question}\n\nYour name is logged on every update—false entries will get your edit access locked.`)) {
                     return;
@@ -300,6 +303,7 @@
             }
             executeStampDriver(btnElement, driverName, status, zone, group);
         }
+
 
         // Actual Database Write
         function executeStampDriver(btnElement, driverName, status, zone, group) {
