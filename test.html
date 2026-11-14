@@ -133,15 +133,19 @@
 </head>
 <body>
 
-    <div id="loading-overlay">
+        <div id="loading-overlay" style="padding: 25px; text-align: center;">
         <div class="parsing-text">↻ Loading Live Board...</div>
+        <div style="color: var(--text-muted); font-size: 13px; max-width: 320px; margin-top: 12px; line-height: 1.5;">
+            Created so members can collectively track the daily Days Off rotation in real time.
+        </div>
     </div>
+
 
     <!-- FIRST-TIME RULES MODAL -->
     <div id="rules-modal-overlay">
-        <div class="rules-card">
+                <div class="rules-card">
             <div class="rules-title">⚠️ Before You Update the Board</div>
-            <p style="font-size: 13px; color: var(--text-muted);">Read these 3 rules carefully before making your first update:</p>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">This tool was created so members can collectively track the Days Off rotation. Please read and follow the 3 rules below:</p>
             <ul class="rules-list">
                 <li><strong>Updates the Live Center Board:</strong> Your click updates the live rotation for everyone in the center—not just your own phone.</li>
                 <li><strong>ONLY Click Drivers Who Got Off:</strong> Do <strong>not</strong> click the people in between who stayed or worked. The board automatically skips them and highlights the next person up.</li>
@@ -152,6 +156,7 @@
                 <button class="btn-rule-agree" id="btn-rules-agree">I UNDERSTAND</button>
             </div>
         </div>
+
     </div>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
