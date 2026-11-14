@@ -3,45 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Library | Local 710</title>
+    <title>West Center - Days Off Board</title>
+    
     <style>
         :root {
             --bg-main: #121212;
+            --bg-card: #1e1e1e;
             --accent: #ffcc00;
+            --accent-green: #2ecc71;
+            --accent-red: #ff3333;
+            --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
-        html, body {
-            overscroll-behavior-y: auto !important; 
-            overflow-y: auto !important;
-        }
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 100px; }
 
-        body { 
-            background-color: var(--bg-main); 
-            color: var(--text-main); 
-            height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden;
-        }
-
-        /* Top Navbar */
+        /* HEADER & NAVIGATION */
         .top-navbar {
-            height: 70px; background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            display: flex; align-items: center; padding: 0 20px; flex: 0 0 auto; z-index: 1000;
+            position: fixed; top: 0; left: 0; right: 0; min-height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex-wrap: wrap; gap: 15px;
         }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
         .hamburger-btn {
             background: none; border: none; color: var(--accent); 
-            font-size: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-right: 15px;
+            font-size: 28px; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
+        .hamburger-btn:active { transform: scale(0.9); }
 
-        /* Drawer Styles */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
             background: #161616; border-right: 2px solid var(--accent);
@@ -51,350 +47,443 @@
         .main-nav-drawer.open { transform: translateX(0); }
         .nav-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
+            backdrop-filter: blur(2px);
         }
         .nav-overlay.open { display: block; }
         
         .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
-        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item {
+            display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none;
+            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
         .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        
-        /* Accordion Styles (Library View) */
-        #library-view { padding: 20px; padding-bottom: 80px; overflow-y: auto; flex: 1; display: block; }
-        details.accordion-section {
-            margin-bottom: 15px; border: 1px solid #333; border-radius: 8px; background: #1a1a1a;
-        }
-        details summary {
-            padding: 20px; color: var(--accent); font-weight: bold; cursor: pointer; list-style: none; display: flex; justify-content: space-between;
-        }
-        details summary::-webkit-details-marker { display: none; }
-        details[open] summary { background: #222; border-bottom: 1px solid #333; }
-        
-        .record-card {
-            display: block; width: 100%; text-align: left; border: none; font-size: 15px;
-            margin-bottom: 10px; border-left: 3px solid var(--accent); padding: 15px; 
-            background: #262626; color: white; border-radius: 4px; cursor: pointer;
-        }
 
-        /* Steward Card Styles */
-        .steward-card {
-            background-color: #262626; border: 1px solid #444;
-            border-radius: 8px; padding: 15px; margin-bottom: 15px;
-            border-left: 5px solid var(--accent);
+        /* LOADING OVERLAY */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
         }
-        .steward-card:last-child { margin-bottom: 0; }
-        .steward-name { font-size: 18px; font-weight: bold; color: white; margin-bottom: 4px; }
-        .steward-title { font-size: 12px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 12px; }
-        .action-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-        .btn-action {
-            flex: 1; text-align: center; text-decoration: none;
-            padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold;
-            text-transform: uppercase; cursor: pointer; border: none;
-        }
-        .btn-call { background-color: var(--accent); color: #000; }
-        .btn-text { background-color: #333; color: white; border: 1px solid #555; }
-        .btn-save { background-color: #2ecc71; color: #000; width: 100%; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none;}
+        .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 
-        /* Mozilla Viewer Styles (Viewer View) */
-        #viewer-view { display: none; flex-direction: column; height: 100%; flex: 1; }
-        .viewer-controls {
-            background: #161616; padding: 12px 20px; border-bottom: 1px solid #333;
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        /* FIRST-TIME RULES MODAL */
+        #rules-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); z-index: 4000; display: none;
+            justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(4px);
         }
-        .back-btn {
-            background: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; white-space: nowrap;
+        .rules-card {
+            background: var(--bg-card); width: 100%; max-width: 440px;
+            border-radius: 10px; border: 2px solid var(--accent); padding: 22px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9);
         }
-        #doc-title { font-size: 14px; color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
-        iframe { flex: 1; width: 100%; border: none; background: #222; }
-    
-    
+        .rules-title { color: var(--accent); font-size: 18px; font-weight: 900; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .rules-list { margin: 14px 0 20px 18px; color: #e0e0e0; font-size: 14px; line-height: 1.5; }
+        .rules-list li { margin-bottom: 10px; }
+        .rules-list strong { color: #ffffff; }
+        .rules-btns { display: flex; gap: 10px; }
+        .btn-rule-cancel { flex: 1; padding: 12px; background: #333; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-rule-agree { flex: 2; padding: 12px; background: var(--accent); color: #111; border: none; border-radius: 6px; font-weight: 900; cursor: pointer; }
+
+        /* REVOKED ACCESS BANNER */
+        #revoked-banner {
+            display: none; max-width: 800px; margin: 0 auto 15px auto;
+            background: rgba(255, 51, 51, 0.15); border: 1px solid var(--accent-red);
+            color: #ff8080; padding: 14px 16px; border-radius: 8px;
+            font-size: 13px; line-height: 1.4; font-weight: 600;
+        }
+        #revoked-banner strong { color: #ffffff; display: block; font-size: 14px; margin-bottom: 3px; }
+
+        /* BOARD SPECIFIC STYLING */
+        .zone-header {
+            background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px;
+            border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+            position: sticky; top: 75px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        
+        .driver-row {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; transition: all 0.2s;
+        }
+        
+        /* The gold highlight class */
+        .driver-row.highlight {
+            border-color: var(--accent);
+            background-color: #2a2615;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+        }
+        
+        .driver-info { display: flex; flex-direction: column; min-width: 150px; }
+        .driver-name { font-size: 16px; font-weight: bold; color: white; }
+        
+        .action-btns { display: flex; gap: 8px; }
+        .btn-board {
+            padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px;
+            font-weight: bold; text-transform: uppercase; cursor: pointer; box-shadow: 0 3px 0 #000;
+        }
+        .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+        .btn-off { background-color: var(--accent-green); color: #111; }
+        .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
     </style>
 </head>
 <body>
 
-    <!-- Nav Drawer -->
+    <div id="loading-overlay">
+        <div class="parsing-text">↻ Loading Live Board...</div>
+    </div>
+
+    <!-- FIRST-TIME RULES MODAL -->
+    <div id="rules-modal-overlay">
+        <div class="rules-card">
+            <div class="rules-title">⚠️ Before You Update the Board</div>
+            <p style="font-size: 13px; color: var(--text-muted);">Read these 3 rules carefully before making your first update:</p>
+            <ul class="rules-list">
+                <li><strong>Updates the Live Center Board:</strong> Your click updates the live rotation for everyone in the center—not just your own phone.</li>
+                <li><strong>ONLY Click Drivers Who Got Off:</strong> Do <strong>not</strong> click the people in between who stayed or worked. The board automatically skips them and highlights the next person up.</li>
+                <li><strong>Your Name Is Logged:</strong> Every click stamps your name on the board. False or accidental entries will get your edit access locked.</li>
+            </ul>
+            <div class="rules-btns">
+                <button class="btn-rule-cancel" onclick="closeRulesModal()">CANCEL</button>
+                <button class="btn-rule-agree" id="btn-rules-agree">I UNDERSTAND</button>
+            </div>
+        </div>
+    </div>
+
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
-        <div class="drawer-header" style="padding: 20px 20px 10px;">
-            <h3 style="color: white; font-size: 18px; display: flex; justify-content: space-between; align-items: center;">
-                Member Menu
-                <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
-            </h3>
+        <div class="drawer-header" style="border-bottom: none; padding: 20px; padding-bottom: 10px; display: flex; justify-content: space-between;">
+            <h3 style="color: white; font-size: 18px;">Driver Portal Menu</h3>
+            <button onclick="closeNavMenu()" style="background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer;">✕</button>
         </div>
-        
-        <!-- NEW CONTAINER FOR JSON LINKS -->
         <div id="nav-links-container"></div>
     </div>
 
     <div class="top-navbar">
-        <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-        <div>
-            <div class="header-title">Local 710 Member Portal</div>
-            <div class="header-sub">Document Library</div>
-        </div>
-    </div>
-
-        <div id="library-view">
-        
-        <!-- PWA INSTALL INSTRUCTIONS (MOVED TO TOP, BORDER FIXED) -->
-        <details class="accordion-section" style="margin-bottom: 15px;">
-            <summary>📱 Install App to Home Screen <span>▼</span></summary>
-            <div style="padding: 15px 20px; font-size: 14px; line-height: 1.6; color: #e0e0e0;">
-                
-                <div style="margin-bottom: 20px;">
-                    <h4 style="color: var(--accent); margin-bottom: 8px; font-size: 15px;">🍎 Apple / iOS (Must use Safari)</h4>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Apple devices block apps from remembering your secure token. You must <b>copy your exact link</b> before installing, then paste it when the app asks for it.</p>
-                    
-                    <!-- THE COPY BOX -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 14px;">
-                        <input type="text" id="ios-link-box" readonly value="Tap copy to grab secure link →" style="flex: 1; background: #262626; border: 1px solid #444; color: #ccc; padding: 10px; border-radius: 6px; font-size: 11px; outline: none; cursor: default;">
-                        <button onclick="copySecureLink(this)" style="background: var(--accent); color: #000; border: none; padding: 0 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; box-shadow: 0 4px 0 #b38f00; transition: all 0.1s;">📋 Copy</button>
-                    </div>
-
-                    <ol style="padding-left: 20px; margin-bottom: 0; font-size: 13px;">
-                        <li style="margin-bottom: 6px;">Tap the <b>Share</b> button at the bottom of Safari (the square with an up arrow).</li>
-                        <li style="margin-bottom: 6px;">Scroll down and tap <b>"Add to Home Screen"</b>.</li>
-                        <li>Open the new app from your home screen and <b>paste</b> your copied link.</li>
-                    </ol>
-                </div>
-                
-                <div style="padding-top: 15px; border-top: 1px dashed #444;">
-                    <h4 style="color: var(--accent-green); margin-bottom: 8px; font-size: 15px;">🤖 Android</h4>
-                    <ol style="padding-left: 20px; margin-bottom: 0; font-size: 13px;">
-                        <li style="margin-bottom: 6px;">Open this portal in <b>Chrome</b>.</li>
-                        <li style="margin-bottom: 6px;">Tap the <b>3-dot menu</b> in the top right corner.</li>
-                        <li>Tap <b>"Add to Home screen"</b> or <b>"Install App"</b>.</li>
-                    </ol>
-                </div>
-                
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title">West Center - Dispatch Board</div>
+                <div id="driver-info" class="header-sub">Live Days Off Tracker</div>
             </div>
-        </details>
-
-        <!-- THE CLIPBOARD LOGIC -->
-        <script>
-            function copySecureLink(btn) {
-                const fullUrl = window.location.href;
-                navigator.clipboard.writeText(fullUrl).then(() => {
-                    const box = document.getElementById('ios-link-box');
-                    box.value = fullUrl; 
-                    box.style.borderColor = 'var(--accent-green)';
-                    box.style.color = '#fff';
-                    
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = '✅ Copied!';
-                    btn.style.backgroundColor = 'var(--accent-green)';
-                    btn.style.boxShadow = '0 2px 0 #1e824c';
-                    btn.style.transform = 'translateY(2px)';
-                    
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.style.backgroundColor = 'var(--accent)';
-                        btn.style.boxShadow = '0 4px 0 #b38f00';
-                        btn.style.transform = 'translateY(0)';
-                        box.style.borderColor = '#444';
-                    }, 3000);
-                }).catch(err => {
-                    alert("Failed to copy link automatically. Please tap the URL bar at the top of Safari and copy it manually.");
-                });
-            }
-        </script>
-
-        <div id="stewards-container"></div>
-        <div id="accordion-container"></div>
+        </div>
     </div>
 
+    <div id="revoked-banner">
+        <strong>🚫 Read-Only Mode — Editing Access Revoked</strong>
+        Your Days Off editing privileges have been locked by a Steward. You can still view the live rotation board below.
+    </div>
 
-    <div id="viewer-view">
-        <div class="viewer-controls">
-            <button class="back-btn" onclick="closeDocument()">← Back</button>
-            <span id="doc-title"></span>
-        </div>
-        <iframe id="pdf-viewer" src=""></iframe>
+    <div id="board-container" style="max-width: 800px; margin: 0 auto;">
+        <div class="zone-header">Bid Drivers (Round 1)</div>
+        <div id="zone-1-list"></div>
+
+        <div class="zone-header">Bid Drivers (Round 2)</div>
+        <div id="zone-2-list"></div>
+
+        <div class="zone-header">Coverage Drivers</div>
+        <div id="zone-3-list"></div>
     </div>
 
     <script>
-       // --- 1. GLOBAL VARIABLES & URL PARAMS ---
+        // 1. Security & Auth
         const urlParams = new URLSearchParams(window.location.search);
-        const passedGuid = urlParams.get('id');
-        const passedName = urlParams.get('name') || '';
-        const passedEmpId = urlParams.get('emp') || ''; 
+        let memberGuid = urlParams.get('id') || localStorage.getItem('saved_member_token');
+        if (memberGuid) localStorage.setItem('saved_member_token', memberGuid);
+
+        let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Unknown User";
+        let isUserAccessRevoked = false;
+
+        // Grab the 'hub' from the URL (Default to West if missing)
+        let rawCenter = urlParams.get('hub') || 'West';
+
+        // Mathematically forces "EAST" into "East" and "WEST" into "West"
+        let currentCenter = rawCenter.charAt(0).toUpperCase() + rawCenter.slice(1).toLowerCase(); 
+
+        // Dynamically update the page headers
+        document.title = `${currentCenter} Center - Days Off Board`;
+        document.querySelector('.header-title').innerText = `${currentCenter} Center (Monday - Friday)`;
+                
+        // 2. The Power Automate Endpoint
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
         
-        // CATCH THE HUB FROM THE URL
-        const passedHub = urlParams.get('hub') || 'Unassigned'; 
-
-        // --- 2. ARMOR-PLATED UNIVERSAL MENU BUILDER ---
-        function buildNavigation(guid, fullName, emp, bucket) {
-            let secureQueryString = `?id=${guid}`;
-            if (fullName) secureQueryString += `&name=${encodeURIComponent(fullName)}`;
-            if (emp) secureQueryString += `&emp=${emp}`;
-            
-            // CLEAN THE HUB DATA
-            const cleanHub = (bucket || "Unassigned").trim();
-            if (cleanHub !== "Unassigned") {
-                secureQueryString += `&hub=${encodeURIComponent(cleanHub)}`;
-            }
-
-            fetch('member-nav.json', { cache: 'no-store' })
-                .then(response => response.json())
-                .then(menuItems => {
-                    const navContainer = document.getElementById('nav-links-container');
-                    const currentPage = window.location.pathname.split('/').pop() || 'library.html';
-                    
-                    const compareHub = cleanHub.toLowerCase();
-                    let menuHTML = '';
-
-                    menuItems.forEach(item => {
-                        // THE BOUNCER
-                        if (item.targetHubs && item.targetHubs.length > 0) {
-                            const safeTargetHubs = item.targetHubs.map(h => h.trim().toLowerCase());
-                            if (!safeTargetHubs.includes(compareHub)) {
-                                return; // Skip rendering this link
-                            }
-                        }
-
-                        if (item.type === 'header') {
-                            menuHTML += `<div class="nav-section-title">${item.title}</div>`;
-                        } else if (item.type === 'link') {
-                            const isActive = (currentPage === item.filename) ? 'active' : '';
-                            const activeText = isActive ? ' (Active)' : '';
-                            const finalUrl = item.filename + secureQueryString;
-                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}${activeText}</a>`;
-                        }
-                    });
-                    navContainer.innerHTML = menuHTML;
-                })
-                .catch(error => {
-                    console.log("Error loading the navigation menu:", error);
-                    document.getElementById('nav-links-container').innerHTML = `<div style="color: red; padding: 20px;">Error loading menu.</div>`;
-                });
-        }
-
-        // FIRE THE MENU BUILDER
-        if (passedGuid) {
-            buildNavigation(passedGuid, passedName, passedEmpId, passedHub);
-        }
-
-
-        // 2. Fetch the Stewards JSON and build the top folder
-        fetch('stewards.json', { cache: 'no-store' })
-            .then(response => response.json())
-            .then(stewards => {
-                const container = document.getElementById('stewards-container');
-                const section = document.createElement('details');
-                section.className = 'accordion-section';
-                
-                let html = `<summary>Local 710 Stewards <span>▼</span></summary><div style="padding: 15px 20px;">`;
-                
-                stewards.forEach(steward => {
-                    const cleanPhone = steward.phone.replace(/\D/g, ''); 
-                    html += `
-                        <div class="steward-card">
-                            <div class="steward-name">${steward.name}</div>
-                            <div class="steward-phone">${steward.phone}</div>
-                            <div class="steward-title">${steward.title}</div>
-                            <div class="action-row">
-                                <a href="tel:${cleanPhone}" class="btn-action btn-call">📞 Call</a>
-                                <a href="sms:${cleanPhone}" class="btn-action btn-text">💬 Text</a>
-                            </div>
-                            <button class="btn-save" onclick="downloadVCard('${steward.name}', '${cleanPhone}')">
-                                👤 Save to Contacts
-                            </button>
-                        </div>
-                    `;
-                });
-                
-                html += `</div>`;
-                section.innerHTML = html;
-                container.appendChild(section);
-            })
-            .catch(error => {
-                console.log("Could not load stewards:", error);
-            });
-
-        // 3. Fetch the Templates JSON and build the rest of the folders
-        fetch('templates.json', { cache: 'no-store' })
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('accordion-container');
-                for (const category in data) {
-                    const section = document.createElement('details');
-                    section.className = 'accordion-section';
-                    
-                    let html = `<summary>${category} <span>▼</span></summary><div style="padding: 15px 20px;">`;
-                    
-                    data[category].forEach(item => {
-                        html += `<button class="record-card" onclick="openDocument('${item.url}', '${item.name}')">${item.name}</button>`;
-                    });
-                    
-                    html += `</div>`;
-                    section.innerHTML = html;
-                    container.appendChild(section);
-                }
-            })
-            .catch(error => {
-                document.getElementById('accordion-container').innerHTML = `<p style="color: red; padding: 20px;">Error loading templates. Make sure templates.json is deployed.</p>`;
-            });
-
-        // The vCard Generator
-        function downloadVCard(name, phone) {
-            const vcardData = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nORG:Local 710 Steward\nTEL;TYPE=WORK,VOICE:${phone}\nEND:VCARD`;
-            const blob = new Blob([vcardData], { type: "text/vcard" });
-            const url = URL.createObjectURL(blob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${name.replace(/\s+/g, '_')}_Local710.vcf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // Viewer Logic
-        function openDocument(url, title) {
-            document.getElementById('library-view').style.display = 'none';
-            document.getElementById('viewer-view').style.display = 'flex';
-            document.getElementById('doc-title').innerText = title;
-            
-            const absoluteUrl = new URL(url, window.location.href).href;
-            const mozillaUrl = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(absoluteUrl);
-            document.getElementById('pdf-viewer').src = mozillaUrl;
-
-            history.pushState({ viewerOpen: true }, "", "#doc-viewer");
-        }
-
-        function closeDocument() {
-            document.getElementById('viewer-view').style.display = 'none';
-            document.getElementById('library-view').style.display = 'block';
-            document.getElementById('pdf-viewer').src = "";
-
-            if (window.location.hash === '#doc-viewer') {
-                history.back();
-            }
-        }
-
-        // Hamburger Menu Controls
+        // Menu Controllers
         function openNavMenu() {
             document.getElementById('main-nav-menu').classList.add('open');
             document.getElementById('nav-overlay').classList.add('open');
         }
-
         function closeNavMenu() {
             document.getElementById('main-nav-menu').classList.remove('open');
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // Hardware Back Button Intercept
-        window.addEventListener('popstate', function(event) {
-            const viewerView = document.getElementById('viewer-view');
-            const libraryView = document.getElementById('library-view');
-            
-            if (viewerView.style.display === 'flex') {
-                viewerView.style.display = 'none';
-                libraryView.style.display = 'block';
-                document.getElementById('pdf-viewer').src = "";
+        // First-Time Rules Modal Controllers
+        function openRulesModal(onConfirmCallback) {
+            const overlay = document.getElementById('rules-modal-overlay');
+            const agreeBtn = document.getElementById('btn-rules-agree');
+            agreeBtn.onclick = () => {
+                overlay.style.display = 'none';
+                onConfirmCallback();
+            };
+            overlay.style.display = 'flex';
+        }
+        function closeRulesModal() {
+            document.getElementById('rules-modal-overlay').style.display = 'none';
+        }
+
+        // Menu Builder
+        function buildNavigation() {
+            let secureQueryString = `?hub=${currentCenter}`;
+            if (memberGuid) secureQueryString += `&id=${memberGuid}`;
+            if (urlParams.get('name')) secureQueryString += `&name=${encodeURIComponent(activeDispatcher)}`;
+
+            fetch('member-nav.json', { cache: 'no-store' })
+                .then(response => response.json())
+                .then(menuItems => {
+                    const navContainer = document.getElementById('nav-links-container');
+                    const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+                    let menuHTML = '';
+
+                    menuItems.forEach(item => {
+                        if (item.type === 'header') {
+                            menuHTML += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                        } else if (item.type === 'link') {
+                            const isActive = (currentPage === item.filename) ? 'active' : '';
+                            const finalUrl = item.filename + secureQueryString;
+                            menuHTML += `<a href="${finalUrl}" class="nav-item ${isActive}">${item.name}</a>`;
+                        }
+                    });
+                    navContainer.innerHTML = menuHTML;
+                })
+                .catch(err => console.log("Menu Error:", err));
+        }
+
+        // Progressive Friction Click Handler (1st = Rules Modal, 2-11 = Warning, 12 = Final Warning, 13+ = Instant)
+        function stampDriver(btnElement, driverName, status, zone, group) {
+            if (isUserAccessRevoked) return;
+
+            let clickCount = parseInt(localStorage.getItem('daysoff_click_count') || '0', 10);
+
+            // Click #1: Full First-Time Rules modal
+            if (clickCount === 0) {
+                openRulesModal(() => {
+                    localStorage.setItem('daysoff_click_count', '1');
+                    executeStampDriver(btnElement, driverName, status, zone, group);
+                });
+                return;
             }
-        });
+
+            const question = status === 'Off'
+                ? `Are you sure ${driverName} got the day off today?`
+                : `Are you sure ${driverName}'s day off was revoked today?`;
+
+            // Clicks #2 through #11: Standard confirmation check
+            if (clickCount < 11) {
+                if (!confirm(`⚠️ LIVE ROTATION WARNING:\n\n${question}\n\nYour name is logged on every update—false entries will get your edit access locked.`)) {
+                    return;
+                }
+            } 
+            // Click #12: Final graduation warning before popups turn off
+            else if (clickCount === 11) {
+                if (!confirm(`🚨 FINAL POPUP — This is the last time you'll see this warning. Every click still logs your name, and false entries will get your edit access locked.\n\n${question}`)) {
+                    return;
+                }
+            }
+
+            // Increment counter (up to 12) and fire immediately for 13+
+            if (clickCount < 12) {
+                localStorage.setItem('daysoff_click_count', String(clickCount + 1));
+            }
+            executeStampDriver(btnElement, driverName, status, zone, group);
+        }
+
+        // Actual Database Write
+        function executeStampDriver(btnElement, driverName, status, zone, group) {
+            if (btnElement) btnElement.innerText = "...";
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+
+            const payload = { 
+                "DriverName": driverName, 
+                "NewStatus": status, 
+                "Timestamp": todayStr,
+                "Zone": parseInt(zone), 
+                "Center": currentCenter, 
+                "Route": currentCenter + "Post", 
+                "UpdatedBy": activeDispatcher, 
+                "Group": group
+            };
+
+            fetch(flowUrl, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => alert("Error saving to database."));
+        }
+
+        // --- GLOBAL ROTATION MATH (ONE BIG LIST) ---
+        function calculateGlobalHighlight(bidList, coverList) {
+            let virtualBoard = [];
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
+            coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
+
+            let mostRecentTime = 0; let mostRecentDateStr = "";
+            virtualBoard.forEach(d => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp) {
+                    let ts = new Date(d.Timestamp).getTime();
+                    if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
+                }
+            });
+            if (mostRecentDateStr === "") return 0;
+
+            let lastOffIndex = -1; let firstStayAfterOff = -1;
+            virtualBoard.forEach((d, i) => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
+            });
+            
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
+            for (let i = startIndex; i < virtualBoard.length; i++) {
+                if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
+                    firstStayAfterOff = i; break; 
+                }
+            }
+
+            if (firstStayAfterOff !== -1) return firstStayAfterOff;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
+            else return 0; 
+        }
+
+        // Rendering the Rows
+        function buildRowHtml(driver, zoneContext, isHighlighted = false) {
+            let displayStatus = "PENDING";
+            let statusColor = "var(--text-muted)"; 
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+            
+            const isToday = (driver.Timestamp === todayStr);
+            const isRecentPast = (driver.Timestamp === window.recentPastDay);
+
+            const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
+
+            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+                
+                if (driver.CurrentStatus.toLowerCase() === 'off') {
+                    if (isToday) {
+                        statusColor = "var(--accent-green)"; 
+                    } else if (isRecentPast) {
+                        statusColor = "var(--accent)"; 
+                    } else {
+                        statusColor = "var(--text-muted)"; 
+                    }
+                } else {
+                    statusColor = "var(--accent-red)"; 
+                }
+            }
+
+            let auditTrailHtml = "";
+            if (updaterName && driver.CurrentStatus) {
+                auditTrailHtml = `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>`;
+            }
+
+            let actionButton = "";
+            if (!isUserAccessRevoked) {
+                if (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) {
+                    actionButton = `<button class="btn-board btn-stay" onclick="stampDriver(this, '${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`;
+                } else {
+                    actionButton = `<button class="btn-board btn-off" onclick="stampDriver(this, '${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
+                }
+            }
+
+            let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
+
+            return `
+                <div class="${rowClass}">
+                    <div class="driver-info">
+                        <span class="driver-name">${driver.Title}</span>
+                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                        ${auditTrailHtml}
+                    </div>
+                    <div class="action-btns">
+                        ${actionButton}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Fetching and Displaying the Data
+        function loadBoardData() {
+            fetch(flowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "Route": currentCenter + "Get" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                // Check if the logged-in user's edit access has been revoked by a Steward
+                const myDriverRecord = data.find(d => d.Title && d.Title.trim().toLowerCase() === activeDispatcher.trim().toLowerCase());
+                isUserAccessRevoked = Boolean(myDriverRecord && myDriverRecord.AccessRevoked);
+                document.getElementById('revoked-banner').style.display = isUserAccessRevoked ? 'block' : 'none';
+
+                const d = new Date();
+                const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+                
+                let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
+                pastDates.sort((a, b) => new Date(b) - new Date(a));
+                
+                window.recentPastDay = pastDates[0] || null; 
+
+                const bidDrivers = data.filter(d => d.Group === 'Bid');
+                const coverDrivers = data.filter(d => d.Group === 'Coverage');
+
+                const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
+                let runningIndex = 0;
+
+                // Draw Zone 1 (Round 1)
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 1, isWinner);
+                }).join('');
+
+                // Draw Zone 2 (Round 2)
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 2, isWinner);
+                }).join('');
+
+                // Draw Zone 3 (Coverage)
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 3, isWinner);
+                }).join('');
+
+                setTimeout(() => {
+                    const activeRow = document.querySelector('.driver-row.highlight');
+                    if (activeRow) {
+                        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            })
+            .catch(error => {
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+                console.error("Fetch error:", error);
+            });
+        }
+
+        // Initialize Page
+        buildNavigation();
+        loadBoardData();
     </script>
 </body>
 </html>
