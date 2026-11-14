@@ -134,25 +134,31 @@
         }
         .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
         .driver-info { display: flex; flex-direction: column; min-width: 150px; }
-        .driver-name { font-size: 16px; font-weight: bold; color: white; }
+        .driver-name { font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .locked-badge { font-size: 10px; font-weight: 800; background: rgba(255, 51, 51, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-        .btn-board { padding: 8px 16px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
+        .btn-board { padding: 8px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
         .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
         
         .btn-off { background-color: var(--accent-green); color: #111; }
         .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
         .btn-clear { background-color: #666; color: #fff; }
         .btn-move { background-color: var(--accent-blue); color: #fff; }
+        .btn-lock { background-color: #d35400; color: #fff; }
+        .btn-unlock { background-color: var(--accent-green); color: #111; }
         .btn-delete { background-color: var(--accent-red); color: #fff; }
-        .btn-add { background-color: var(--accent); color: #111; width: 100%; margin-bottom: 20px; font-size: 14px; padding: 12px; display: none; }
+
+        .admin-top-bar { display: none; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-add { background: var(--accent); color: #111; flex: 2; min-width: 200px; font-size: 13px; padding: 12px; }
+        .btn-clear-all { background: var(--accent-red); color: #fff; flex: 1; min-width: 160px; font-size: 13px; padding: 12px; }
 
         /* Admin Mode Toggles */
         .dispatch-ui { display: flex; gap: 8px; }
-        .admin-ui { display: none; gap: 8px; }
+        .admin-ui { display: none; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
         body.admin-mode .dispatch-ui { display: none; }
         body.admin-mode .admin-ui { display: flex; }
-        body.admin-mode .btn-add { display: block; }
+        body.admin-mode .admin-top-bar { display: flex; }
 
         /* LIGHT MODE OVERRIDES */
         body.light-mode { --bg-main: #f0f2f5; --bg-card: #ffffff; --text-main: #121212; --text-muted: #555; --border: #d1d5db; --accent: #cca300; }
@@ -258,7 +264,10 @@
     </div>
 
     <div id="board-container" style="max-width: 800px; margin: 0 auto; margin-top: 20px;">
-        <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER TO DATABASE</button>
+        <div class="admin-top-bar">
+            <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER</button>
+            <button class="btn-board btn-clear-all" onclick="adminClearAll()">⚠️ CLEAR ALL STATUSES</button>
+        </div>
         <div class="zone-header">Bid Drivers (Round 1)</div>
         <div id="zone-1-list"></div>
         <div class="zone-header">Bid Drivers (Round 2)</div>
@@ -268,8 +277,11 @@
     </div>
 
     <script>
-        // 1. Security & Auth
+        // 1. Security & Auth (Preserves both steward GUID and name across navigation)
         const urlParams = new URLSearchParams(window.location.search);
+        let stewardGuid = urlParams.get('steward') || localStorage.getItem('saved_steward_token') || "";
+        if (stewardGuid) localStorage.setItem('saved_steward_token', stewardGuid);
+
         let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Steward Admin";
 
         // 2. THE MEMORY LOGIC
@@ -307,7 +319,10 @@
             let currentPage = window.location.pathname.split('/').pop();
             if (currentPage === '') currentPage = 'index.html'; 
 
-            let secureQueryString = `?name=${encodeURIComponent(activeDispatcher)}`;
+            let params = [];
+            if (stewardGuid) params.push(`steward=${encodeURIComponent(stewardGuid)}`);
+            if (urlParams.get('name')) params.push(`name=${encodeURIComponent(activeDispatcher)}`);
+            let secureQueryString = params.length > 0 ? `?${params.join('&')}` : '';
 
             fetch('steward-nav.json', { cache: 'no-store' })
                 .then(res => res.json())
@@ -404,10 +419,35 @@
             }
         }
 
+        function adminClearAll() {
+            if(confirm(`⚠️ WARNING: Are you sure you want to clear ALL statuses for the entire ${currentCenter} board?`)) {
+                sendAdminPayload("ALL", currentCenter + "Post", {
+                    NewStatus: "", Timestamp: "", Zone: 0
+                });
+            }
+        }
+
         function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
             if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
                 sendAdminPayload(driverName, currentCenter + "Post", { 
                     NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup 
+                });
+            }
+        }
+
+        function adminToggleAccess(driverName, currentlyRevoked, currentStatus, currentTimestamp, currentZone, currentGroup) {
+            const nextState = !currentlyRevoked;
+            const confirmMsg = nextState
+                ? `🔒 REVOKE EDIT ACCESS:\n\nLock ${driverName} out of editing the Member Days Off board? (They will still be able to view it in read-only mode.)`
+                : `🔓 RESTORE EDIT ACCESS:\n\nUnlock ${driverName} so they can edit the Member Days Off board again?`;
+
+            if(confirm(confirmMsg)) {
+                sendAdminPayload(driverName, currentCenter + "Post", {
+                    NewStatus: currentStatus,
+                    Timestamp: currentTimestamp,
+                    Zone: parseInt(currentZone) || 0,
+                    Group: currentGroup,
+                    AccessRevoked: nextState
                 });
             }
         }
@@ -447,7 +487,7 @@
                 }
             }
 
-            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "" });
+            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "", AccessRevoked: false });
             closeModal();
         }
 
@@ -493,6 +533,7 @@
             const isToday = (driver.Timestamp === todayStr);
             const isRecentPast = (driver.Timestamp === window.recentPastDay);
             const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
+            const isRevoked = Boolean(driver.AccessRevoked);
 
             if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
                 displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
@@ -504,15 +545,21 @@
             }
 
             let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
+            let lockedBadgeHtml = isRevoked ? `<span class="locked-badge">🚫 Edit Locked</span>` : "";
 
             let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
                 ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
                 : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
 
             let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
+            let lockBtnHtml = isRevoked
+                ? `<button class="btn-board btn-unlock" onclick="adminToggleAccess('${driver.Title}', true, '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0}, '${driver.Group}')">🔓 UNLOCK</button>`
+                : `<button class="btn-board btn-lock" onclick="adminToggleAccess('${driver.Title}', false, '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0}, '${driver.Group}')">🔒 LOCK</button>`;
+
             let adminBtn = `
                 <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
                 <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}', ${driver.ZoneTag})">CLEAR</button>
+                ${lockBtnHtml}
                 <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
             `;
 
@@ -521,7 +568,7 @@
             return `
                 <div class="${rowClass}">
                     <div class="driver-info">
-                        <span class="driver-name">${driver.Title}</span>
+                        <span class="driver-name">${driver.Title}${lockedBadgeHtml}</span>
                         <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
                         ${auditTrailHtml}
                     </div>
