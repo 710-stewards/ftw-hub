@@ -3,29 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local 710 Archive Vault</title>
+    <title>Steward Admin - Days Off</title>
+    
     <style>
         :root {
             --bg-main: #121212;
             --bg-card: #1e1e1e;
             --accent: #ffcc00;
             --accent-green: #2ecc71;
-            --danger: #ff3333;
+            --accent-red: #ff3333;
+            --accent-blue: #3498db;
             --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
-
-        /* RESPONSIVE TWO-STORY STICKY HEADER */
-        .top-navbar {
-            position: fixed; top: 0; left: 0; right: 0;
-            background: #1a1a1a; border-bottom: 2px solid var(--accent);
-            padding: 12px 20px 16px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
         
+        /* Padding to accommodate the double-stacked sticky header and steward controls */
+        body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 145px; }
+
+        /* HEADER & NAVIGATION */
+        .top-navbar {
+            position: fixed; top: 0; left: 0; right: 0; height: 75px;
+            background: #1a1a1a; border-bottom: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
         .header-title { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
         .header-sub { font-size: 13px; color: var(--accent); margin-top: 2px; font-weight: 500; }
         
@@ -34,55 +38,12 @@
             font-size: 28px; cursor: pointer; transition: transform 0.2s;
             display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
         }
-        .hamburger-btn:active { transform: scale(0.9); }
-
-        /* CLEAN FULL-WIDTH SEARCH BAR + SMART POPOVER */
-        .search-wrap { position: relative; width: 100%; }
-        .search-input {
-            width: 100%; height: 45px; background: #262626; border: 1px solid #444;
-            color: white; border-radius: 6px; padding: 0 42px 0 15px; font-size: 15px; outline: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-        .search-input:focus { border-color: var(--accent); }
-        .search-help-btn {
-            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-            width: 28px; height: 28px; border-radius: 50%;
-            background: #333; border: 1px solid #555; color: var(--accent);
-            font-size: 13px; font-weight: 900; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .search-help-btn:hover { background: rgba(255, 204, 0, 0.15); border-color: var(--accent); }
-        .search-popover {
-            position: absolute; top: 52px; left: 0; right: 0;
-            background: var(--bg-card); border: 1px solid var(--accent);
-            border-radius: 8px; padding: 12px 14px; z-index: 1002;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.75); display: none;
-        }
-        .search-popover.open { display: block; }
-        .sp-header { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
-        .sp-row {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #262626; border: 1px solid #3a3a3a; border-radius: 6px;
-            padding: 7px 10px; cursor: pointer; transition: border-color 0.15s;
-        }
-        .sp-row:hover { border-color: var(--accent); }
-        .sp-label { font-size: 12px; font-weight: 700; color: var(--text-main); }
-        .sp-pill {
-            background: rgba(255, 204, 0, 0.12); color: var(--accent);
-            border: 1px solid var(--accent); border-radius: 4px;
-            padding: 2px 7px; font-family: monospace; font-size: 12px; font-weight: bold;
-        }
 
         /* 3-DOT MENU STYLES */
-        .menu-sort-select {
-            width: 100%; height: 42px; background: #222; color: white; border: 1px solid #444; 
-            border-radius: 6px; padding: 0 10px; font-size: 14px; font-weight: bold; cursor: pointer; outline: none;
-        }
         .settings-dropdown {
-            position: absolute; top: 50px; right: 0px; background: var(--bg-card); border: 1px solid var(--border);
+            position: absolute; top: 55px; right: 20px; background: var(--bg-card); border: 1px solid var(--border);
             border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1001;
-            display: none; flex-direction: column; overflow: hidden; min-width: 280px; max-width: 90vw;
+            display: none; flex-direction: column; overflow: hidden; min-width: 250px;
         }
         .settings-dropdown.open { display: flex; }
         .settings-item {
@@ -93,177 +54,140 @@
         .settings-item:last-child { border-bottom: none; }
         .settings-item:hover { background: rgba(255, 204, 0, 0.15); color: var(--accent); }
 
-        /* MAIN NAV DRAWER */
+        /* NAVIGATION DRAWER */
         .main-nav-drawer {
             position: fixed; top: 0; left: 0; bottom: 0; width: 300px;
-            background: var(--bg-main); border-right: 2px solid var(--accent);
+            background: #161616; border-right: 2px solid var(--accent);
             z-index: 3000; transform: translateX(-100%); transition: transform 0.3s ease;
             box-shadow: 10px 0 30px rgba(0,0,0,0.8); display: flex; flex-direction: column;
         }
         .main-nav-drawer.open { transform: translateX(0); }
         .nav-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 2500; display: none;
-            backdrop-filter: blur(2px);
+            background: rgba(0,0,0,0.6); z-index: 2500; display: none; backdrop-filter: blur(2px);
         }
         .nav-overlay.open { display: block; }
         
-        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed var(--border); margin-bottom: 5px; }
-        .nav-item {
-            display: block; padding: 12px 20px; color: var(--text-main); text-decoration: none;
-            font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent;
+        .nav-section-title { padding: 25px 20px 8px; font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px dashed #333; margin-bottom: 5px; }
+        .nav-item { display: block; padding: 12px 20px; color: #e0e0e0; text-decoration: none; font-size: 14px; transition: all 0.2s; font-weight: 500; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #222; color: white; padding-left: 25px; border-left-color: #555; }
+        .nav-item.active { background: #2a2a2a; border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
+
+        /* STEWARD CONTROLS (Sticky directly under the header) */
+        .steward-controls {
+            position: fixed; top: 75px; left: 0; right: 0; background: #222;
+            border-bottom: 1px solid var(--border); padding: 10px 20px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 900;
         }
-        .nav-item:hover { background: rgba(128,128,128,0.1); padding-left: 25px; border-left-color: #555; }
-        .nav-item.active { background: var(--bg-card); border-left-color: var(--accent); color: var(--accent); font-weight: bold; pointer-events: none; }
-        .nav-item.disabled { color: #555; pointer-events: none; font-style: italic; }
+        
+        .center-toggle { display: flex; background: #111; border-radius: 6px; border: 1px solid #444; overflow: hidden; }
+        .toggle-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .toggle-btn.active { background: var(--accent); color: #111; }
+
+        .admin-switch-container { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-red); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* LOADING OVERLAY */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-main); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .parsing-text { color: var(--text-muted); font-weight: bold; font-size: 16px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* MODAL STYLING */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); z-index: 3000; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(3px);
+        }
+        .modal-card {
+            background: var(--bg-card); width: 90%; max-width: 400px;
+            border-radius: 8px; border: 1px solid var(--border); padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-title { color: var(--accent); font-size: 18px; margin-bottom: 15px; font-weight: bold; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px; background: #111; color: white;
+            border: 1px solid #444; border-radius: 4px; font-size: 14px;
+        }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-full { flex: 1; padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .btn-cancel { background: #444; color: white; }
+        .btn-submit { background: var(--accent); color: black; }
+
+        /* BOARD SPECIFIC STYLING */
+        .zone-header { background: #222; padding: 12px; margin: 30px 0 15px 0; border-radius: 6px; border-left: 4px solid var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+        .driver-row {
+            background-color: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 16px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; transition: all 0.2s;
+        }
+        .driver-row.highlight { border-color: var(--accent); background-color: #2a2615; box-shadow: 0 0 10px rgba(255, 204, 0, 0.2); }
+        .driver-info { display: flex; flex-direction: column; min-width: 150px; }
+        .driver-name { font-size: 16px; font-weight: bold; color: white; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .locked-badge { font-size: 10px; font-weight: 800; background: rgba(255, 51, 51, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn-board { padding: 8px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #000; }
+        .btn-board:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
+        
+        .btn-off { background-color: var(--accent-green); color: #111; }
+        .btn-stay { background-color: #444; color: #fff; border: 1px solid #666; }
+        .btn-clear { background-color: #666; color: #fff; }
+        .btn-move { background-color: var(--accent-blue); color: #fff; }
+        .btn-lock { background-color: #d35400; color: #fff; }
+        .btn-unlock { background-color: var(--accent-green); color: #111; }
+        .btn-delete { background-color: var(--accent-red); color: #fff; }
+
+        .admin-top-bar { display: none; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-add { background: var(--accent); color: #111; flex: 2; min-width: 200px; font-size: 13px; padding: 12px; }
+        .btn-clear-all { background: var(--accent-red); color: #fff; flex: 1; min-width: 160px; font-size: 13px; padding: 12px; }
+
+        /* Admin Mode Toggles */
+        .dispatch-ui { display: flex; gap: 8px; }
+        .admin-ui { display: none; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        body.admin-mode .dispatch-ui { display: none; }
+        body.admin-mode .admin-ui { display: flex; }
+        body.admin-mode .admin-top-bar { display: flex; }
 
         /* LIGHT MODE OVERRIDES */
-        body.light-mode {
-            --bg-main: #f0f2f5;
-            --bg-card: #ffffff;
-            --text-main: #121212;
-            --text-muted: #555;
-            --border: #d1d5db;
-            --accent: #cca300; 
-        }
-        body.light-mode .top-navbar, body.light-mode .main-nav-drawer { background: #ffffff; border-color: #d1d5db; }
-        body.light-mode .drawer-header { background: #f8f9fa; }
+        body.light-mode { --bg-main: #f0f2f5; --bg-card: #ffffff; --text-main: #121212; --text-muted: #555; --border: #d1d5db; --accent: #cca300; }
+        body.light-mode .top-navbar, body.light-mode .main-nav-drawer, body.light-mode .steward-controls { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .driver-row { background: #ffffff; border-color: #d1d5db; }
+        body.light-mode .driver-name { color: #111; }
         body.light-mode .nav-item { color: #333; }
         body.light-mode .nav-item:hover { background: #f0f2f5; }
-        body.light-mode .nav-item.active { background: #fffbe6; }
+        body.light-mode .nav-item.active { background: #fffbe6; color: #b37700; border-left-color: #b37700; }
         body.light-mode .hamburger-btn { color: #121212; } 
-        body.light-mode .status-terminal { background: #f8f9fa; border-color: #d1d5db; }
-        body.light-mode .sb-value { color: #111; }
-        body.light-mode .search-help-btn { background: #f0f2f5; border-color: #ccc; color: #b37700; }
-        body.light-mode .sp-row { background: #f8f9fa; border-color: #d1d5db; }
-        body.light-mode .sp-pill { color: #b37700; border-color: #b37700; }
-        body.light-mode .edit-btn { background: #f0f2f5 !important; color: #111 !important; border-color: #ccc !important; }
-        body.light-mode .custom-modal { background: #ffffff; border-color: #ccc; }
-        body.light-mode .btn-modal-no { background: #f0f2f5; color: #111; border-color: #ccc; }
-        body.light-mode .custom-modal input, body.light-mode .custom-modal select { background: #ffffff; color: #111; border-color: #ccc; }
-        body.light-mode .search-input, body.light-mode .menu-sort-select {
-            background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
-        }
-        body.light-mode .header-sub,
-        body.light-mode .ctr-meta,
-        body.light-mode .sb-label,
-        body.light-mode .group-header-title,
-        body.light-mode .modal-title {
-            color: #b37700 !important; 
-            -webkit-text-stroke: 0 !important; 
-            text-shadow: none !important;
-            font-weight: 900;
-        }
-
-        /* CARD ARCHITECTURE */
-        .record-card {
-            background-color: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); border-left: 5px solid #555;
-        }
-        .card-top-row {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;
-        }
-        .ctr-name { font-size: 20px; font-weight: 900; color: var(--text-main); margin: 0; }
-        .ctr-amt { font-size: 20px; font-weight: 900; color: var(--danger); margin: 0; }
-        .ctr-meta {
-            display: flex; color: var(--accent); font-size: 14px;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            flex: 1 1 100%; order: 3; margin-top: 10px; justify-content: space-between; 
-        }
-        @media (min-width: 650px) {
-            .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
-        }
-
-        .edit-btn {
-            background: #222; border: 1px solid #444; border-radius: 6px; color: white;
-            padding: 4px 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
-        }
-        .edit-btn:active { transform: scale(0.9); }
-
-        /* READ ONLY BADGES */
-        .status-terminal {
-            background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444;
-            display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 12px;
-        }
-        .status-block { display: flex; flex-direction: column; gap: 4px; }
-        .sb-label { font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .sb-value { font-size: 14px; font-weight: bold; color: white; text-transform: uppercase; }
-
-        /* BUTTONS */
-        .btn-3d {
-            width: 100%; height: 42px; border: none; border-radius: 6px;
-            font-size: 13px; font-weight: bold; text-transform: uppercase;
-            letter-spacing: 0.5px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: all 0.1s;
-        }
-        .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
-        .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
-
-        /* MODAL OVERLAY & FORM INPUTS */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.82); backdrop-filter: blur(3px);
-            z-index: 4000; display: none; align-items: center; justify-content: center;
-        }
-        .custom-modal {
-            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
-            width: 92%; max-width: 480px; padding: 22px; text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.85);
-        }
-        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
-        .modal-text { font-size: 13px; color: #bbb; margin-bottom: 20px; line-height: 1.5; }
-        .modal-btn-row { display: flex; gap: 10px; }
-        .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-modal-reopen { background: #262626; color: var(--accent); border: 1px solid var(--accent); flex: 1.2; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .btn-modal-reopen:hover { background: rgba(255, 204, 0, 0.12); }
-
-        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
-        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
-        .custom-modal input[type="text"],
-        .custom-modal input[type="number"],
-        .custom-modal input[type="date"],
-        .custom-modal select {
-            width: 100%; height: 40px; background: #262626; border: 1px solid #444;
-            color: #fff; border-radius: 6px; padding: 0 10px; font-size: 14px; outline: none;
-        }
-        .custom-modal input:focus, .custom-modal select:focus { border-color: var(--accent); }
-        .modal-section-divider {
-            grid-column: span 2; margin-top: 8px; padding-top: 10px;
-            border-top: 1px dashed var(--border); font-size: 11px; font-weight: 800;
-            color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px;
-        }
-
-        /* RIGHT SIDE AUDIT DRAWER */
-        .side-drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 100%; 
-            background: var(--bg-main); border-left: 2px solid var(--accent);
-            z-index: 3000; transform: translateX(100%); transition: transform 0.3s ease;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.7); display: flex; flex-direction: column;
-        }
-        .side-drawer.open { transform: translateX(0); }
-        .drawer-header {
-            padding: 20px; background: #222; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .drawer-body { padding: 20px; flex: 1; overflow-y: auto; }
-        .pdf-frame { 
-            width: 100%; height: calc(100vh - 220px); min-height: 800px; 
-            border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
-        }
+        body.light-mode .center-toggle { background: #f0f2f5; border-color: #ccc; }
+        body.light-mode .toggle-btn { color: #555; }
+        body.light-mode .toggle-btn.active { background: #cca300; color: #111; }
+        body.light-mode .zone-header { background: #f8f9fa; color: #b37700; border-color: #d1d5db; border-left-color: #cca300; }
+        body.light-mode .driver-row.highlight { background: #fffbe6; border-color: #cca300; box-shadow: 0 0 10px rgba(204, 163, 0, 0.2); }
+        body.light-mode .modal-card { background: #ffffff; border-color: #ccc; }
+        body.light-mode .modal-title { color: #b37700; }
+        body.light-mode .form-group input, body.light-mode .form-group select { background: #ffffff; color: #111; border-color: #ccc; }
+        body.light-mode .header-sub { color: #b37700 !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-weight: 900; }
     </style>
 </head>
 <body>
 
     <script>
-        if (localStorage.getItem('tags_theme') === 'light') {
-            document.body.classList.add('light-mode');
-        }
+        // INSTANT MEMORY CHECK
+        if (localStorage.getItem('tags_theme') === 'light') document.body.classList.add('light-mode');
     </script>
 
-    <datalist id="global-disposition-list"></datalist>
-    <datalist id="edit-roster-list"></datalist>
+    <div id="loading-overlay"><div class="parsing-text">↻ Loading Live Board...</div></div>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
@@ -274,215 +198,146 @@
             </div>
             <h3 style="color: var(--text-main); font-size: 16px;">Local 710 Panel</h3>
         </div>
-        
-        <div id="dynamic-nav-container"></div>
+        <div id="dynamic-nav-container"></div>      
     </div>
 
-    <!-- DOUBLE DECKER STICKY HEADER -->
+    <div id="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">Add New Driver</div>
+            <div class="form-group">
+                <label>DRIVER FULL NAME *</label>
+                <input type="text" id="newDriverName" placeholder="e.g. John Doe" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>ASSIGN TO GROUP *</label>
+                <select id="newDriverGroup">
+                    <option value="" disabled selected>Select a group...</option>
+                    <option value="Bid">Bid Driver</option>
+                    <option value="Coverage">Coverage Driver</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>SENIORITY (INSERT DIRECTLY AFTER)</label>
+                <select id="insertAfterSelect">
+                    <option value="TOP">-- Place at very top of list --</option>
+                </select>
+            </div>
+            <div class="modal-btns">
+                <button class="btn-full btn-cancel" onclick="closeModal()">CANCEL</button>
+                <button class="btn-full btn-submit" onclick="submitNewDriver()">SAVE DRIVER</button>
+            </div>
+        </div>
+    </div>
+
     <div class="top-navbar">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
-                <div>
-                    <div class="header-title">Archive Vault</div>
-                    <div id="steward-info" class="header-sub">Connecting Security Token...</div>
-                </div>
-            </div>
-            
-            <div style="position: relative;">
-                <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
-                
-                <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
-                
-                <div id="settings-dropdown" class="settings-dropdown">
-                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                        Sort Vault
-                    </div>
-                    <div style="padding: 10px 15px; border-bottom: 1px solid var(--border);">
-                        <select id="sort-dropdown" class="menu-sort-select" onchange="applyFilters(); toggleSettingsMenu();">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="settled_date">Settled (New)</option>
-                            <option value="az">Name (A-Z)</option>
-                            <option value="payout">Highest Payout</option>
-                        </select>
-                    </div>
-
-                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                        Display Options
-                    </div>
-                    
-                    <label class="settings-item" style="justify-content: space-between;">
-                        Hide Pending Cases
-                        <input type="checkbox" id="toggle-hide-pending" onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                    </label>
-
-                    <label class="settings-item" style="justify-content: space-between; border-bottom: 1px solid var(--border);">
-                        Group by Steward
-                        <input type="checkbox" id="toggle-group-steward" onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                    </label>
-
-                    <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
-                        Coverage Roster
-                    </div>
-                    
-                    <div id="coverage-checkboxes" style="max-height: 250px; overflow-y: auto; padding: 10px 15px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border);">
-                        <div style="color: var(--text-muted); font-size: 12px;">Loading roster...</div>
-                    </div>
-
-                    <button class="settings-item" onclick="toggleTheme()" style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
-                    <button class="settings-item" onclick="clearToken()" style="color: var(--danger);">🚪 Log Out / Clear Token</button>
-                </div>
+        <div style="display: flex; align-items: center; gap: 15px; flex: 1;">
+            <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
+            <div>
+                <div class="header-title" id="page-title">Steward Admin Board</div>
+                <div id="driver-info" class="header-sub">Manage Roster & Days Off</div>
             </div>
         </div>
-
-        <!-- ROW 2: Sticky 100% Width Smart Search Bar -->
-        <div class="search-wrap">
-            <input type="text" id="live-search-box" class="search-input" oninput="handleSmartSearchInput('live-search-box', 'archive-search-popover', applyFilters)" placeholder="🔍 Search all... (or art:3, mgr:, body:, id:)">
-            <button type="button" class="search-help-btn" onclick="toggleSearchLegend('archive-search-popover')" title="Search Specific Category">?</button>
-            <div id="archive-search-popover" class="search-popover"></div>
-        </div>
-    </div>
-
-    <div id="data-display">
-        <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
-            ↻ Accessing Deep Archive Logs...
-        </div>
-    </div>
-
-    <!-- ARCHIVE EDIT / REOPEN MODAL -->
-    <div id="edit-modal-overlay" class="modal-overlay">
-        <div class="custom-modal" style="text-align: left; max-height: 90vh; overflow-y: auto;">
-            <h3 class="modal-title" style="border-bottom: 1px dashed var(--border); padding-bottom: 10px;">Edit Settled Archive Record</h3>
-            <input type="hidden" id="edit-record-id">
+        <div style="position: relative;">
+            <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
-                <div class="input-wrapper" style="grid-column: span 2;">
-                    <span class="input-label">Member Name</span>
-                    <input type="text" id="edit-gr-fullname" list="edit-roster-list" oninput="handleEditRosterSelection(this)">
-                </div>
-                
-                <div class="input-wrapper">
-                    <span class="input-label">Driver ID</span>
-                    <input type="text" id="edit-gr-empid" style="font-family: monospace; font-weight: bold;">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Claim Amount ($)</span>
-                    <input type="number" step="0.01" id="edit-gr-amount">
-                </div>
-                
-                <div class="input-wrapper">
-                    <span class="input-label">Violation Date</span>
-                    <input type="date" id="edit-gr-vdate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">File Date</span>
-                    <input type="date" id="edit-gr-fdate">
-                </div>
-                
-                <div class="input-wrapper" style="grid-column: span 2;">
-                    <span class="input-label">Violation Type</span>
-                    <select id="edit-gr-vtype">
-                        <option value="" hidden>Select...</option>
-                        <option value="Discharge">Discharge</option>
-                        <option value="Suspension">Suspension</option>
-                        <option value="Pay Claim">Pay Claim</option>
-                        <option value="Protest">Protest</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-                <div class="input-wrapper" style="grid-column: span 2;">
-                    <span class="input-label">Sub Violation</span>
-                    <select id="edit-gr-subtype" onchange="handleEditSubViolChange(this)">
-                        <option value="" hidden>Select...</option>
-                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
-                    </select>
-                    <input type="text" id="edit-gr-custom-subtype" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
-                </div>
-
-                <!-- SETTLEMENT SECTION -->
-                <div class="modal-section-divider">Settlement Details</div>
-
-                <div class="input-wrapper" style="grid-column: span 2;">
-                    <span class="input-label">Disposition</span>
-                    <input type="text" id="edit-gr-disp" list="global-disposition-list" placeholder="Select or type disposition...">
-                </div>
-
-                <div class="input-wrapper">
-                    <span class="input-label">Date Settled</span>
-                    <input type="date" id="edit-gr-sdate">
-                </div>
-                <div class="input-wrapper">
-                    <span class="input-label">Final Paid Amt ($)</span>
-                    <input type="number" step="0.01" id="edit-gr-samt">
-                </div>
-
-                <div style="grid-column: span 2; display: flex; gap: 18px; margin-top: 4px; font-size: 12px; font-weight: bold; color: var(--text-muted);">
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" id="edit-gr-bofpi" style="width: 16px; height: 16px; accent-color: var(--accent);"> B.O.F.P.I.T.I.C.
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                        <input type="checkbox" id="edit-gr-nps" style="width: 16px; height: 16px; accent-color: var(--accent);"> N.P.S.
-                    </label>
-                </div>
-            </div>
+            <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
             
-            <div class="modal-btn-row" style="margin-top: 20px; flex-wrap: wrap;">
-                <button id="btn-reopen-gr" onclick="reopenArchiveCase()" class="btn-modal-reopen" title="Clear settlement and send back to Processing Hub">🔄 Reopen Case</button>
-                <button onclick="closeEditModal()" class="btn-modal-no">Cancel</button>
-                <button id="btn-save-gr" onclick="saveArchiveEdits()" class="btn-modal-yes">💾 Save</button>
+            <div id="settings-dropdown" class="settings-dropdown">
+                <button class="settings-item" onclick="toggleTheme()" style="border-bottom: 1px solid var(--border);">🌗 Day/Night Mode</button>
+                <button class="settings-item" onclick="clearToken()" style="color: var(--accent-red);">🚪 Log Out</button>
             </div>
         </div>
     </div>
 
-    <div id="side-drawer" class="side-drawer">
-        <div id="drawerHandle" class="drawer-handle"></div>
-        <div class="drawer-header">
-            <h3 id="drawer-title" style="color: var(--accent); font-size: 16px;">Case Details</h3>
-            <button class="btn-nav" onclick="closeDrawer()" style="background: #2a2a2a; border: 1px solid #444; color: white; padding: 8px 14px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer;">✕ Close</button>
+    <div class="steward-controls">
+        <div class="center-toggle">
+            <button id="btn-west" class="toggle-btn active" onclick="switchCenter('West')">WEST</button>
+            <button id="btn-east" class="toggle-btn" onclick="switchCenter('East')">EAST</button>
         </div>
-        <div id="drawer-main-content" class="drawer-body"></div>
+        <div class="admin-switch-container">
+            Admin Mode
+            <label class="toggle-switch">
+                <input type="checkbox" id="adminToggle" onchange="toggleAdminMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div id="board-container" style="max-width: 800px; margin: 0 auto; margin-top: 20px;">
+        <div class="admin-top-bar">
+            <button class="btn-board btn-add" onclick="openModal()">+ ADD NEW DRIVER</button>
+            <button class="btn-board btn-clear-all" onclick="adminClearAll()">⚠️ CLEAR ALL STATUSES</button>
+        </div>
+        <div class="zone-header">Bid Drivers (Round 1)</div>
+        <div id="zone-1-list"></div>
+        <div class="zone-header">Bid Drivers (Round 2)</div>
+        <div id="zone-2-list"></div>
+        <div class="zone-header">Coverage Drivers</div>
+        <div id="zone-3-list"></div>
     </div>
 
     <script>
+        // 1. Security & Auth (Preserves both steward GUID and name across navigation)
         const urlParams = new URLSearchParams(window.location.search);
-        const stewardGUID = urlParams.get('steward');
-        
-        // Archive Reader Flow
-        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
-        
-        // Processing Hub Flow (Used for 'archive_edit' / 'reopen_case' single-write update)
-        const hubFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
+        let stewardGuid = urlParams.get('steward') || localStorage.getItem('saved_steward_token') || "";
+        if (stewardGuid) localStorage.setItem('saved_steward_token', stewardGuid);
 
-        // Intake Flow (Quietly fetched to arm Roster & Dropdown options)
-        const intakeVerifyFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
+        let activeDispatcher = urlParams.get('name') ? decodeURIComponent(urlParams.get('name')) : "Steward Admin";
+
+        // 2. THE MEMORY LOGIC
+        let currentCenter = localStorage.getItem('steward_center') || 'West';
         
-        let masterGrievanceCache = []; 
-        let masterStewardRoster = [];
-        let masterSeniorityArray = [];
-        let myProfileData = {};
-        let currentStewardName = '';
-        let isArchiveLoaded = false;
+        // 3. Power Automate URL
+        const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/4f15a4289d7747779ba892ae2de71ada/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9Y8bdwj3XSpksiWuyAdq_EbccltWFNebIwQdkhSzFLc";
+
+        function initUI() {
+            document.getElementById('page-title').innerText = `${currentCenter} Center - Steward Admin`;
+            document.getElementById('btn-west').classList.toggle('active', currentCenter === 'West');
+            document.getElementById('btn-east').classList.toggle('active', currentCenter === 'East');
+        }
+
+        function switchCenter(centerName) {
+            currentCenter = centerName;
+            localStorage.setItem('steward_center', centerName);
+            initUI();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            loadBoardData();
+        }
+
+        function toggleAdminMode() {
+            document.body.classList.toggle('admin-mode', document.getElementById('adminToggle').checked);
+        }
+
+        // --- NAVIGATION CONTROLLERS ---
+        function openNavMenu() { document.getElementById('main-nav-menu').classList.add('open'); document.getElementById('nav-overlay').classList.add('open'); }
+        function closeNavMenu() { document.getElementById('main-nav-menu').classList.remove('open'); document.getElementById('nav-overlay').classList.remove('open'); }
+        function toggleSettingsMenu() { document.getElementById('settings-dropdown').classList.toggle('open'); document.getElementById('settings-overlay').style.display = document.getElementById('settings-dropdown').classList.contains('open') ? 'block' : 'none'; }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); toggleSettingsMenu(); }
+        function clearToken() { localStorage.removeItem('saved_steward_token'); window.location.reload(); }
 
         function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
             if (currentPage === '') currentPage = 'index.html'; 
 
-            fetch('steward-nav.json')
+            let params = [];
+            if (stewardGuid) params.push(`steward=${encodeURIComponent(stewardGuid)}`);
+            if (urlParams.get('name')) params.push(`name=${encodeURIComponent(activeDispatcher)}`);
+            let secureQueryString = params.length > 0 ? `?${params.join('&')}` : '';
+
+            fetch('steward-nav.json', { cache: 'no-store' })
                 .then(res => res.json())
                 .then(menuItems => {
                     const navContainer = document.getElementById('dynamic-nav-container');
                     let navHtml = '';
-
+                    
                     menuItems.forEach(item => {
                         if (item.type === 'header') {
-                            navHtml += `<div class="nav-section-title">${item.title}</div>`;
-                        } 
-                        else if (item.type === 'link') {
+                            navHtml += `<div class="nav-section-title" style="margin-top: 10px;">${item.title}</div>`;
+                        } else if (item.type === 'link') {
                             if (item.filename === currentPage) {
                                 navHtml += `<a href="#" class="nav-item active">${item.name} (Active)</a>`;
                             } else {
-                                navHtml += `<a href="${item.filename}?steward=${stewardGUID}" class="nav-item">→ ${item.name}</a>`;
+                                navHtml += `<a href="${item.filename}${secureQueryString}" class="nav-item">→ ${item.name}</a>`;
                             }
                         }
                     });
@@ -491,798 +346,301 @@
                 .catch(err => console.error("Menu failed to load:", err));
         }
 
-        buildDynamicNav();
-
-        const formatToUsDate = (isoString) => {
-            if (!isoString || isoString === 'N/A') return 'N/A';
-            const parts = isoString.split('T')[0].split('-');
-            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
-            return isoString;
-        };
-
-        function openNavMenu() {
-            document.getElementById('main-nav-menu').classList.add('open');
-            document.getElementById('nav-overlay').classList.add('open');
+        // --- Modal Controls ---
+        function openModal() {
+            document.getElementById('newDriverName').value = "";
+            document.getElementById('newDriverGroup').value = "";
+            document.getElementById('modal-overlay').style.display = 'flex';
         }
-        function closeNavMenu() {
-            document.getElementById('main-nav-menu').classList.remove('open');
-            document.getElementById('nav-overlay').classList.remove('open');
-        }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        function toggleSettingsMenu() {
-            const dropdown = document.getElementById('settings-dropdown');
-            const overlay = document.getElementById('settings-overlay');
-            dropdown.classList.toggle('open');
-            overlay.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
-        }
-
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-            toggleSettingsMenu(); 
-        }
-
-        function clearToken() {
-            if(confirm("Are you sure you want to log out and clear your security token?")) {
-                localStorage.removeItem('saved_steward_token');
-                window.location.reload();
-            }
-        }
-
-        // --- ARCHIVE EDIT & REOPEN MODAL LOGIC ---
-        function openArchiveEditModal(recordId) {
-            if (!confirm("⚠️ WARNING: You are about to edit a settled archive record.\n\nAre you sure you want to continue?")) {
-                return;
-            }
-
-            const record = masterGrievanceCache.find(r => r.Title === recordId);
-            if (!record) return;
-
-            document.getElementById('edit-record-id').value = recordId;
+        // The Universal Click Action
+        function stampDriver(driverName, status, zone, group) {
+            event.target.innerText = "...";
             
-            const fName = record.FirstName || '';
-            const lName = record.LastName || '';
-            const fullName = `${fName} ${lName}`.trim() || record.RawOCRName || '';
-            
-            document.getElementById('edit-gr-fullname').value = fullName;
-            document.getElementById('edit-gr-empid').value = record.EmployeeID || '';
-            document.getElementById('edit-gr-amount').value = record.ViolationAmount || '';
-            document.getElementById('edit-gr-vdate').value = record.ViolationDate ? record.ViolationDate.split('T')[0] : '';
-            document.getElementById('edit-gr-fdate').value = record.FileDate ? record.FileDate.split('T')[0] : '';
-            
-            const vTypeSelect = document.getElementById('edit-gr-vtype');
-            let isTypeMatch = Array.from(vTypeSelect.options).some(opt => opt.value === record.ViolationType);
-            if (record.ViolationType && !isTypeMatch) {
-                vTypeSelect.innerHTML += `<option value="${record.ViolationType}">${record.ViolationType}</option>`;
-            }
-            vTypeSelect.value = record.ViolationType || '';
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
 
-            const subTypeSelect = document.getElementById('edit-gr-subtype');
-            const customInput = document.getElementById('edit-gr-custom-subtype');
-            let isStandardSub = Array.from(subTypeSelect.options).some(opt => opt.value === record.ViolationSubType);
-            
-            if (record.ViolationSubType && !isStandardSub) {
-                subTypeSelect.value = 'CUSTOM_OTHER';
-                customInput.style.display = 'block';
-                customInput.value = record.ViolationSubType;
-            } else {
-                subTypeSelect.value = record.ViolationSubType || '';
-                customInput.style.display = 'none';
-                customInput.value = '';
-            }
+            const payload = { 
+                "DriverName": driverName, 
+                "NewStatus": status, 
+                "Timestamp": todayStr, 
+                "Zone": parseInt(zone), 
+                "Center": currentCenter, 
+                "Route": currentCenter + "Post", 
+                "UpdatedBy": activeDispatcher, 
+                "Group": group 
+            };
 
-            const dispRaw = (record.Disposition && typeof record.Disposition === 'object') ? record.Disposition.Value : record.Disposition;
-            document.getElementById('edit-gr-disp').value = dispRaw || '';
-            document.getElementById('edit-gr-sdate').value = record.SettledDate ? record.SettledDate.split('T')[0] : '';
-            document.getElementById('edit-gr-samt').value = record.SettledAmount !== undefined && record.SettledAmount !== null ? record.SettledAmount : '';
-            document.getElementById('edit-gr-bofpi').checked = !!record.BOFPITIC;
-            document.getElementById('edit-gr-nps').checked = !!record.NPS;
-
-            document.getElementById('edit-modal-overlay').style.display = 'flex';
-        }
-
-        function handleEditRosterSelection(inputElem) {
-            const typedName = inputElem.value.trim().toLowerCase();
-            const idInput = document.getElementById('edit-gr-empid');
-            
-            const match = masterSeniorityArray.find(p => {
-                const fn = p.FirstName || p['First Name'] || '';
-                const ln = p.LastName || p['Last Name'] || '';
-                return `${fn} ${ln}`.trim().toLowerCase() === typedName;
-            });
-
-            if (match) {
-                idInput.value = match.Title || match['Title'] || '';
-            }
-        }
-
-        function handleEditSubViolChange(selectElem) {
-            const customInput = document.getElementById('edit-gr-custom-subtype');
-            if (selectElem.value === 'CUSTOM_OTHER') {
-                customInput.style.display = 'block';
-                customInput.value = '';
-                customInput.focus();
-            } else {
-                customInput.style.display = 'none';
-            }
-        }
-
-        function closeEditModal() {
-            document.getElementById('edit-modal-overlay').style.display = 'none';
-        }
-
-        function collectModalCoreFields() {
-            const fullName = document.getElementById('edit-gr-fullname').value.trim();
-            const empid = document.getElementById('edit-gr-empid').value.trim();
-            const amount = document.getElementById('edit-gr-amount').value.trim();
-            const vdate = document.getElementById('edit-gr-vdate').value;
-            const fdate = document.getElementById('edit-gr-fdate').value;
-            const vtype = document.getElementById('edit-gr-vtype').value;
-            
-            let vsubtype = document.getElementById('edit-gr-subtype').value;
-            if (vsubtype === 'CUSTOM_OTHER') {
-                vsubtype = document.getElementById('edit-gr-custom-subtype').value.trim();
-            }
-
-            if (!empid || !fullName) {
-                alert("Action Blocked: Member Name and Driver ID are mandatory.");
-                return null;
-            }
-
-            const nameParts = fullName.split(' ');
-            const fname = nameParts[0] || '';
-            const lname = nameParts.slice(1).join(' ') || '';
-
-            return { fname, lname, empid, amount, vdate, fdate, vtype, vsubtype };
-        }
-
-        function saveArchiveEdits() {
-            const core = collectModalCoreFields();
-            if (!core) return;
-
-            const disp = document.getElementById('edit-gr-disp').value.trim();
-            const sdate = document.getElementById('edit-gr-sdate').value;
-            const samt = document.getElementById('edit-gr-samt').value.trim();
-            const bofpiFlag = document.getElementById('edit-gr-bofpi').checked ? 1 : 0;
-            const npsFlag = document.getElementById('edit-gr-nps').checked ? 1 : 0;
-
-            if (!disp) {
-                alert("Validation Blocked: Disposition cannot be blank when saving a settled record. Use 'Reopen Case' if you want to clear the settlement.");
-                return;
-            }
-
-            if (!confirm("🚨 PERMANENT CHANGE: You are about to overwrite this settled record in the archive.\n\nAre you sure you want to continue?")) {
-                return;
-            }
-
-            const recordId = document.getElementById('edit-record-id').value;
-            const saveBtn = document.getElementById('btn-save-gr');
-            saveBtn.innerText = '⏳ Saving...';
-            saveBtn.style.pointerEvents = 'none';
-
-            const timeStamp = new Date().toLocaleString('en-US');
-            const auditSignature = `${currentStewardName} (Archive Edit) - ${timeStamp}`;
-
-            fetch(hubFlowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    stewardGuid: stewardGUID,
-                    action: "archive_edit",
-                    titleId: recordId,
-                    FirstName: core.fname,
-                    LastName: core.lname,
-                    EmployeeID: core.empid,
-                    ViolationAmount: core.amount,
-                    ViolationDate: core.vdate,
-                    FileDate: core.fdate,
-                    ViolationType: core.vtype,
-                    ViolationSubType: core.vsubtype,
-                    SelectedStatus: disp,
-                    TargetDate: sdate || null,
-                    FinalPayoutAmount: samt === '' ? '0.00' : samt,
-                    BOFPITIC: bofpiFlag,
-                    NPS: npsFlag,
-                    UpdatedByStamp: auditSignature
-                })
-            }).then(res => {
-                if (res.ok) {
-                    saveBtn.innerText = '✅ Saved';
-                    setTimeout(() => {
-                        closeEditModal();
-                        saveBtn.innerText = '💾 Save';
-                        saveBtn.style.pointerEvents = 'auto';
-                        loadArchiveData();
-                    }, 900);
-                } else {
-                    alert("Cloud sync failed. Make sure the 'archive_edit' branch is configured in Power Automate.");
-                    saveBtn.innerText = '💾 Save';
-                    saveBtn.style.pointerEvents = 'auto';
-                }
-            }).catch(() => {
-                alert("Network error.");
-                saveBtn.innerText = '💾 Save';
-                saveBtn.style.pointerEvents = 'auto';
-            });
-        }
-
-        function reopenArchiveCase() {
-            const core = collectModalCoreFields();
-            if (!core) return;
-
-            if (!confirm("🚨 PERMANENT CHANGE: This will clear the Disposition, Settled Date, and Paid Amount, returning this case to Pending status on the Processing Hub.\n\nAre you sure you want to continue?")) {
-                return;
-            }
-
-            const recordId = document.getElementById('edit-record-id').value;
-            const reopenBtn = document.getElementById('btn-reopen-gr');
-            const bofpiFlag = document.getElementById('edit-gr-bofpi').checked ? 1 : 0;
-            const npsFlag = document.getElementById('edit-gr-nps').checked ? 1 : 0;
-
-            reopenBtn.innerText = '⏳ Reopening...';
-            reopenBtn.style.pointerEvents = 'none';
-
-            const timeStamp = new Date().toLocaleString('en-US');
-            const auditSignature = `${currentStewardName} (Reopened) - ${timeStamp}`;
-
-            fetch(hubFlowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    stewardGuid: stewardGUID,
-                    action: "archive_edit",
-                    titleId: recordId,
-                    FirstName: core.fname,
-                    LastName: core.lname,
-                    EmployeeID: core.empid,
-                    ViolationAmount: core.amount,
-                    ViolationDate: core.vdate,
-                    FileDate: core.fdate,
-                    ViolationType: core.vtype,
-                    ViolationSubType: core.vsubtype,
-                    SelectedStatus: null,
-                    TargetDate: null,
-                    FinalPayoutAmount: null,
-                    BOFPITIC: bofpiFlag,
-                    NPS: npsFlag,
-                    UpdatedByStamp: auditSignature
-                })
-            }).then(res => {
-                if (res.ok) {
-                    reopenBtn.innerText = '✅ Reopened';
-                    setTimeout(() => {
-                        closeEditModal();
-                        reopenBtn.innerText = '🔄 Reopen Case';
-                        reopenBtn.style.pointerEvents = 'auto';
-                        loadArchiveData();
-                    }, 900);
-                } else {
-                    alert("Cloud sync failed. Make sure the 'archive_edit' branch is configured in Power Automate.");
-                    reopenBtn.innerText = '🔄 Reopen Case';
-                    reopenBtn.style.pointerEvents = 'auto';
-                }
-            }).catch(() => {
-                alert("Network error.");
-                reopenBtn.innerText = '🔄 Reopen Case';
-                reopenBtn.style.pointerEvents = 'auto';
-            });
-        }
-        
-        function loadArchiveData() {
-            if (!stewardGUID) {
-                document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
-                return;
-            }
-
-            // Quietly fetch Intake data to arm Roster & Dropdown datalists inside the Edit Modal
-            fetch(intakeVerifyFlowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+            fetch(flowUrl, { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify(payload) 
             })
-            .then(res => res.json())
-            .then(data => {
-                const roster = data.seniorityList || data.stewardRoster || []; 
-                if (roster.length > 0) {
-                    masterSeniorityArray = roster;
-                    let opts = '';
-                    masterSeniorityArray.forEach(p => {
-                        const fn = p.FirstName || p['First Name'] || '';
-                        const ln = p.LastName || p['Last Name'] || '';
-                        if (fn || ln) opts += `<option value="${fn} ${ln}"></option>`;
-                    });
-                    document.getElementById('edit-roster-list').innerHTML = opts;
-                }
-                
-                const drops = data.dropdownOptions || [];
-                if (drops.length > 0) {
-                    const violTypeRows = drops.filter(opt => opt.Title === 'ViolationType');
-                    const subViolRows = drops.filter(opt => opt.Title === 'ViolationSubType');
-                    const dispRows = drops.filter(opt => opt.Title === 'Disposition');
-                    
-                    if (violTypeRows.length > 0) {
-                        let typeHtml = '<option value="" hidden>Select...</option>';
-                        violTypeRows.forEach(opt => {
-                            const val = opt.OptionValue || opt.Value || '';
-                            if(val) typeHtml += `<option value="${val}">${val}</option>`;
-                        });
-                        document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
-                    }
+            .then(res => { if(res.ok) setTimeout(() => { loadBoardData(); }, 1500); })
+            .catch(err => alert("Error saving to database."));
+        }
 
-                    if (subViolRows.length > 0) {
-                        let subTypeHtml = '<option value="" hidden>Select...</option>';
-                        subViolRows.forEach(opt => {
-                            const val = opt.OptionValue || opt.Value || '';
-                            if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
-                        });
-                        subTypeHtml += `<option value="CUSTOM_OTHER">✍️ Type Custom...</option>`;
-                        document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
-                    }
-
-                    if (dispRows.length > 0) {
-                        let dispHtml = '';
-                        dispRows.forEach(opt => {
-                            const val = opt.OptionValue || opt.Value || '';
-                            if(val) dispHtml += `<option value="${val}">`;
-                        });
-                        document.getElementById('global-disposition-list').innerHTML = dispHtml;
-                    }
-                }
-            }).catch(e => console.log("Silent dropdown fetch skipped."));
+        // --- ADMIN FUNCTIONS ---
+        function sendAdminPayload(driverName, routeString, extraData) {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            const payload = {
+                "DriverName": driverName,
+                "Center": currentCenter,
+                "Route": routeString, 
+                "UpdatedBy": activeDispatcher,
+                ...extraData 
+            };
 
             fetch(flowUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load_archive" })
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             })
-            .then(res => res.json())
-            .then(bundle => {
-                masterGrievanceCache = bundle.pendingGrievances || [];
-                masterStewardRoster = bundle.stewardRoster || [];
-
-                myProfileData = masterStewardRoster.find(s => (s.GUID || s.Title || '').toString().toLowerCase().trim() === stewardGUID.toLowerCase().trim());
-                
-                if (!myProfileData) {
-                    document.getElementById('loading').innerText = "Security Halt: Invalid or unauthorized token.";
-                    return; 
+            .then(res => { 
+                if(res.ok) {
+                    setTimeout(() => { loadBoardData(); }, 1500); 
+                } else {
+                    document.getElementById('loading-overlay').style.display = 'none'; 
+                    alert("Backend Error: Power Automate failed to process the request.");
                 }
+            })
+            .catch(err => { 
+                document.getElementById('loading-overlay').style.display = 'none'; 
+                alert("Network Error: Could not reach the database."); 
+            });
+        }
 
-                currentStewardName = myProfileData.StewardName;
-                isArchiveLoaded = true;
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('steward-info').innerText = `${currentStewardName} | Authorized Viewer`;
-
-                // Fallback Disposition population if bundle includes dropdownOptions
-                if (bundle.dropdownOptions && bundle.dropdownOptions.length > 0) {
-                    const dispRows = bundle.dropdownOptions.filter(opt => opt.Title === 'Disposition');
-                    if (dispRows.length > 0) {
-                        document.getElementById('global-disposition-list').innerHTML = dispRows
-                            .map(opt => opt.OptionValue || opt.Value || '')
-                            .filter(Boolean)
-                            .map(val => `<option value="${val}">`)
-                            .join('');
-                    }
-                }
-
-                const coverageContainer = document.getElementById('coverage-checkboxes');
-                coverageContainer.innerHTML = '';
-                
-                const sortedRoster = [...masterStewardRoster].sort((a, b) => (a.StewardName || '').localeCompare(b.StewardName || ''));
-
-                sortedRoster.forEach(st => {
-                    if (st.StewardName && st.StewardID) {
-                        coverageContainer.innerHTML += `
-                            <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); cursor: pointer; padding: 6px 0;">
-                                <input type="checkbox" class="steward-filter-chk" value="${st.StewardID}" data-name="${st.StewardName}" checked onchange="applyFilters()" style="width: 18px; height: 18px; accent-color: var(--accent);">
-                                ${st.StewardName}
-                            </label>
-                        `;
-                    }
+        function adminClearStatus(driverName, currentGroup, currentZone) {
+            if(confirm(`Are you sure you want to clear today's status for ${driverName}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: "", Timestamp: "", Zone: parseInt(currentZone) || 0, Group: currentGroup 
                 });
-
-                applyFilters();
-            }).catch(err => {
-                document.getElementById('loading').innerText = "Interface parsing failure on Archive handshake.";
-                console.error(err);
-            });
-        }
-
-        // --- SMART SEARCH ENGINE ---
-        const SMART_SEARCH_TAGS = [
-            { tag: 'art:', label: 'Article #', triggers: ['art', 'article'] },
-            { tag: 'mgr:', label: 'Manager', triggers: ['mgr', 'man', 'manager', 'sup'] },
-            { tag: 'body:', label: 'Complaint', triggers: ['body', 'comp', 'complaint', 'griev'] },
-            { tag: 'id:', label: 'Emp / Sys ID', triggers: ['id', 'emp', 'sys'] }
-        ];
-
-        function renderSearchPopover(popoverId, inputId, tagsToShow, isAutofill, filterFnName) {
-            const pop = document.getElementById(popoverId);
-            if (!pop || tagsToShow.length === 0) {
-                if (pop) pop.classList.remove('open');
-                return;
-            }
-            const title = isAutofill ? 'Tap to Autofill Category:' : 'Search Specific Category:';
-            pop.innerHTML = `
-                <div class="sp-header">${title}</div>
-                <div class="sp-grid">
-                    ${tagsToShow.map(item => `
-                        <div class="sp-row" onmousedown="event.preventDefault(); insertSmartTag('${inputId}', '${popoverId}', '${item.tag}', ${isAutofill}, ${filterFnName})">
-                            <span class="sp-label">${item.label}</span>
-                            <span class="sp-pill">${item.tag}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            pop.classList.add('open');
-        }
-
-        function toggleSearchLegend(popoverId) {
-            const pop = document.getElementById(popoverId);
-            if (pop.classList.contains('open')) {
-                pop.classList.remove('open');
-            } else {
-                renderSearchPopover(popoverId, 'live-search-box', SMART_SEARCH_TAGS, false, applyFilters);
             }
         }
 
-        function handleSmartSearchInput(inputId, popoverId, filterFn) {
-            const val = document.getElementById(inputId).value;
-            const lastChunk = val.split(/[\s,]+/).pop().toLowerCase();
-
-            if (lastChunk.length >= 2 && !lastChunk.includes(':')) {
-                const matches = SMART_SEARCH_TAGS.filter(t =>
-                    t.triggers.some(trig => trig.startsWith(lastChunk))
-                );
-                if (matches.length > 0) {
-                    renderSearchPopover(popoverId, inputId, matches, true, filterFn);
-                } else {
-                    document.getElementById(popoverId).classList.remove('open');
-                }
-            } else {
-                document.getElementById(popoverId).classList.remove('open');
+        function adminClearAll() {
+            if(confirm(`⚠️ WARNING: Are you sure you want to clear ALL statuses for the entire ${currentCenter} board?`)) {
+                sendAdminPayload("ALL", currentCenter + "Post", {
+                    NewStatus: "", Timestamp: "", Zone: 0
+                });
             }
-
-            filterFn();
         }
 
-        function insertSmartTag(inputId, popoverId, tag, replaceLastWord, filterFn) {
-            const input = document.getElementById(inputId);
-            let val = input.value;
-
-            if (replaceLastWord) {
-                val = val.replace(/[^\s,]+$/, '') + tag;
-            } else {
-                const needsSpace = val.length > 0 && !/[\s,]$/.test(val);
-                val = val + (needsSpace ? ' ' : '') + tag;
+        function adminUpdateGroup(driverName, newGroup, currentStatus, currentTimestamp, currentZone) {
+            if(confirm(`Are you sure you want to move ${driverName} to ${newGroup}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Post", { 
+                    NewStatus: currentStatus, Timestamp: currentTimestamp, Zone: parseInt(currentZone) || 0, Group: newGroup 
+                });
             }
-
-            input.value = val;
-            document.getElementById(popoverId).classList.remove('open');
-            input.focus();
-            filterFn();
         }
 
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-wrap')) {
-                document.querySelectorAll('.search-popover').forEach(p => p.classList.remove('open'));
+        function adminToggleAccess(driverName, currentlyRevoked, currentStatus, currentTimestamp, currentZone, currentGroup) {
+            const nextState = !currentlyRevoked;
+            const confirmMsg = nextState
+                ? `🔒 REVOKE EDIT ACCESS:\n\nLock ${driverName} out of editing the Member Days Off board? (They will still be able to view it in read-only mode.)`
+                : `🔓 RESTORE EDIT ACCESS:\n\nUnlock ${driverName} so they can edit the Member Days Off board again?`;
+
+            if(confirm(confirmMsg)) {
+                sendAdminPayload(driverName, currentCenter + "Post", {
+                    NewStatus: currentStatus,
+                    Timestamp: currentTimestamp,
+                    Zone: parseInt(currentZone) || 0,
+                    Group: currentGroup,
+                    AccessRevoked: nextState
+                });
             }
-        });
-
-        function matchesSmartSearch(item, rawSearch, allFieldsText) {
-            if (!rawSearch) return true;
-            const cleaned = rawSearch.replace(/:\s+/g, ':').replace(/,/g, ' ');
-            const tokens = cleaned.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-
-            return tokens.every(token => {
-                const cleanToken = token.replace(/^"|"$/g, '').toLowerCase();
-                if (!cleanToken) return true;
-
-                if (cleanToken.startsWith('art:') || cleanToken.startsWith('article:')) {
-                    const val = cleanToken.replace(/^art(icle)?:/, '');
-                    return !val || `${item.ArticleNumber || ''}`.toLowerCase().includes(val);
-                }
-                if (cleanToken.startsWith('mgr:') || cleanToken.startsWith('manager:')) {
-                    const val = cleanToken.replace(/^m(anage)?r:/, '');
-                    return !val || `${item.Manager || ''}`.toLowerCase().includes(val);
-                }
-                if (cleanToken.startsWith('body:') || cleanToken.startsWith('complaint:')) {
-                    const val = cleanToken.replace(/^(body|complaint):/, '');
-                    return !val || `${item.Complaint || ''}`.toLowerCase().includes(val);
-                }
-                if (cleanToken.startsWith('id:')) {
-                    const val = cleanToken.replace(/^id:/, '');
-                    return !val || `${item.EmployeeID || ''} ${item.Title || ''}`.toLowerCase().includes(val);
-                }
-
-                return allFieldsText.includes(cleanToken);
-            });
         }
 
-        function applyFilters() {
-            if (!isArchiveLoaded) return;
-            const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
-            const isGrouped = document.getElementById('toggle-group-steward').checked;
-            const hidePending = document.getElementById('toggle-hide-pending').checked;
-            const searchText = document.getElementById('live-search-box').value.trim();
-            const sortMode = document.getElementById('sort-dropdown').value;
-
-            let filteredArray = masterGrievanceCache.filter(item => {
-                const st = (item.StewardOfRecord || '').trim();
-                if (!checkedBoxes.includes(st)) return false;
-
-                const disp = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                const isPending = !disp || disp.toUpperCase() === 'PENDING';
-                if (hidePending && isPending) return false;
-
-                if (searchText !== '') {
-                    const searchTarget = `
-                        ${item.FirstName || ''} ${item.LastName || ''} 
-                        ${item.RawOCRName || ''} 
-                        ${item.EmployeeID || ''} 
-                        ${item.Title || ''} 
-                        ${item.ViolationType || ''} 
-                        ${item.ViolationSubType || ''}
-                        ${item.ArticleNumber || ''}
-                        ${item.Manager || ''}
-                        ${item.Complaint || ''}
-                        ${item.NotesA || ''}
-                        ${item.NotesB || ''}
-                        ${item.ViolationAmount || ''}
-                        ${item.SettledAmount || ''}
-                        ${formatToUsDate(item.ViolationDate ? item.ViolationDate.split('T')[0] : '')}
-                        ${formatToUsDate(item.FileDate ? item.FileDate.split('T')[0] : '')}
-                        ${formatToUsDate(item.SettledDate ? item.SettledDate.split('T')[0] : '')}
-                        ${item.StewardOfRecord || ''}
-                        ${disp || ''}
-                    `.toLowerCase();
-                    
-                    if (!matchesSmartSearch(item, searchText, searchTarget)) return false;
-                }
-
-                return true;
-            });
-
-            filteredArray.sort((a, b) => {
-                if (sortMode === 'newest') {
-                    return new Date(b.ViolationDate || 0) - new Date(a.ViolationDate || 0);
-                } else if (sortMode === 'oldest') {
-                    return new Date(a.ViolationDate || 0) - new Date(b.ViolationDate || 0);
-                } else if (sortMode === 'settled_date') {
-                    return new Date(b.SettledDate || 0) - new Date(a.SettledDate || 0);
-                } else if (sortMode === 'payout') {
-                    const payA = parseFloat(a.SettledAmount || 0);
-                    const payB = parseFloat(b.SettledAmount || 0);
-                    return payB - payA; 
-                } else if (sortMode === 'first_name') {
-                    const fnA = (a.FirstName || '').toLowerCase();
-                    const fnB = (b.FirstName || '').toLowerCase();
-                    if (fnA < fnB) return -1;
-                    if (fnA > fnB) return 1;
-                    return 0;
-                } else {
-                    const lnA = (a.LastName || '').toLowerCase();
-                    const lnB = (b.LastName || '').toLowerCase();
-                    if (lnA < lnB) return -1;
-                    if (lnA > lnB) return 1;
-                    const fnA = (a.FirstName || '').toLowerCase();
-                    const fnB = (b.FirstName || '').toLowerCase();
-                    if (fnA < fnB) return -1;
-                    if (fnA > fnB) return 1;
-                    return 0;
-                }
-            });
-
-            renderArchiveCards(filteredArray, isGrouped);
+        function adminDeleteDriver(driverName) {
+            if(confirm(`Are you sure you want to permanently delete ${driverName}?`)) {
+                sendAdminPayload(driverName, currentCenter + "Delete", {});
+            }
         }
 
-        function renderArchiveCards(filteredData, isGrouped) {
-            const display = document.getElementById('data-display');
-            display.style.paddingBottom = '120px';
-
-            if (filteredData.length === 0) {
-                display.innerHTML = '<div style="color: var(--text-muted); padding: 40px; text-align: center; font-size: 14px; font-weight: bold;">No records matched your search or filter criteria.</div>';
-                return;
-            }
-
-            const grouped = {};
+        function submitNewDriver() {
+            const name = document.getElementById('newDriverName').value.trim();
+            const group = document.getElementById('newDriverGroup').value;
+            const insertAfter = document.getElementById('insertAfterSelect').value;
             
-            if (isGrouped) {
-                filteredData.forEach(item => {
-                    const stID = (item.StewardOfRecord || '').trim();
-                    let stName = stID;
-                    
-                    const checkbox = document.querySelector(`.steward-filter-chk[value="${stID}"]`);
-                    if (checkbox) stName = checkbox.getAttribute('data-name');
-                    else if (!stID) stName = 'Unassigned Roster';
+            if (!name || !group) { alert("You must enter a Name and select a Group."); return; }
+            
+            let targetZone = (group === 'Bid') ? 1 : 3;
+            let finalSortOrder = 1;
 
-                    if (!grouped[stName]) grouped[stName] = [];
-                    grouped[stName].push(item);
-                });
-            } else {
-                grouped['Search Results'] = filteredData;
+            let groupList = window.masterDriverList.filter(d => d.Group === group);
+            
+            if (groupList.length > 0) {
+                if (insertAfter === "TOP") {
+                    finalSortOrder = (groupList[0].SortOrder || 1) - 1; 
+                } else {
+                    let targetIndex = groupList.findIndex(d => d.Title === insertAfter);
+                    if (targetIndex !== -1) {
+                        let driverA_Sort = groupList[targetIndex].SortOrder || 0;
+                        if (targetIndex + 1 < groupList.length) {
+                            let driverB_Sort = groupList[targetIndex + 1].SortOrder || 0;
+                            finalSortOrder = (driverA_Sort + driverB_Sort) / 2;
+                        } else {
+                            finalSortOrder = driverA_Sort + 1;
+                        }
+                    }
+                }
             }
 
-            let html = '';
-            const sortedGroupNames = Object.keys(grouped).sort();
+            sendAdminPayload(name, currentCenter + "Add", { Group: group, Zone: targetZone, SortOrder: finalSortOrder, NewStatus: "", Timestamp: "", AccessRevoked: false });
+            closeModal();
+        }
 
-            for (const groupName of sortedGroupNames) {
-                const items = grouped[groupName]; 
+        // --- GLOBAL ROTATION MATH ---
+        function calculateGlobalHighlight(bidList, coverList) {
+            let virtualBoard = [];
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 1 }));
+            bidList.forEach(d => virtualBoard.push({ ...d, expectedZone: 2 }));
+            coverList.forEach(d => virtualBoard.push({ ...d, expectedZone: 3 }));
 
-                html += `
-                    <div style="margin: 25px 0 15px 0; border-bottom: 1px solid var(--accent); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-end;">
-                        <span class="group-header-title" style="color: var(--accent); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">${isGrouped ? 'Files for: ' + groupName : groupName}</span>
-                        <span style="color: var(--text-muted); font-size: 11px; font-weight: bold;">${items.length} RECORD${items.length > 1 ? 'S' : ''} FOUND</span>
+            let mostRecentTime = 0; let mostRecentDateStr = "";
+            virtualBoard.forEach(d => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp) {
+                    let ts = new Date(d.Timestamp).getTime();
+                    if (ts > mostRecentTime) { mostRecentTime = ts; mostRecentDateStr = d.Timestamp; }
+                }
+            });
+            if (mostRecentDateStr === "") return 0; 
+
+            let lastOffIndex = -1; let firstStayAfterOff = -1;
+            virtualBoard.forEach((d, i) => {
+                if (d.ZoneTag == d.expectedZone && d.Timestamp === mostRecentDateStr && d.CurrentStatus && d.CurrentStatus.toLowerCase() === 'off') lastOffIndex = i;
+            });
+            
+            let startIndex = lastOffIndex === -1 ? 0 : lastOffIndex + 1;
+            for (let i = startIndex; i < virtualBoard.length; i++) {
+                if (virtualBoard[i].ZoneTag == virtualBoard[i].expectedZone && virtualBoard[i].Timestamp === mostRecentDateStr && virtualBoard[i].CurrentStatus && virtualBoard[i].CurrentStatus.toLowerCase() === 'stay') {
+                    firstStayAfterOff = i; break; 
+                }
+            }
+
+            if (firstStayAfterOff !== -1) return firstStayAfterOff;
+            else if (lastOffIndex !== -1) return (lastOffIndex + 1) % virtualBoard.length;
+            else return 0; 
+        }
+
+        // Rendering the Rows
+        function buildRowHtml(driver, zoneContext, isHighlighted = false) {
+            let displayStatus = "PENDING"; let statusColor = "var(--text-muted)"; 
+            
+            const d = new Date();
+            const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+            const isToday = (driver.Timestamp === todayStr);
+            const isRecentPast = (driver.Timestamp === window.recentPastDay);
+            const updaterName = driver.UpdatedBy || driver.Updated_x0020_By || driver['Updated By'] || "";
+            const isRevoked = Boolean(driver.AccessRevoked);
+
+            if (driver.ZoneTag == zoneContext && driver.CurrentStatus) {
+                displayStatus = `${driver.CurrentStatus} (${driver.Timestamp})`;
+                if (driver.CurrentStatus.toLowerCase() === 'off') {
+                    if (isToday) statusColor = "var(--accent-green)"; 
+                    else if (isRecentPast) statusColor = "var(--accent)"; 
+                    else statusColor = "var(--text-muted)"; 
+                } else { statusColor = "var(--accent-red)"; }
+            }
+
+            let auditTrailHtml = (updaterName && driver.CurrentStatus) ? `<span style="font-size: 10px; color: #555; margin-top: 3px; font-style: italic;">Clicked by: ${updaterName}</span>` : "";
+            let lockedBadgeHtml = isRevoked ? `<span class="locked-badge">🚫 Edit Locked</span>` : "";
+
+            let dispatchBtn = (isToday && driver.CurrentStatus === 'Off' && driver.ZoneTag == zoneContext) 
+                ? `<button class="btn-board btn-stay" onclick="stampDriver('${driver.Title}', 'Stay', ${zoneContext}, '${driver.Group}')">REVOKE</button>`
+                : `<button class="btn-board btn-off" onclick="stampDriver('${driver.Title}', 'Off', ${zoneContext}, '${driver.Group}')">OFF</button>`;
+
+            let switchGroupTarget = (driver.Group === 'Bid') ? 'Coverage' : 'Bid';
+            let lockBtnHtml = isRevoked
+                ? `<button class="btn-board btn-unlock" onclick="adminToggleAccess('${driver.Title}', true, '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0}, '${driver.Group}')">🔓 UNLOCK</button>`
+                : `<button class="btn-board btn-lock" onclick="adminToggleAccess('${driver.Title}', false, '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0}, '${driver.Group}')">🔒 LOCK</button>`;
+
+            let adminBtn = `
+                <button class="btn-board btn-move" onclick="adminUpdateGroup('${driver.Title}', '${switchGroupTarget}', '${driver.CurrentStatus || ''}', '${driver.Timestamp || ''}', ${driver.ZoneTag || 0})">TO ${switchGroupTarget.toUpperCase()}</button>
+                <button class="btn-board btn-clear" onclick="adminClearStatus('${driver.Title}', '${driver.Group}', ${driver.ZoneTag})">CLEAR</button>
+                ${lockBtnHtml}
+                <button class="btn-board btn-delete" onclick="adminDeleteDriver('${driver.Title}')">X</button>
+            `;
+
+            let rowClass = isHighlighted ? "driver-row highlight" : "driver-row";
+
+            return `
+                <div class="${rowClass}">
+                    <div class="driver-info">
+                        <span class="driver-name">${driver.Title}${lockedBadgeHtml}</span>
+                        <span class="driver-status" style="color: ${statusColor}; font-weight: bold; font-size: 12px; margin-top: 4px; text-transform: uppercase;">${displayStatus}</span>
+                        ${auditTrailHtml}
                     </div>
-                `;
-
-                items.forEach(item => {
-                    const sysId = item.Title || '';
-                    const empName = `${item.FirstName || ''} ${item.LastName || ''}`.trim() || item.RawOCRName || 'Unknown Member';
-                    const empId = item.EmployeeID || '-------';
-                    
-                    const fDateRaw = item.FileDate ? item.FileDate.split('T')[0] : 'N/A';
-                    const vDateRaw = item.ViolationDate ? item.ViolationDate.split('T')[0] : 'N/A';
-                    const fDate = formatToUsDate(fDateRaw);
-                    const vDate = formatToUsDate(vDateRaw);
-                    
-                    const violType = item.ViolationType || 'Not Set';
-                    const violSubType = item.ViolationSubType || '';
-                    const cleanMetaType = violSubType ? `${violType} — ${violSubType}` : violType;
-                    
-                    const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
-                    
-                    const rawHistory = item.NotesA || '';
-                    const existingHistoryHtml = rawHistory ? `
-                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: #b3b3b3; line-height: 1.5;">
-                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Case Timeline History:</b>
-                            <div style="white-space: pre-wrap;">${rawHistory}</div>
-                        </div>
-                    ` : '';
-
-                    const rawNotesB = item.NotesB || '';
-                    const stewardsNotesHtml = rawNotesB ? `
-                        <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: #b3b3b3; line-height: 1.5;">
-                            <b style="color: var(--accent); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">Stewards Meeting Notes:</b>
-                            <div style="white-space: pre-wrap;">${rawNotesB}</div>
-                        </div>
-                    ` : '';
-
-                    let itemStewardName = (item.StewardOfRecord || '').trim();
-                    const stCheckbox = document.querySelector(`.steward-filter-chk[value="${itemStewardName}"]`);
-                    if (stCheckbox) itemStewardName = stCheckbox.getAttribute('data-name');
-                    else if (!itemStewardName) itemStewardName = 'Unassigned Roster';
-                    const stewardBadgeHtml = `<span>Steward: <span style="color: var(--accent);">${itemStewardName}</span></span>`;
-
-                    const dispTextRaw = (item.Disposition && typeof item.Disposition === 'object') ? item.Disposition.Value : item.Disposition;
-                    const dispText = dispTextRaw ? dispTextRaw : 'PENDING';
-                    const isPending = dispText === 'PENDING' || dispText === 'Note' || !dispTextRaw;
-                    const statusColor = isPending ? 'var(--accent)' : 'var(--accent-green)';
-                    const cardBorderColor = isPending ? '#555' : 'var(--accent-green)';
-                    
-                    const settledDateDisplay = item.SettledDate ? formatToUsDate(item.SettledDate.split('T')[0]) : '------';
-                    const settledAmtDisplay = parseFloat(item.SettledAmount || 0).toFixed(2);
-                    
-                    const bofpiPill = item.BOFPITIC ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">BOFPITIC</span>` : '';
-                    const npsPill = item.NPS ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">NPS</span>` : '';
-
-                    // Show edit pencil ONLY on settled (green) cards
-                    const editPencilHtml = !isPending ? `<button class="edit-btn" onclick="openArchiveEditModal('${sysId}')" title="Edit Settled Record">✏️</button>` : '';
-
-                    html += `
-                        <div class="record-card" style="border-left: 5px solid ${cardBorderColor}; transition: all 0.2s ease;">
-                            
-                            <div class="card-top-row">
-                                <h4 class="ctr-name">${empName}</h4>
-                                <div class="ctr-meta">
-                                    <span>${vDate}</span>
-                                    <span>${cleanMetaType}</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <div class="ctr-amt" style="color: #888; font-size: 16px;">Orig: $${originalAmt}</div>
-                                    ${editPencilHtml}
-                                </div>
-                            </div>
-
-                            <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
-                                ${stewardBadgeHtml}
-                                <span>Driver ID: <span style="color: #bbb;">${empId}</span></span>
-                                <span>Sys ID: <span style="color: #bbb;">${sysId}</span></span>
-                                <span>File Date: <span style="color: #bbb;">${fDate}</span></span>
-                                <div style="display: flex; gap: 6px; margin-left: auto;">${bofpiPill}${npsPill}</div>
-                            </div>
-
-                            <div class="status-terminal">
-                                <div class="status-block">
-                                    <span class="sb-label">Disposition</span>
-                                    <span class="sb-value" style="color: ${statusColor};">${dispText}</span>
-                                </div>
-                                <div class="status-block">
-                                    <span class="sb-label">Date Settled</span>
-                                    <span class="sb-value">${settledDateDisplay}</span>
-                                </div>
-                                <div class="status-block" style="text-align: right;">
-                                    <span class="sb-label">Final Payout</span>
-                                    <span class="sb-value" style="color: var(--accent-green); font-size: 16px;">$${settledAmtDisplay}</span>
-                                </div>
-                            </div>
-
-                            ${stewardsNotesHtml}
-                            ${existingHistoryHtml}
-
-                            <div style="margin-top: 14px;">
-                                <button class="btn-3d btn-review" onclick="openHubDrawer('${sysId}')">View PDF Evidence</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }
-
-            display.innerHTML = html;
-        }
-
-        function openHubDrawer(recordId) {
-            const record = masterGrievanceCache.find(r => r.Title === recordId);
-            if (!record) return;
-
-            document.getElementById('drawer-title').innerText = `Audit Vault: ${recordId}`;
-            const container = document.getElementById('drawer-main-content');
-            
-            let safeLink = record.PublicLink || '';
-            if (safeLink.includes("drive.google.com")) {
-                const match = safeLink.match(/(?:id=|\/d\/)([\w-]+)/);
-                if (match && match[1]) safeLink = `https://drive.google.com/file/d/${match[1]}/preview`;
-            }
-
-            container.innerHTML = `
-                <div style="background: #222; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 15px; font-size: 13px;">
-                    <p style="margin-bottom: 6px;"><b>Floor File Date:</b> ${record.FileDate ? formatToUsDate(record.FileDate.split('T')[0]) : 'N/A'}</p>
-                    <p style="margin-bottom: 6px;"><b>Violation Date:</b> ${record.ViolationDate ? formatToUsDate(record.ViolationDate.split('T')[0]) : 'N/A'}</p>
-                    <p style="margin-bottom: 6px;"><b>Original Claim Hours:</b> ${record.ClaimHours || '0.00'}</p>
+                    <div class="action-btns">
+                        <div class="dispatch-ui">${dispatchBtn}</div>
+                        <div class="admin-ui">${adminBtn}</div>
+                    </div>
                 </div>
-                <label class="input-label" style="margin-bottom: 4px; display: block;">Original Evidence PDF Document</label>
-                ${safeLink ? `<iframe src="${safeLink}" class="pdf-frame" frameborder="0"></iframe>` : `<div style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border);">No linked PDF source available</div>`}
             `;
-
-            document.getElementById('side-drawer').classList.add('open');
-            history.pushState({ drawerOpen: true }, "", "#file-viewer");
         }
 
-        function closeDrawer() { 
-            document.getElementById('side-drawer').classList.remove('open'); 
-            if (window.location.hash === '#file-viewer') {
-                history.back();
-            }
+        // Fetching and Displaying the Data
+        function loadBoardData() {
+            fetch(flowUrl, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "Route": currentCenter + "Get" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                const d = new Date();
+                const todayStr = ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2) + '/' + d.getFullYear();
+                
+                let pastDates = [...new Set(data.map(d => d.Timestamp).filter(ts => ts && ts !== todayStr))];
+                pastDates.sort((a, b) => new Date(b) - new Date(a));
+                window.recentPastDay = pastDates[0] || null; 
+                
+                window.masterDriverList = data; 
+                
+                const bidDrivers = data.filter(d => d.Group === 'Bid');
+                const coverDrivers = data.filter(d => d.Group === 'Coverage');
+
+                const allNames = data.map(d => `<option value="${d.Title}">${d.Title}</option>`).join('');
+                document.getElementById('insertAfterSelect').innerHTML = `<option value="TOP">-- Place at very top of list --</option>` + allNames;
+
+                const globalHighlightIndex = calculateGlobalHighlight(bidDrivers, coverDrivers);
+                let runningIndex = 0;
+
+                document.getElementById('zone-1-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 1, isWinner);
+                }).join('');
+
+                document.getElementById('zone-2-list').innerHTML = bidDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 2, isWinner);
+                }).join('');
+
+                document.getElementById('zone-3-list').innerHTML = coverDrivers.map(d => {
+                    let isWinner = (runningIndex === globalHighlightIndex); runningIndex++;
+                    return buildRowHtml(d, 3, isWinner);
+                }).join('');
+
+                setTimeout(() => {
+                    const activeRow = document.querySelector('.driver-row.highlight');
+                    if (activeRow) {
+                        activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+
+            })
+            .catch(error => {
+                document.getElementById('loading-overlay').innerHTML = `<div style="color:red; font-weight:bold;">Error loading board data.</div>`;
+                console.error("Fetch error:", error);
+            });
         }
 
-        const drawer = document.getElementById('side-drawer');
-        const handle = document.getElementById('drawerHandle');
-        handle.addEventListener('mousedown', initResize);
-        handle.addEventListener('touchstart', initResize, { passive: true });
-
-        function initResize() {
-            document.addEventListener('mousemove', resizeDrawer);
-            document.addEventListener('mouseup', stopResize);
-            document.addEventListener('touchmove', resizeDrawer, { passive: false });
-            document.addEventListener('touchend', stopResize);
-        }
-        function resizeDrawer(e) {
-            let clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-            const newWidth = window.innerWidth - clientX;
-            if (newWidth > window.innerWidth * 0.3 && newWidth < window.innerWidth * 0.8) drawer.style.width = newWidth + 'px';
-        }
-        function stopResize() {
-            document.removeEventListener('mousemove', resizeDrawer);
-            document.removeEventListener('touchmove', resizeDrawer);
-        }
-
-        window.addEventListener('popstate', function(event) {
-            const drawer = document.getElementById('side-drawer');
-            if (drawer.classList.contains('open')) {
-                drawer.classList.remove('open');
-            }
-        });
-
-        loadArchiveData();
+        // Initialize Page
+        initUI();
+        buildDynamicNav();
+        loadBoardData();
     </script>
 </body>
 </html>
