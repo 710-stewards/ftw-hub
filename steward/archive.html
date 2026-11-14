@@ -10,14 +10,13 @@
             --bg-card: #1e1e1e;
             --accent: #ffcc00;
             --accent-green: #2ecc71;
+            --danger: #ff3333;
             --border: #333;
             --text-main: #ffffff;
             --text-muted: #888;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        
-        /* Adjusted padding since the header is slightly slimmer now */
         body { background-color: var(--bg-main); color: var(--text-main); padding: 15px; padding-top: 135px; }
 
         /* RESPONSIVE TWO-STORY STICKY HEADER */
@@ -37,13 +36,43 @@
         }
         .hamburger-btn:active { transform: scale(0.9); }
 
-        /* CLEAN FULL-WIDTH SEARCH BAR */
+        /* CLEAN FULL-WIDTH SEARCH BAR + SMART POPOVER */
+        .search-wrap { position: relative; width: 100%; }
         .search-input {
             width: 100%; height: 45px; background: #262626; border: 1px solid #444;
-            color: white; border-radius: 6px; padding: 0 15px; font-size: 15px; outline: none;
+            color: white; border-radius: 6px; padding: 0 42px 0 15px; font-size: 15px; outline: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         .search-input:focus { border-color: var(--accent); }
+        .search-help-btn {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #333; border: 1px solid #555; color: var(--accent);
+            font-size: 13px; font-weight: 900; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .search-help-btn:hover { background: rgba(255, 204, 0, 0.15); border-color: var(--accent); }
+        .search-popover {
+            position: absolute; top: 52px; left: 0; right: 0;
+            background: var(--bg-card); border: 1px solid var(--accent);
+            border-radius: 8px; padding: 12px 14px; z-index: 1002;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.75); display: none;
+        }
+        .search-popover.open { display: block; }
+        .sp-header { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .sp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+        .sp-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #262626; border: 1px solid #3a3a3a; border-radius: 6px;
+            padding: 7px 10px; cursor: pointer; transition: border-color 0.15s;
+        }
+        .sp-row:hover { border-color: var(--accent); }
+        .sp-label { font-size: 12px; font-weight: 700; color: var(--text-main); }
+        .sp-pill {
+            background: rgba(255, 204, 0, 0.12); color: var(--accent);
+            border: 1px solid var(--accent); border-radius: 4px;
+            padding: 2px 7px; font-family: monospace; font-size: 12px; font-weight: bold;
+        }
 
         /* 3-DOT MENU STYLES */
         .menu-sort-select {
@@ -105,17 +134,21 @@
         body.light-mode .hamburger-btn { color: #121212; } 
         body.light-mode .status-terminal { background: #f8f9fa; border-color: #d1d5db; }
         body.light-mode .sb-value { color: #111; }
-        
-        /* Light Mode UI Overrides */
+        body.light-mode .search-help-btn { background: #f0f2f5; border-color: #ccc; color: #b37700; }
+        body.light-mode .sp-row { background: #f8f9fa; border-color: #d1d5db; }
+        body.light-mode .sp-pill { color: #b37700; border-color: #b37700; }
+        body.light-mode .edit-btn { background: #f0f2f5 !important; color: #111 !important; border-color: #ccc !important; }
+        body.light-mode .custom-modal { background: #ffffff; border-color: #ccc; }
+        body.light-mode .btn-modal-no { background: #f0f2f5; color: #111; border-color: #ccc; }
+        body.light-mode .custom-modal input, body.light-mode .custom-modal select { background: #ffffff; color: #111; border-color: #ccc; }
         body.light-mode .search-input, body.light-mode .menu-sort-select {
             background: #ffffff !important; color: #111 !important; border-color: #ccc !important;
         }
-
-        /* CLEAN HIGH-CONTRAST GOLD FOR LIGHT MODE */
         body.light-mode .header-sub,
         body.light-mode .ctr-meta,
         body.light-mode .sb-label,
-        body.light-mode .group-header-title {
+        body.light-mode .group-header-title,
+        body.light-mode .modal-title {
             color: #b37700 !important; 
             -webkit-text-stroke: 0 !important; 
             text-shadow: none !important;
@@ -143,6 +176,12 @@
             .ctr-meta { flex: 1; order: 0; margin-top: 0; justify-content: center; gap: 20px; }
         }
 
+        .edit-btn {
+            background: #222; border: 1px solid #444; border-radius: 6px; color: white;
+            padding: 4px 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+        }
+        .edit-btn:active { transform: scale(0.9); }
+
         /* READ ONLY BADGES */
         .status-terminal {
             background: #222; padding: 12px 16px; border-radius: 6px; border: 1px solid #444;
@@ -161,6 +200,41 @@
         .btn-3d:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
         .btn-review { background-color: #333; color: #fff; border: 1px solid #555; }
 
+        /* MODAL OVERLAY & FORM INPUTS */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.82); backdrop-filter: blur(3px);
+            z-index: 4000; display: none; align-items: center; justify-content: center;
+        }
+        .custom-modal {
+            background: #1a1a1a; border: 1px solid var(--accent); border-radius: 8px;
+            width: 92%; max-width: 480px; padding: 22px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+        }
+        .modal-title { font-size: 18px; font-weight: 800; color: white; margin-bottom: 10px; }
+        .modal-text { font-size: 13px; color: #bbb; margin-bottom: 20px; line-height: 1.5; }
+        .modal-btn-row { display: flex; gap: 10px; }
+        .btn-modal-yes { background: var(--accent); color: #111; flex: 1; height: 42px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-modal-no { background: #333; color: white; border: 1px solid #555; flex: 1; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-modal-reopen { background: #262626; color: var(--accent); border: 1px solid var(--accent); flex: 1.2; height: 42px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        .btn-modal-reopen:hover { background: rgba(255, 204, 0, 0.12); }
+
+        .input-wrapper { display: flex; flex-direction: column; gap: 4px; position: relative; }
+        .input-label { font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; }
+        .custom-modal input[type="text"],
+        .custom-modal input[type="number"],
+        .custom-modal input[type="date"],
+        .custom-modal select {
+            width: 100%; height: 40px; background: #262626; border: 1px solid #444;
+            color: #fff; border-radius: 6px; padding: 0 10px; font-size: 14px; outline: none;
+        }
+        .custom-modal input:focus, .custom-modal select:focus { border-color: var(--accent); }
+        .modal-section-divider {
+            grid-column: span 2; margin-top: 8px; padding-top: 10px;
+            border-top: 1px dashed var(--border); font-size: 11px; font-weight: 800;
+            color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px;
+        }
+
         /* RIGHT SIDE AUDIT DRAWER */
         .side-drawer {
             position: fixed; top: 0; right: 0; bottom: 0; width: 100%; 
@@ -178,17 +252,18 @@
             width: 100%; height: calc(100vh - 220px); min-height: 800px; 
             border-radius: 4px; border: 1px solid #333; margin-top: 10px; 
         }
-
     </style>
 </head>
 <body>
 
     <script>
-        // INSTANT MEMORY CHECK: Prevents the dark-to-light screen flash
         if (localStorage.getItem('tags_theme') === 'light') {
             document.body.classList.add('light-mode');
         }
     </script>
+
+    <datalist id="global-disposition-list"></datalist>
+    <datalist id="edit-roster-list"></datalist>
 
     <div id="nav-overlay" class="nav-overlay" onclick="closeNavMenu()"></div>
     <div id="main-nav-menu" class="main-nav-drawer">
@@ -205,7 +280,6 @@
 
     <!-- DOUBLE DECKER STICKY HEADER -->
     <div class="top-navbar">
-        <!-- ROW 1: Titles & Menus -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; width: 100%;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <button class="hamburger-btn" onclick="openNavMenu()">☰</button>
@@ -218,12 +292,9 @@
             <div style="position: relative;">
                 <button class="hamburger-btn" onclick="toggleSettingsMenu()" style="margin: 0; width: 40px;">⋮</button>
                 
-                <!-- INVISIBLE OVERLAY -->
                 <div id="settings-overlay" onclick="toggleSettingsMenu()" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000;"></div>
                 
                 <div id="settings-dropdown" class="settings-dropdown">
-                    
-                    <!-- MOVED SORT TO 3-DOT MENU -->
                     <div style="padding: 10px 15px; background: var(--bg-main); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">
                         Sort Vault
                     </div>
@@ -265,15 +336,102 @@
             </div>
         </div>
 
-        <!-- ROW 2: Sticky 100% Width Search Bar -->
-        <div style="width: 100%;">
-            <input type="text" id="live-search-box" class="search-input" onkeyup="applyFilters()" placeholder="🔍 Search Name, ID, Amount, Date...">
+        <!-- ROW 2: Sticky 100% Width Smart Search Bar -->
+        <div class="search-wrap">
+            <input type="text" id="live-search-box" class="search-input" oninput="handleSmartSearchInput('live-search-box', 'archive-search-popover', applyFilters)" placeholder="🔍 Search all... (or art:3, mgr:, body:, id:)">
+            <button type="button" class="search-help-btn" onclick="toggleSearchLegend('archive-search-popover')" title="Search Specific Category">?</button>
+            <div id="archive-search-popover" class="search-popover"></div>
         </div>
     </div>
 
     <div id="data-display">
         <div id="loading" style="text-align: center; padding: 40px; color: var(--text-muted); font-weight: bold;">
             ↻ Accessing Deep Archive Logs...
+        </div>
+    </div>
+
+    <!-- ARCHIVE EDIT / REOPEN MODAL -->
+    <div id="edit-modal-overlay" class="modal-overlay">
+        <div class="custom-modal" style="text-align: left; max-height: 90vh; overflow-y: auto;">
+            <h3 class="modal-title" style="border-bottom: 1px dashed var(--border); padding-bottom: 10px;">Edit Settled Archive Record</h3>
+            <input type="hidden" id="edit-record-id">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Member Name</span>
+                    <input type="text" id="edit-gr-fullname" list="edit-roster-list" oninput="handleEditRosterSelection(this)">
+                </div>
+                
+                <div class="input-wrapper">
+                    <span class="input-label">Driver ID</span>
+                    <input type="text" id="edit-gr-empid" style="font-family: monospace; font-weight: bold;">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Claim Amount ($)</span>
+                    <input type="number" step="0.01" id="edit-gr-amount">
+                </div>
+                
+                <div class="input-wrapper">
+                    <span class="input-label">Violation Date</span>
+                    <input type="date" id="edit-gr-vdate">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">File Date</span>
+                    <input type="date" id="edit-gr-fdate">
+                </div>
+                
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Violation Type</span>
+                    <select id="edit-gr-vtype">
+                        <option value="" hidden>Select...</option>
+                        <option value="Discharge">Discharge</option>
+                        <option value="Suspension">Suspension</option>
+                        <option value="Pay Claim">Pay Claim</option>
+                        <option value="Protest">Protest</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Sub Violation</span>
+                    <select id="edit-gr-subtype" onchange="handleEditSubViolChange(this)">
+                        <option value="" hidden>Select...</option>
+                        <option value="CUSTOM_OTHER">✍️ Type Custom...</option>
+                    </select>
+                    <input type="text" id="edit-gr-custom-subtype" style="display: none; margin-top: 8px;" placeholder="Type custom violation here...">
+                </div>
+
+                <!-- SETTLEMENT SECTION -->
+                <div class="modal-section-divider">Settlement Details</div>
+
+                <div class="input-wrapper" style="grid-column: span 2;">
+                    <span class="input-label">Disposition</span>
+                    <input type="text" id="edit-gr-disp" list="global-disposition-list" placeholder="Select or type disposition...">
+                </div>
+
+                <div class="input-wrapper">
+                    <span class="input-label">Date Settled</span>
+                    <input type="date" id="edit-gr-sdate">
+                </div>
+                <div class="input-wrapper">
+                    <span class="input-label">Final Paid Amt ($)</span>
+                    <input type="number" step="0.01" id="edit-gr-samt">
+                </div>
+
+                <div style="grid-column: span 2; display: flex; gap: 18px; margin-top: 4px; font-size: 12px; font-weight: bold; color: var(--text-muted);">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" id="edit-gr-bofpi" style="width: 16px; height: 16px; accent-color: var(--accent);"> B.O.F.P.I.T.I.C.
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <input type="checkbox" id="edit-gr-nps" style="width: 16px; height: 16px; accent-color: var(--accent);"> N.P.S.
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-btn-row" style="margin-top: 20px; flex-wrap: wrap;">
+                <button id="btn-reopen-gr" onclick="reopenArchiveCase()" class="btn-modal-reopen" title="Clear settlement and send back to Processing Hub">🔄 Reopen Case</button>
+                <button onclick="closeEditModal()" class="btn-modal-no">Cancel</button>
+                <button id="btn-save-gr" onclick="saveArchiveEdits()" class="btn-modal-yes">💾 Save</button>
+            </div>
         </div>
     </div>
 
@@ -289,14 +447,22 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const stewardGUID = urlParams.get('steward');
+        
+        // Archive Reader Flow
         const flowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/b88ce482e30740e7ac52b68d9feb61c9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=z0LxIGVmdi28LYjtgM6_H3vWPYI4dkMvAAIEU-Ja1f0";
+        
+        // Processing Hub Flow (Used for 'archive_edit' / 'reopen_case' single-write update)
+        const hubFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/2ef18f1b8de94219a28c58ea094c4ec7/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=JIvMrQUzrlP3B7ED1PDqgUnpx246IUCR78UU92tYgqo";
+
+        // Intake Flow (Quietly fetched to arm Roster & Dropdown options)
+        const intakeVerifyFlowUrl = "https://defaultb1b2f01d8fee4ceb9550ca64ce62b7.f8.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/29defda63e574badbccaac58a833e39f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=YbxLXTZZ9bwT6gCUpreD8ja423SE6Z0Eiy1BN1M73J8";
         
         let masterGrievanceCache = []; 
         let masterStewardRoster = [];
+        let masterSeniorityArray = [];
         let myProfileData = {};
         let currentStewardName = '';
         let isArchiveLoaded = false;
-
 
         function buildDynamicNav() {
             let currentPage = window.location.pathname.split('/').pop();
@@ -343,24 +509,16 @@
             document.getElementById('nav-overlay').classList.remove('open');
         }
 
-        // --- 3-DOT MENU & THEME LOGIC ---
         function toggleSettingsMenu() {
             const dropdown = document.getElementById('settings-dropdown');
             const overlay = document.getElementById('settings-overlay');
-            
             dropdown.classList.toggle('open');
-            
-            if (dropdown.classList.contains('open')) {
-                overlay.style.display = 'block';
-            } else {
-                overlay.style.display = 'none';
-            }
+            overlay.style.display = dropdown.classList.contains('open') ? 'block' : 'none';
         }
 
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            localStorage.setItem('tags_theme', isLight ? 'light' : 'dark');
+            localStorage.setItem('tags_theme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
             toggleSettingsMenu(); 
         }
 
@@ -370,12 +528,307 @@
                 window.location.reload();
             }
         }
+
+        // --- ARCHIVE EDIT & REOPEN MODAL LOGIC ---
+        function openArchiveEditModal(recordId) {
+            if (!confirm("⚠️ WARNING: You are about to edit a settled archive record.\n\nAre you sure you want to continue?")) {
+                return;
+            }
+
+            const record = masterGrievanceCache.find(r => r.Title === recordId);
+            if (!record) return;
+
+            document.getElementById('edit-record-id').value = recordId;
+            
+            const fName = record.FirstName || '';
+            const lName = record.LastName || '';
+            const fullName = `${fName} ${lName}`.trim() || record.RawOCRName || '';
+            
+            document.getElementById('edit-gr-fullname').value = fullName;
+            document.getElementById('edit-gr-empid').value = record.EmployeeID || '';
+            document.getElementById('edit-gr-amount').value = record.ViolationAmount || '';
+            document.getElementById('edit-gr-vdate').value = record.ViolationDate ? record.ViolationDate.split('T')[0] : '';
+            document.getElementById('edit-gr-fdate').value = record.FileDate ? record.FileDate.split('T')[0] : '';
+            
+            const vTypeSelect = document.getElementById('edit-gr-vtype');
+            let isTypeMatch = Array.from(vTypeSelect.options).some(opt => opt.value === record.ViolationType);
+            if (record.ViolationType && !isTypeMatch) {
+                vTypeSelect.innerHTML += `<option value="${record.ViolationType}">${record.ViolationType}</option>`;
+            }
+            vTypeSelect.value = record.ViolationType || '';
+
+            const subTypeSelect = document.getElementById('edit-gr-subtype');
+            const customInput = document.getElementById('edit-gr-custom-subtype');
+            let isStandardSub = Array.from(subTypeSelect.options).some(opt => opt.value === record.ViolationSubType);
+            
+            if (record.ViolationSubType && !isStandardSub) {
+                subTypeSelect.value = 'CUSTOM_OTHER';
+                customInput.style.display = 'block';
+                customInput.value = record.ViolationSubType;
+            } else {
+                subTypeSelect.value = record.ViolationSubType || '';
+                customInput.style.display = 'none';
+                customInput.value = '';
+            }
+
+            const dispRaw = (record.Disposition && typeof record.Disposition === 'object') ? record.Disposition.Value : record.Disposition;
+            document.getElementById('edit-gr-disp').value = dispRaw || '';
+            document.getElementById('edit-gr-sdate').value = record.SettledDate ? record.SettledDate.split('T')[0] : '';
+            document.getElementById('edit-gr-samt').value = record.SettledAmount !== undefined && record.SettledAmount !== null ? record.SettledAmount : '';
+            document.getElementById('edit-gr-bofpi').checked = !!record.BOFPITIC;
+            document.getElementById('edit-gr-nps').checked = !!record.NPS;
+
+            document.getElementById('edit-modal-overlay').style.display = 'flex';
+        }
+
+        function handleEditRosterSelection(inputElem) {
+            const typedName = inputElem.value.trim().toLowerCase();
+            const idInput = document.getElementById('edit-gr-empid');
+            
+            const match = masterSeniorityArray.find(p => {
+                const fn = p.FirstName || p['First Name'] || '';
+                const ln = p.LastName || p['Last Name'] || '';
+                return `${fn} ${ln}`.trim().toLowerCase() === typedName;
+            });
+
+            if (match) {
+                idInput.value = match.Title || match['Title'] || '';
+            }
+        }
+
+        function handleEditSubViolChange(selectElem) {
+            const customInput = document.getElementById('edit-gr-custom-subtype');
+            if (selectElem.value === 'CUSTOM_OTHER') {
+                customInput.style.display = 'block';
+                customInput.value = '';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal-overlay').style.display = 'none';
+        }
+
+        function collectModalCoreFields() {
+            const fullName = document.getElementById('edit-gr-fullname').value.trim();
+            const empid = document.getElementById('edit-gr-empid').value.trim();
+            const amount = document.getElementById('edit-gr-amount').value.trim();
+            const vdate = document.getElementById('edit-gr-vdate').value;
+            const fdate = document.getElementById('edit-gr-fdate').value;
+            const vtype = document.getElementById('edit-gr-vtype').value;
+            
+            let vsubtype = document.getElementById('edit-gr-subtype').value;
+            if (vsubtype === 'CUSTOM_OTHER') {
+                vsubtype = document.getElementById('edit-gr-custom-subtype').value.trim();
+            }
+
+            if (!empid || !fullName) {
+                alert("Action Blocked: Member Name and Driver ID are mandatory.");
+                return null;
+            }
+
+            const nameParts = fullName.split(' ');
+            const fname = nameParts[0] || '';
+            const lname = nameParts.slice(1).join(' ') || '';
+
+            return { fname, lname, empid, amount, vdate, fdate, vtype, vsubtype };
+        }
+
+        function saveArchiveEdits() {
+            const core = collectModalCoreFields();
+            if (!core) return;
+
+            const disp = document.getElementById('edit-gr-disp').value.trim();
+            const sdate = document.getElementById('edit-gr-sdate').value;
+            const samt = document.getElementById('edit-gr-samt').value.trim();
+            const bofpiFlag = document.getElementById('edit-gr-bofpi').checked ? 1 : 0;
+            const npsFlag = document.getElementById('edit-gr-nps').checked ? 1 : 0;
+
+            if (!disp) {
+                alert("Validation Blocked: Disposition cannot be blank when saving a settled record. Use 'Reopen Case' if you want to clear the settlement.");
+                return;
+            }
+
+            if (!confirm("🚨 PERMANENT CHANGE: You are about to overwrite this settled record in the archive.\n\nAre you sure you want to continue?")) {
+                return;
+            }
+
+            const recordId = document.getElementById('edit-record-id').value;
+            const saveBtn = document.getElementById('btn-save-gr');
+            saveBtn.innerText = '⏳ Saving...';
+            saveBtn.style.pointerEvents = 'none';
+
+            const timeStamp = new Date().toLocaleString('en-US');
+            const auditSignature = `${currentStewardName} (Archive Edit) - ${timeStamp}`;
+
+            fetch(hubFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    stewardGuid: stewardGUID,
+                    action: "archive_edit",
+                    titleId: recordId,
+                    FirstName: core.fname,
+                    LastName: core.lname,
+                    EmployeeID: core.empid,
+                    ViolationAmount: core.amount,
+                    ViolationDate: core.vdate,
+                    FileDate: core.fdate,
+                    ViolationType: core.vtype,
+                    ViolationSubType: core.vsubtype,
+                    SelectedStatus: disp,
+                    TargetDate: sdate || null,
+                    FinalPayoutAmount: samt === '' ? '0.00' : samt,
+                    BOFPITIC: bofpiFlag,
+                    NPS: npsFlag,
+                    UpdatedByStamp: auditSignature
+                })
+            }).then(res => {
+                if (res.ok) {
+                    saveBtn.innerText = '✅ Saved';
+                    setTimeout(() => {
+                        closeEditModal();
+                        saveBtn.innerText = '💾 Save';
+                        saveBtn.style.pointerEvents = 'auto';
+                        loadArchiveData();
+                    }, 900);
+                } else {
+                    alert("Cloud sync failed. Make sure the 'archive_edit' branch is configured in Power Automate.");
+                    saveBtn.innerText = '💾 Save';
+                    saveBtn.style.pointerEvents = 'auto';
+                }
+            }).catch(() => {
+                alert("Network error.");
+                saveBtn.innerText = '💾 Save';
+                saveBtn.style.pointerEvents = 'auto';
+            });
+        }
+
+        function reopenArchiveCase() {
+            const core = collectModalCoreFields();
+            if (!core) return;
+
+            if (!confirm("🚨 PERMANENT CHANGE: This will clear the Disposition, Settled Date, and Paid Amount, returning this case to Pending status on the Processing Hub.\n\nAre you sure you want to continue?")) {
+                return;
+            }
+
+            const recordId = document.getElementById('edit-record-id').value;
+            const reopenBtn = document.getElementById('btn-reopen-gr');
+            const bofpiFlag = document.getElementById('edit-gr-bofpi').checked ? 1 : 0;
+            const npsFlag = document.getElementById('edit-gr-nps').checked ? 1 : 0;
+
+            reopenBtn.innerText = '⏳ Reopening...';
+            reopenBtn.style.pointerEvents = 'none';
+
+            const timeStamp = new Date().toLocaleString('en-US');
+            const auditSignature = `${currentStewardName} (Reopened) - ${timeStamp}`;
+
+            fetch(hubFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    stewardGuid: stewardGUID,
+                    action: "archive_edit",
+                    titleId: recordId,
+                    FirstName: core.fname,
+                    LastName: core.lname,
+                    EmployeeID: core.empid,
+                    ViolationAmount: core.amount,
+                    ViolationDate: core.vdate,
+                    FileDate: core.fdate,
+                    ViolationType: core.vtype,
+                    ViolationSubType: core.vsubtype,
+                    SelectedStatus: null,
+                    TargetDate: null,
+                    FinalPayoutAmount: null,
+                    BOFPITIC: bofpiFlag,
+                    NPS: npsFlag,
+                    UpdatedByStamp: auditSignature
+                })
+            }).then(res => {
+                if (res.ok) {
+                    reopenBtn.innerText = '✅ Reopened';
+                    setTimeout(() => {
+                        closeEditModal();
+                        reopenBtn.innerText = '🔄 Reopen Case';
+                        reopenBtn.style.pointerEvents = 'auto';
+                        loadArchiveData();
+                    }, 900);
+                } else {
+                    alert("Cloud sync failed. Make sure the 'archive_edit' branch is configured in Power Automate.");
+                    reopenBtn.innerText = '🔄 Reopen Case';
+                    reopenBtn.style.pointerEvents = 'auto';
+                }
+            }).catch(() => {
+                alert("Network error.");
+                reopenBtn.innerText = '🔄 Reopen Case';
+                reopenBtn.style.pointerEvents = 'auto';
+            });
+        }
         
         function loadArchiveData() {
             if (!stewardGUID) {
                 document.getElementById('loading').innerText = "Security Halt: No routing verification token provided.";
                 return;
             }
+
+            // Quietly fetch Intake data to arm Roster & Dropdown datalists inside the Edit Modal
+            fetch(intakeVerifyFlowUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ "stewardGuid": stewardGUID, "action": "load" })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const roster = data.seniorityList || data.stewardRoster || []; 
+                if (roster.length > 0) {
+                    masterSeniorityArray = roster;
+                    let opts = '';
+                    masterSeniorityArray.forEach(p => {
+                        const fn = p.FirstName || p['First Name'] || '';
+                        const ln = p.LastName || p['Last Name'] || '';
+                        if (fn || ln) opts += `<option value="${fn} ${ln}"></option>`;
+                    });
+                    document.getElementById('edit-roster-list').innerHTML = opts;
+                }
+                
+                const drops = data.dropdownOptions || [];
+                if (drops.length > 0) {
+                    const violTypeRows = drops.filter(opt => opt.Title === 'ViolationType');
+                    const subViolRows = drops.filter(opt => opt.Title === 'ViolationSubType');
+                    const dispRows = drops.filter(opt => opt.Title === 'Disposition');
+                    
+                    if (violTypeRows.length > 0) {
+                        let typeHtml = '<option value="" hidden>Select...</option>';
+                        violTypeRows.forEach(opt => {
+                            const val = opt.OptionValue || opt.Value || '';
+                            if(val) typeHtml += `<option value="${val}">${val}</option>`;
+                        });
+                        document.getElementById('edit-gr-vtype').innerHTML = typeHtml;
+                    }
+
+                    if (subViolRows.length > 0) {
+                        let subTypeHtml = '<option value="" hidden>Select...</option>';
+                        subViolRows.forEach(opt => {
+                            const val = opt.OptionValue || opt.Value || '';
+                            if(val) subTypeHtml += `<option value="${val}">${val}</option>`;
+                        });
+                        subTypeHtml += `<option value="CUSTOM_OTHER">✍️ Type Custom...</option>`;
+                        document.getElementById('edit-gr-subtype').innerHTML = subTypeHtml;
+                    }
+
+                    if (dispRows.length > 0) {
+                        let dispHtml = '';
+                        dispRows.forEach(opt => {
+                            const val = opt.OptionValue || opt.Value || '';
+                            if(val) dispHtml += `<option value="${val}">`;
+                        });
+                        document.getElementById('global-disposition-list').innerHTML = dispHtml;
+                    }
+                }
+            }).catch(e => console.log("Silent dropdown fetch skipped."));
 
             fetch(flowUrl, {
                 method: "POST",
@@ -398,6 +851,18 @@
                 isArchiveLoaded = true;
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('steward-info').innerText = `${currentStewardName} | Authorized Viewer`;
+
+                // Fallback Disposition population if bundle includes dropdownOptions
+                if (bundle.dropdownOptions && bundle.dropdownOptions.length > 0) {
+                    const dispRows = bundle.dropdownOptions.filter(opt => opt.Title === 'Disposition');
+                    if (dispRows.length > 0) {
+                        document.getElementById('global-disposition-list').innerHTML = dispRows
+                            .map(opt => opt.OptionValue || opt.Value || '')
+                            .filter(Boolean)
+                            .map(val => `<option value="${val}">`)
+                            .join('');
+                    }
+                }
 
                 const coverageContainer = document.getElementById('coverage-checkboxes');
                 coverageContainer.innerHTML = '';
@@ -422,12 +887,123 @@
             });
         }
 
+        // --- SMART SEARCH ENGINE ---
+        const SMART_SEARCH_TAGS = [
+            { tag: 'art:', label: 'Article #', triggers: ['art', 'article'] },
+            { tag: 'mgr:', label: 'Manager', triggers: ['mgr', 'man', 'manager', 'sup'] },
+            { tag: 'body:', label: 'Complaint', triggers: ['body', 'comp', 'complaint', 'griev'] },
+            { tag: 'id:', label: 'Emp / Sys ID', triggers: ['id', 'emp', 'sys'] }
+        ];
+
+        function renderSearchPopover(popoverId, inputId, tagsToShow, isAutofill, filterFnName) {
+            const pop = document.getElementById(popoverId);
+            if (!pop || tagsToShow.length === 0) {
+                if (pop) pop.classList.remove('open');
+                return;
+            }
+            const title = isAutofill ? 'Tap to Autofill Category:' : 'Search Specific Category:';
+            pop.innerHTML = `
+                <div class="sp-header">${title}</div>
+                <div class="sp-grid">
+                    ${tagsToShow.map(item => `
+                        <div class="sp-row" onmousedown="event.preventDefault(); insertSmartTag('${inputId}', '${popoverId}', '${item.tag}', ${isAutofill}, ${filterFnName})">
+                            <span class="sp-label">${item.label}</span>
+                            <span class="sp-pill">${item.tag}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            pop.classList.add('open');
+        }
+
+        function toggleSearchLegend(popoverId) {
+            const pop = document.getElementById(popoverId);
+            if (pop.classList.contains('open')) {
+                pop.classList.remove('open');
+            } else {
+                renderSearchPopover(popoverId, 'live-search-box', SMART_SEARCH_TAGS, false, applyFilters);
+            }
+        }
+
+        function handleSmartSearchInput(inputId, popoverId, filterFn) {
+            const val = document.getElementById(inputId).value;
+            const lastChunk = val.split(/[\s,]+/).pop().toLowerCase();
+
+            if (lastChunk.length >= 2 && !lastChunk.includes(':')) {
+                const matches = SMART_SEARCH_TAGS.filter(t =>
+                    t.triggers.some(trig => trig.startsWith(lastChunk))
+                );
+                if (matches.length > 0) {
+                    renderSearchPopover(popoverId, inputId, matches, true, filterFn);
+                } else {
+                    document.getElementById(popoverId).classList.remove('open');
+                }
+            } else {
+                document.getElementById(popoverId).classList.remove('open');
+            }
+
+            filterFn();
+        }
+
+        function insertSmartTag(inputId, popoverId, tag, replaceLastWord, filterFn) {
+            const input = document.getElementById(inputId);
+            let val = input.value;
+
+            if (replaceLastWord) {
+                val = val.replace(/[^\s,]+$/, '') + tag;
+            } else {
+                const needsSpace = val.length > 0 && !/[\s,]$/.test(val);
+                val = val + (needsSpace ? ' ' : '') + tag;
+            }
+
+            input.value = val;
+            document.getElementById(popoverId).classList.remove('open');
+            input.focus();
+            filterFn();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrap')) {
+                document.querySelectorAll('.search-popover').forEach(p => p.classList.remove('open'));
+            }
+        });
+
+        function matchesSmartSearch(item, rawSearch, allFieldsText) {
+            if (!rawSearch) return true;
+            const cleaned = rawSearch.replace(/:\s+/g, ':').replace(/,/g, ' ');
+            const tokens = cleaned.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+
+            return tokens.every(token => {
+                const cleanToken = token.replace(/^"|"$/g, '').toLowerCase();
+                if (!cleanToken) return true;
+
+                if (cleanToken.startsWith('art:') || cleanToken.startsWith('article:')) {
+                    const val = cleanToken.replace(/^art(icle)?:/, '');
+                    return !val || `${item.ArticleNumber || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('mgr:') || cleanToken.startsWith('manager:')) {
+                    const val = cleanToken.replace(/^m(anage)?r:/, '');
+                    return !val || `${item.Manager || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('body:') || cleanToken.startsWith('complaint:')) {
+                    const val = cleanToken.replace(/^(body|complaint):/, '');
+                    return !val || `${item.Complaint || ''}`.toLowerCase().includes(val);
+                }
+                if (cleanToken.startsWith('id:')) {
+                    const val = cleanToken.replace(/^id:/, '');
+                    return !val || `${item.EmployeeID || ''} ${item.Title || ''}`.toLowerCase().includes(val);
+                }
+
+                return allFieldsText.includes(cleanToken);
+            });
+        }
+
         function applyFilters() {
             if (!isArchiveLoaded) return;
             const checkedBoxes = Array.from(document.querySelectorAll('.steward-filter-chk:checked')).map(chk => chk.value);
             const isGrouped = document.getElementById('toggle-group-steward').checked;
             const hidePending = document.getElementById('toggle-hide-pending').checked;
-            const searchText = document.getElementById('live-search-box').value.toLowerCase().trim();
+            const searchText = document.getElementById('live-search-box').value.trim();
             const sortMode = document.getElementById('sort-dropdown').value;
 
             let filteredArray = masterGrievanceCache.filter(item => {
@@ -438,7 +1014,7 @@
                 const isPending = !disp || disp.toUpperCase() === 'PENDING';
                 if (hidePending && isPending) return false;
 
-                                if (searchText !== '') {
+                if (searchText !== '') {
                     const searchTarget = `
                         ${item.FirstName || ''} ${item.LastName || ''} 
                         ${item.RawOCRName || ''} 
@@ -460,9 +1036,8 @@
                         ${disp || ''}
                     `.toLowerCase();
                     
-                    if (!searchTarget.includes(searchText)) return false;
+                    if (!matchesSmartSearch(item, searchText, searchTarget)) return false;
                 }
-
 
                 return true;
             });
@@ -556,7 +1131,6 @@
                     
                     const originalAmt = parseFloat(item.ViolationAmount || 0).toFixed(2);
                     
-                    // NOTES / TIMELINE LOGIC
                     const rawHistory = item.NotesA || '';
                     const existingHistoryHtml = rawHistory ? `
                         <div class="history-timeline-box" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 12px; color: #b3b3b3; line-height: 1.5;">
@@ -591,6 +1165,9 @@
                     const bofpiPill = item.BOFPITIC ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">BOFPITIC</span>` : '';
                     const npsPill = item.NPS ? `<span style="background: #333; color: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #555; font-size: 10px;">NPS</span>` : '';
 
+                    // Show edit pencil ONLY on settled (green) cards
+                    const editPencilHtml = !isPending ? `<button class="edit-btn" onclick="openArchiveEditModal('${sysId}')" title="Edit Settled Record">✏️</button>` : '';
+
                     html += `
                         <div class="record-card" style="border-left: 5px solid ${cardBorderColor}; transition: all 0.2s ease;">
                             
@@ -600,7 +1177,10 @@
                                     <span>${vDate}</span>
                                     <span>${cleanMetaType}</span>
                                 </div>
-                                <div class="ctr-amt" style="color: #888; font-size: 16px;">Orig: $${originalAmt}</div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="ctr-amt" style="color: #888; font-size: 16px;">Orig: $${originalAmt}</div>
+                                    ${editPencilHtml}
+                                </div>
                             </div>
 
                             <div style="display: flex; gap: 16px; font-size: 11px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
